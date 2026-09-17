@@ -1,0 +1,53 @@
+The analysis reveals something important. Let me synthesize this into the answer you're looking for.
+
+---
+
+## The Universal Notebook: What Every Platform Would Need
+
+After mapping all 7 platforms, here's what every single one would have if they built a "notebook":
+
+| # | Field | Why It's Universal |
+|---|---|---|
+| **1** | **ID** | Every system needs a unique identifier. Immutable. How the system references it internally. |
+| **2** | **Name** | Every system needs a human-readable label. "ES — Index macro", "BTC Momentum", "My Workflow". |
+| **3** | **Owner** | Every notebook belongs to someone. Even in single-user systems, you need to know who created it for data integrity and future sharing. |
+| **4** | **CreatedAt** | Every notebook has a birth moment. Essential for sorting, audit trails, "3 months of research" context. |
+| **5** | **UpdatedAt** | Every notebook has a last-touched moment. Essential for recency sorting, "updated 2h ago" in the sidebar. |
+| **6** | **Description** | Optional longer context. Not always required, but universally useful. "This notebook tracks macro positioning in ES ahead of FOMC." |
+| **7** | **Status** | Every notebook has a lifecycle. Active, archived, deleted. Keeps the workspace clean without losing old work. |
+| **8** | **DeletedAt** | Soft delete. Research is precious. You don't lose weeks of work by accident. Enables "recently deleted" recovery. |
+| **9** | **Tags** | Categorization. "macro", "crypto", "earnings", "backtest". Every system has some way to label and filter. |
+| **10** | **Visibility** | Access control. Public, private, shared. Even in single-user, you need to know if this is draft or published. |
+
+---
+
+## Platform Evidence
+
+| Field | TradingView | Obsidian | QuantConnect | Fantasy Football | YouTube | Gmail | n8n |
+|---|---|---|---|---|---|---|---|
+| **ID** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| **Name** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| **Owner** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| **CreatedAt** | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ |
+| **UpdatedAt** | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ |
+| **Description** | ✓ | — | ✓ | — | ✓ | — | ✓ |
+| **Status** | ✓ | — | ✓ | ✓ | ✓ | ✓ | ✓ |
+| **DeletedAt** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| **Tags** | — | ✓ | — | ✓ | ✓ | ✓ | ✓ |
+| **Visibility** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+---
+
+## The Insight
+
+The first 5 fields are **non-negotiable** — they exist in every system, no exceptions:
+
+1. **ID** — the immutable reference
+2. **Name** — the human reference
+3. **Owner** — who it belongs to
+4. **CreatedAt** — when it was born
+5. **UpdatedAt** — when it was last touched
+
+Fields 6–10 are **near-universal** — they appear in most systems, and the ones missing them are either legacy (Gmail's timestamps) or domain-specific (Obsidian doesn't need "status" because the file system handles it).
+
+The key realization: **the first 5 fields are the same whether you're building TradingView, Gmail, or a trading research environment.** The domain-specific stuff (charts, emails, workflows, teams) is what varies. The container itself is always the same shape.

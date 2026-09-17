@@ -1,0 +1,1 @@
+> **Intent programming is first-person programming in which computational components are treated as computational selves capable of receiving intent, communicating, responding to events, and acting within a shared computational world.**

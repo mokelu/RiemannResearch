@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { IronCalc, init, Model } from '@ironcalc/workbook'
-import './style.css'
 
 function App() {
   const [model, setModel] = useState(null)
