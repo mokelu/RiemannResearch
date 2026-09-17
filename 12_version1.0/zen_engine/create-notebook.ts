@@ -1,5 +1,5 @@
 import { Surreal } from "surrealdb";
-import type { Space } from "../types/notebook";
+import type { Space } from "../types/notebook.types";
 
 const surreal = new Surreal();
 await surreal.connect("ws://localhost:8000");
