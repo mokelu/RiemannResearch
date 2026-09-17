@@ -1,24 +1,28 @@
 import { Surreal } from "surrealdb";
-import { migrate, type Migration } from "../shared/db/migrate";
+import { createWasmEngines } from "@surrealdb/wasm";
+import { migrate } from "../shared/db/migrate";
+import { browserMigrations } from "./migrations";
 
 let db: Surreal | null = null;
-
-function loadBrowserMigrations(): Migration[] {
-  // In browser, migrations are bundled or fetched
-  // For now, return empty — will be populated when bundler is configured
-  return [];
-}
 
 export async function getDb(): Promise<Surreal> {
   if (db) return db;
 
-  const surreal = new Surreal();
-  await surreal.connect("ws://localhost:8000");
-  await surreal.signin({ username: "root", password: "root" });
-  await surreal.use({ namespace: "app", database: "main" });
+  try {
+    createWasmEngines();
 
-  await migrate(surreal, loadBrowserMigrations());
+    const surreal = new Surreal();
+    await surreal.connect("indxdb://riemann");
 
-  db = surreal;
-  return db;
+    await migrate(surreal, browserMigrations);
+
+    // Health check
+    await surreal.query("RETURN 1");
+
+    db = surreal;
+    return db;
+  } catch (err) {
+    db = null;
+    throw err;
+  }
 }

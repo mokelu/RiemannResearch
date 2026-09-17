@@ -1,5 +1,4 @@
-import { readFileSync } from "fs";
-import { join } from "path";
+import jdm from "./jdm/permissions.json";
 
 interface DecisionGraph {
   nodes: Array<{
@@ -35,10 +34,8 @@ interface EvaluationResult {
 export class ZenEngine {
   private graph: DecisionGraph;
 
-  constructor(graphPath?: string) {
-    const defaultPath = join(__dirname, "jdm", "permissions.json");
-    const filePath = graphPath ?? defaultPath;
-    this.graph = JSON.parse(readFileSync(filePath, "utf-8"));
+  constructor() {
+    this.graph = jdm as DecisionGraph;
   }
 
   evaluate(input: EvaluationInput): EvaluationResult {

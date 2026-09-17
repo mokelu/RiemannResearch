@@ -1,9 +1,11 @@
+// UI prefs only — notebooks, documents, artifacts belong to SurrealDB
+
 import { createStorage } from "unstorage";
 import { indexedDBDriver } from "unstorage/drivers/indexeddb";
 import type { StorageAdapter } from "../shared/storage/storage.types";
 
 const storage = createStorage({
-  driver: indexedDBDriver({ name: "riemann" }),
+  driver: indexedDBDriver({ dbName: "riemann" }),
 });
 
 export const browserStorage: StorageAdapter = {

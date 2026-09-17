@@ -4,14 +4,21 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "dev": "vite",
+    "build": "vite build",
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "surrealdb": "^1.0.0"
+    "@surrealdb/wasm": "^3.0.3",
+    "idb-keyval": "^6.3.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "surrealdb": "^2.0.8",
+    "unstorage": "^1.17.5"
   },
   "devDependencies": {
-    "typescript": "^5.4.0",
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "typescript": "^5.4.0"
   }
 }
