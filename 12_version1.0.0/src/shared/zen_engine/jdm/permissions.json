@@ -1,0 +1,80 @@
+{
+  "nodes": [
+    {
+      "id": "start",
+      "type": "input",
+      "label": "Evaluate Permission"
+    },
+    {
+      "id": "check_subject_type",
+      "type": "decision",
+      "label": "Subject Type?",
+      "conditions": [
+        { "field": "subject.type", "operator": "eq", "value": "user" },
+        { "field": "subject.type", "operator": "eq", "value": "agent" },
+        { "field": "subject.type", "operator": "eq", "value": "worker" },
+        { "field": "subject.type", "operator": "eq", "value": "app" }
+      ]
+    },
+    {
+      "id": "user_rules",
+      "type": "decision",
+      "label": "User Action?",
+      "conditions": [
+        { "field": "action", "operator": "in", "value": ["CREATE", "READ", "UPDATE", "DELETE"] }
+      ]
+    },
+    {
+      "id": "agent_rules",
+      "type": "decision",
+      "label": "Agent Action?",
+      "conditions": [
+        { "field": "action", "operator": "in", "value": ["READ", "EXECUTE"] }
+      ]
+    },
+    {
+      "id": "worker_rules",
+      "type": "decision",
+      "label": "Worker Action?",
+      "conditions": [
+        { "field": "action", "operator": "eq", "value": "EXECUTE" }
+      ]
+    },
+    {
+      "id": "app_rules",
+      "type": "decision",
+      "label": "App Action?",
+      "conditions": [
+        { "field": "action", "operator": "in", "value": ["READ", "CREATE", "UPDATE"] }
+      ]
+    },
+    {
+      "id": "allow",
+      "type": "output",
+      "label": "ALLOW",
+      "value": "ALLOW"
+    },
+    {
+      "id": "deny",
+      "type": "output",
+      "label": "DENY",
+      "value": "DENY"
+    }
+  ],
+  "edges": [
+    { "from": "start", "to": "check_subject_type" },
+    { "from": "check_subject_type", "to": "user_rules", "condition": "subject.type == user" },
+    { "from": "check_subject_type", "to": "agent_rules", "condition": "subject.type == agent" },
+    { "from": "check_subject_type", "to": "worker_rules", "condition": "subject.type == worker" },
+    { "from": "check_subject_type", "to": "app_rules", "condition": "subject.type == app" },
+    { "from": "check_subject_type", "to": "deny", "condition": "default" },
+    { "from": "user_rules", "to": "allow", "condition": "match" },
+    { "from": "user_rules", "to": "deny", "condition": "default" },
+    { "from": "agent_rules", "to": "allow", "condition": "match" },
+    { "from": "agent_rules", "to": "deny", "condition": "default" },
+    { "from": "worker_rules", "to": "allow", "condition": "match" },
+    { "from": "worker_rules", "to": "deny", "condition": "default" },
+    { "from": "app_rules", "to": "allow", "condition": "match" },
+    { "from": "app_rules", "to": "deny", "condition": "default" }
+  ]
+}
