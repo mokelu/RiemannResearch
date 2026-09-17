@@ -1,19 +1,12 @@
-import { readFileSync, readdirSync } from "fs";
-import { join } from "path";
 import { Surreal } from "surrealdb";
 import { migrate, type Migration } from "../shared/db/migrate";
 
 let db: Surreal | null = null;
 
-function loadLocalMigrations(): Migration[] {
-  const dir = join(process.cwd(), "migrations");
-  return readdirSync(dir)
-    .filter((f) => f.endsWith(".surql"))
-    .sort()
-    .map((name) => ({
-      name,
-      sql: readFileSync(join(dir, name), "utf-8"),
-    }));
+function loadBrowserMigrations(): Migration[] {
+  // In browser, migrations are bundled or fetched
+  // For now, return empty — will be populated when bundler is configured
+  return [];
 }
 
 export async function getDb(): Promise<Surreal> {
@@ -24,7 +17,7 @@ export async function getDb(): Promise<Surreal> {
   await surreal.signin({ username: "root", password: "root" });
   await surreal.use({ namespace: "app", database: "main" });
 
-  await migrate(surreal, loadLocalMigrations());
+  await migrate(surreal, loadBrowserMigrations());
 
   db = surreal;
   return db;
