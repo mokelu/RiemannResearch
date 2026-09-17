@@ -1,4 +1,4 @@
-export interface Space {
+export interface Notebook {
   id: string;
   name: string;
   createdAt: string;
