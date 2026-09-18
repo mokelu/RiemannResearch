@@ -2,7 +2,7 @@ export type SubjectType =
   | 'user'
   | 'agent'
   | 'worker'
-  | 'app';
+  | 'plugin';
 
 export interface Subject {
   id: string;
@@ -16,32 +16,23 @@ export type Action =
   | 'READ'
   | 'UPDATE'
   | 'DELETE'
-  | 'EXECUTE'
-  | 'APPROVE';
+  | 'EXECUTE';
 
 export type ResourceType =
-  | 'space'
   | 'notebook'
   | 'document'
-  | 'dataset'
-  | 'file'
-  | 'workflow'
-  | 'function'
-  | 'plugin'
-  | 'agent'
-  | 'workspace'
-  | 'account'
-  | 'resource';
+  | 'artifact';
 
 export interface Resource {
   type: ResourceType;
   id?: string;
   ownerId?: string;
-  attributes?: Record<string, unknown>;
 }
 
 export interface Context {
-  metadata?: Record<string, unknown>;
+  ownerId?: string;
+  requesterId?: string;
+  workspaceId?: string;
 }
 
 export interface EvaluationInput {
@@ -65,5 +56,5 @@ export interface EvaluationResult {
 export interface CompatibilityRule {
   subjectType: SubjectType;
   actions: Action[];
-  resources?: ResourceType[];
+  resources: ResourceType[];
 }

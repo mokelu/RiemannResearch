@@ -12,6 +12,9 @@ export const nodeStorage: StorageAdapter = {
   getItem: (key) => storage.getItem(key) as any,
   setItem: (key, value) => storage.setItem(key, value as any),
   removeItem: (key) => storage.removeItem(key),
+  hasItem: (key) => storage.hasItem(key),
   getKeys: () => storage.getKeys(),
+  getItems: (keys) => storage.getItems(keys) as any,
+  setItems: (entries) => storage.setItems(entries as any),
   clear: () => storage.clear(),
 };

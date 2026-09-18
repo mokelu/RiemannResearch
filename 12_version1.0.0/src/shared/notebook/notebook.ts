@@ -1,8 +1,11 @@
-import { RecordId } from "surrealdb";
-
 export interface Notebook {
-  id: RecordId;
+  id: string;
   name: string;
-  createdAt: string;
-  updatedAt: string;
+  ownerId: string;
+  workspaceId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date;
+  revision: number;
+  origin: "browser" | "local" | "cloud";
 }
