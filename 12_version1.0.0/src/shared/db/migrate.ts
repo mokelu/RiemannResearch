@@ -5,6 +5,14 @@ export interface Migration {
   sql: string;
 }
 
+interface MigrationRecord {
+  name: string;
+}
+
+interface QueryResult {
+  result: MigrationRecord[];
+}
+
 export async function migrate(surreal: Surreal, migrations: Migration[]): Promise<void> {
   await surreal.query(`
     DEFINE TABLE IF NOT EXISTS _migration SCHEMAFULL;
@@ -13,10 +21,12 @@ export async function migrate(surreal: Surreal, migrations: Migration[]): Promis
     DEFINE INDEX IF NOT EXISTS migration_name ON _migration FIELDS name UNIQUE;
   `);
 
-  const [rows] = await surreal.query<[Array<{ name: string }>]>(
+  const rowsResult = await surreal.query<QueryResult[]>(
     "SELECT name FROM _migration"
   );
-  const applied = new Set((rows || []).map((r) => r.name));
+  const applied = new Set(
+    (rowsResult[0]?.result || []).map((r) => r.name)
+  );
 
   for (const m of migrations) {
     if (applied.has(m.name)) continue;
@@ -26,7 +36,6 @@ export async function migrate(surreal: Surreal, migrations: Migration[]): Promis
       await surreal.query("CREATE _migration SET name = $name", { name: m.name });
       console.log(`[Database] Applied migration: ${m.name}`);
     } catch (err: unknown) {
-      // Multi-tab race: another tab already applied this migration
       if (err instanceof Error && err.message.includes("already applied")) {
         continue;
       }

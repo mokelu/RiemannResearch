@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:db": "docker run --rm --pull always -p 8000:8000 surrealdb/surrealdb:latest start --user root --pass root",
     "build": "vite build",
+    "build:node": "tsc --outDir dist-node",
     "check": "tsc --noEmit"
   },
   "dependencies": {
@@ -19,6 +21,7 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@vitejs/plugin-react": "^6.1.1",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "vite": "^6.0.0"
   }
 }
