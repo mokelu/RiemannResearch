@@ -8,7 +8,9 @@
     "dev:db": "docker run --rm --pull always -p 8000:8000 surrealdb/surrealdb:latest start --user root --pass root",
     "build": "vite build",
     "build:node": "tsc --outDir dist-node",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@surrealdb/wasm": "^3.0.3",
@@ -21,7 +23,9 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@vitejs/plugin-react": "^6.1.1",
+    "happy-dom": "^20.14.5",
     "typescript": "^5.4.0",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "vitest": "^5.0.1"
   }
 }
