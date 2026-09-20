@@ -43,12 +43,23 @@ def run_backtest(
     positives = strategy_returns[strategy_returns > 0].sum()
     negatives = -strategy_returns[strategy_returns < 0].sum()
 
+    # drawdown window: peak -> trough of the worst drawdown (candle indices)
+    dd_vals = drawdown_pct.to_numpy()
+    trough = int(dd_vals.argmax())
+    peak = int(equity.iloc[: trough + 1].values.argmax())
+
+    # worst calendar day, anchored to the first bar of that day
+    worst_day = daily_pnl.idxmin()
+    wd_series = daily_pnl.min()
+    wd_bar = int(np.argmax((days == worst_day).astype(int)))
+
     days_to_target = None
+    target_bar = None
     if profit_target_pct is not None:
         hit = equity >= initial_balance * (1.0 + profit_target_pct / 100.0)
         if hit.any():
-            first_hit = days[hit.to_numpy()][0]
-            days_to_target = int((first_hit - days[0]).days)
+            target_bar = int(hit.to_numpy().argmax())
+            days_to_target = int((days[target_bar] - days[0]).days)
 
     return {
         "final_balance": round(float(equity.iloc[-1]), 2),
@@ -59,8 +70,29 @@ def run_backtest(
         "trading_days": int((exposure.groupby(days).apply(lambda s: (s != 0).any())).sum()),
         "profit_factor": round(float(positives / negatives), 2) if negatives > 0 else float("inf"),
         "days_to_target": days_to_target,
+        "dd_window": {"from": peak, "to": trough, "pct": round(float(dd_vals[trough]), 2)},
+        "worst_day": {
+            "bar": wd_bar,
+            "date": str(worst_day.date()) if hasattr(worst_day, "date") else str(worst_day),
+            "loss_pct": round(float(max(-wd_series * 100.0, 0.0)), 2),
+        },
+        # raw series for tagging — callers strip these before JSON/artifact use
+        "series": {
+            "equity": [round(float(v), 2) for v in equity.tolist()],
+            "positions": [int(v) for v in positions.reindex(df.index).fillna(0).to_numpy()],
+            "target_bar": target_bar,
+        },
         "equity_curve": _sample_curve(equity),
     }
+
+
+SERIES_KEYS = ("series",)
+
+
+def strip_series(metrics: dict) -> dict:
+    """Drop bulky keys before storing metrics on a trial (dd_window/worst_day
+    are small and candle-anchored — they stay)."""
+    return {k: v for k, v in metrics.items() if k not in SERIES_KEYS and k != "equity_curve"}
 
 
 def trade_count(turnover: pd.Series) -> int:

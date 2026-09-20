@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riemann Research — The Notebook · A Research Artifact, Read</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- CDN only: React 18 + React Flow v11 (canvas & graph views) + Chart.js + marked -->
+<link rel="stylesheet" href="https://unpkg.com/reactflow@11.11.4/dist/style.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/reactflow@11.11.4/dist/umd/index.js"></script>
+<script src="https://unpkg.com/chart.js@4.4.7/dist/chart.umd.js"></script>
+<script src="https://unpkg.com/marked@15.0.4/marked.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
+<style>
+  :root{
+    --bg:#0C0B09; --panel:#12110E; --panel2:#17150F; --panel3:#1C1913;
+    --line:#262319; --line2:#332E22;
+    --text:#EDEAE0; --mut:#9A937F; --mut2:#6E6857;
+    --amber:#F2A93B; --amber-dim:rgba(242,169,59,.14);
+    --up:#4CC38A; --dn:#E5484D; --blue:#6FA8DC; --violet:#A78BFA;
+    --sans:"Space Grotesk",sans-serif; --mono:"IBM Plex Mono",monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  ::selection{background:rgba(242,169,59,.28);color:var(--text)}
+  html,body,#root{height:100%}
+  #root{display:flex;flex-direction:column}
+  body{background:var(--panel);color:var(--text);font-family:var(--sans);overflow:hidden}
+  button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  input,textarea,select{font-family:var(--mono);color:var(--text);background:var(--bg);border:1px solid var(--line2);border-radius:6px;outline:none;font-size:11px}
+  input:focus,textarea:focus,select:focus{border-color:var(--amber)}
+  textarea{resize:vertical;caret-color:var(--amber)}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#292419;border-radius:6px;border:2px solid var(--bg)}
+
+  /* ── top chrome: notebook identity + the seven projections ── */
+  .nTop{flex:none;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 14px 0}
+  .nRow1{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .nName{font-size:14px;font-weight:700}
+  .nMeta{font-family:var(--mono);font-size:9.5px;color:var(--mut2)}
+  .nThesis{font-size:10.5px;color:var(--mut2);margin-left:auto}
+  .nThesis b{color:var(--amber)}
+  .provChip{font-family:var(--mono);font-size:9px;color:var(--amber);border:1px solid var(--amber);border-radius:99px;padding:1.5px 9px;cursor:pointer;text-decoration:none}
+  .provChip:hover{background:var(--amber-dim)}
+  .tabs{display:flex;gap:2px;margin-top:9px}
+  .tab{padding:8px 14px 9px;font-size:11px;font-weight:600;color:var(--mut2);border-radius:9px 9px 0 0;border:1px solid transparent;border-bottom:none;display:flex;gap:7px;align-items:center;position:relative;top:1px}
+  .tab:hover{color:var(--text);background:var(--panel2)}
+  .tab.on{color:var(--amber);background:var(--panel);border-color:var(--line)}
+  .tab .tnum{font-family:var(--mono);font-size:8.5px;border:1px solid var(--line2);border-radius:4px;padding:0 4px;color:var(--mut2)}
+  .tab.on .tnum{border-color:var(--amber);color:var(--amber)}
+
+  /* ── toolbar (per view) ── */
+  .tBar{flex:none;display:flex;align-items:center;gap:6px;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--bg);overflow-x:auto;flex-wrap:nowrap}
+  .tBar .vb{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);margin-right:4px}
+  .seedBtn{font-size:11px;padding:4px 10px;border-radius:7px;background:var(--amber);color:#171204;font-weight:600;white-space:nowrap;border:none}
+  .seedBtn:hover{filter:brightness(1.08)}
+  .seedBtn:disabled{opacity:.5;cursor:wait}
+  .pick{font-size:10.5px;padding:4px 8px;border:1px solid var(--line2);border-radius:7px;background:var(--panel2);max-width:340px}
+  .runStat{font-family:var(--mono);font-size:9.5px;color:var(--amber);background:var(--amber-dim);border:1px solid var(--line2);border-radius:99px;padding:3px 10px;white-space:nowrap}
+  .tHint{margin-left:auto;font-size:10px;color:var(--mut2);white-space:nowrap;padding-left:12px}
+
+  #stage{flex:1;min-height:0;position:relative;overflow:hidden}
+  .scroller{height:100%;overflow-y:auto;padding:18px 0 60px}
+  .wrap{max-width:860px;margin:0 auto;padding:0 20px}
+
+  /* ── the block lens (shared across views) ── */
+  .blk{background:var(--panel2);border:1px solid var(--line2);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;width:100%;height:100%}
+  .bHead{display:flex;align-items:center;gap:8px;padding:8px 11px;border-bottom:1px solid var(--line);background:var(--panel3);flex:none}
+  .bType{font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:#171204;background:var(--amber);border-radius:4px;padding:1.5px 6px;font-weight:600}
+  .bName{font-size:12px;font-weight:600;flex:1;min-width:0}
+  .bAge{font-family:var(--mono);font-size:8.5px;color:var(--mut2)}
+  .bBody{flex:1;overflow:auto;padding:11px;min-height:0}
+  .row{display:flex;gap:6px;align-items:center;margin-bottom:7px;flex-wrap:wrap}
+  .row label{font-family:var(--mono);font-size:9px;color:var(--mut2);text-transform:uppercase;letter-spacing:.08em}
+  .miniBtn{font-size:10px;padding:4px 9px;border:1px solid var(--line2);border-radius:6px;color:var(--mut)}
+  .miniBtn:hover{color:var(--amber);border-color:var(--amber)}
+
+  .taFull{width:100%;min-height:96px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:12px;line-height:1.65;color:var(--text);font-family:var(--sans)}
+  .taMono{font-family:var(--mono);font-size:10.5px;line-height:1.7}
+  .concl{background:var(--bg);border:1px solid var(--amber);border-left-width:3px;border-radius:8px;padding:11px 13px;font-size:12.5px;line-height:1.7;color:var(--text)}
+
+  table.v{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px}
+  table.v th{color:var(--mut2);font-weight:500;text-align:left;padding:3px 7px;border-bottom:1px solid var(--line2);position:sticky;top:0;background:var(--panel2);letter-spacing:.05em}
+  table.v td{padding:3px 7px;border-bottom:1px solid var(--line);color:var(--text);white-space:nowrap}
+  .chartBox{position:relative;height:160px}
+  .mktBox{position:relative;height:340px}
+
+  .accItem{border:1px solid var(--line2);border-radius:8px;margin-bottom:5px;overflow:hidden}
+  .accHead{display:flex;gap:8px;padding:6px 10px;background:var(--bg);font-size:11.5px;cursor:pointer}
+  .accHead .car{margin-left:auto;font-family:var(--mono);color:var(--mut2)}
+  .accBody{padding:7px 10px;font-size:11px;color:var(--mut);border-top:1px solid var(--line)}
+
+  input[type=range]{width:100%;accent-color:var(--amber);background:none;border:none}
+  .slVal{font-family:var(--mono);font-size:14px;color:var(--amber);text-align:center;padding:6px 0}
+  .slHint{font-family:var(--mono);font-size:8.5px;color:var(--mut2);text-align:center;padding-top:3px}
+
+  .trialChips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px}
+  .tchip{font-family:var(--mono);font-size:9px;border-radius:99px;padding:2px 9px;border:1px solid var(--line2);color:var(--mut2);cursor:pointer}
+  .tchip.sv.on{color:var(--up);border-color:var(--up);background:rgba(76,195,138,.09)}
+  .tchip.rj.on{color:var(--dn);border-color:var(--dn);background:rgba(229,72,77,.09)}
+  .tchip.off{opacity:.4;text-decoration:line-through}
+
+  /* ── view 1: sequence ── */
+  .seqItem{margin-bottom:16px;display:flex;gap:10px;align-items:flex-start}
+  .seqIdx{font-family:var(--mono);font-size:10px;color:var(--mut2);padding-top:12px;width:22px;text-align:right;flex:none}
+  .seqItem .blk{max-height:520px}
+
+  /* ── view 3: list ── */
+  .listRow{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+  .listRow:hover{background:var(--panel2)}
+  .listRow .grip{color:var(--mut2);font-family:var(--mono);font-size:12px}
+
+  /* ── view 4: code ── */
+  .srcPre{font-family:var(--mono);font-size:10.5px;line-height:1.75;color:var(--mut);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:16px 18px;white-space:pre-wrap;overflow:auto}
+  .srcPre .cm{color:var(--mut2)}.srcPre .bl{color:var(--amber)}.srcPre .st{color:var(--blue)}.srcPre .kw{color:var(--violet)}
+
+  /* ── view 6: timeline — one block owns the center; the strip is the collection seen from the side ── */
+  .tlin{position:absolute;inset:0;display:flex;flex-direction:column}
+  .tlStage{flex:1;min-height:0;display:flex;align-items:stretch;justify-content:center;padding:16px 18px 8px}
+  .tlStage .blk{max-width:980px;animation:blockIn .22s ease}
+  @keyframes blockIn{from{opacity:0;transform:translateY(8px) scale(.995)}}
+  .tlStamp{font-family:var(--mono);font-size:8.5px;color:var(--mut2);white-space:nowrap}
+  .stripWrap{flex:none;border-top:1px solid var(--line);background:var(--bg)}
+  .stripHead{display:flex;align-items:center;gap:10px;padding:6px 14px 2px;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut2)}
+  .sortTog{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .sortTog button{padding:2px 9px;font-size:9px;letter-spacing:.08em;color:var(--mut2)}
+  .sortTog button.on{background:var(--amber-dim);color:var(--amber)}
+  .stripHint{margin-left:auto;text-transform:none;letter-spacing:0;font-size:9.5px;opacity:.8}
+  #strip{display:flex;gap:8px;align-items:center;padding:6px 14px 12px;overflow-x:auto;scroll-behavior:smooth;cursor:grab;user-select:none}
+  #strip.drag{cursor:grabbing;scroll-behavior:auto}
+  .scard{flex:none;width:158px;background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:7px 9px;cursor:pointer;transition:all .14s;position:relative}
+  .scard:hover{border-color:#4A422E;transform:translateY(-2px)}
+  .scard.on{border-color:var(--amber);background:#211B0E;box-shadow:0 0 0 1px var(--amber),0 6px 18px rgba(0,0,0,.45);transform:translateY(-3px)}
+  .scard .stype{font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;color:#171204;background:var(--amber);border-radius:3px;padding:1px 5px;font-weight:600}
+  .scard .sname{font-size:11px;font-weight:600;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .scard .stime{font-family:var(--mono);font-size:8.5px;color:var(--mut2);margin-top:2px}
+  .scard .ssum{font-size:9px;color:var(--mut2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .scard::after{content:"";position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);width:0;height:0;border:5px solid transparent;opacity:0}
+  .scard.on::after{opacity:1;border-bottom-color:var(--amber)}
+  .tlNav{margin-left:auto;display:flex;gap:4px;align-items:center;flex:none}
+  .tlHint{font-size:10px;color:var(--mut2);white-space:nowrap;margin-right:8px}
+  .tlNav button{width:26px;height:26px;border:1px solid var(--line2);border-radius:7px;color:var(--mut);font-family:var(--mono);font-size:12px;display:flex;align-items:center;justify-content:center}
+  .tlNav button:hover{color:var(--amber);border-color:var(--amber)}
+  .tlPos{font-family:var(--mono);font-size:9.5px;color:var(--mut2);padding:0 6px;white-space:nowrap}
+
+  /* ── view 7: table ── */
+  table.blocks{width:100%;border-collapse:collapse;font-size:11.5px}
+  table.blocks th{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line2)}
+  table.blocks td{padding:9px 10px;border-bottom:1px solid var(--line);color:var(--text)}
+  table.blocks tr:hover td{background:var(--panel2)}
+  .pill{font-family:var(--mono);font-size:8.5px;border:1px solid var(--line2);border-radius:99px;padding:1.5px 8px;color:var(--mut)}
+  .pill.has{border-color:rgba(76,195,138,.4);color:var(--up)}
+
+  /* ── canvas / graph via react flow ── */
+  .flowFill{height:100%}
+  .react-flow{background:var(--panel)}
+  .react-flow__attribution{display:none}
+  .react-flow__handle{opacity:0;width:4px;height:4px;border:none}
+  .react-flow__node{cursor:grab}
+  .react-flow__resize-control.handle{background:var(--amber);border-color:var(--bg)}
+  .react-flow__edge-path{stroke:#4A422E;stroke-width:1.3;stroke-dasharray:3 3}
+  .react-flow__controls{box-shadow:none;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .react-flow__controls-button{background:var(--panel2);border-bottom:1px solid var(--line);color:var(--mut);fill:var(--mut)}
+  .react-flow__controls-button:hover{background:var(--panel3)}
+  .graphLegend{position:absolute;left:14px;bottom:12px;font-size:10px;color:var(--mut2);background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:5px 12px;z-index:5}
+  .graphLegend b{color:var(--mut)}
+
+  .zero{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--mut2);font-size:12.5px}
+  .zero .big{font-size:15px;color:var(--mut);font-weight:600}
+  .artList{display:flex;flex-direction:column;gap:6px;max-height:44vh;overflow:auto;width:min(560px,86vw)}
+  .artRow{display:flex;gap:10px;align-items:center;background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:9px 13px;cursor:pointer;text-align:left}
+  .artRow:hover{border-color:var(--amber)}
+  .artRow .aid{font-family:var(--mono);font-size:9px;color:var(--mut2)}
+  .artRow .at{font-size:12px;font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useRef, useEffect, useCallback, useMemo } = React;
+const { ReactFlow, Background, Controls, Handle, Position } = window.ReactFlow;
+
+/* ════════════════════════════════════════════════════════════════
+   THE NOTEBOOK, READING A REAL RESEARCH ARTIFACT
+   Same claim as mockup 15: one unordered collection of blocks,
+   seven projections, graph edges computed from shared data.
+   What changes here: the blocks are FROZEN — nobody edits the past.
+   Lens choices (which curve, which columns, which trials are
+   visible) stay interactive; sliders hold DRAFT values whose only
+   effect is to FORK a new run. Interaction spawns a child.
+   The notebook is a reading experience, not an admin panel.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── local-first data loading: the artifacts folder IS the backend ──
+   Script tags work from file://, Live Server, any static host, and :8010.
+   The Python server is only ever asked for one thing: running NEW studies. */
+const BASES = ["artifacts/", "../artifacts/", "/artifacts/"];
+function tryScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = src; s.onload = () => res(true); s.onerror = () => rej(false);
+    document.head.appendChild(s);
+  });
+}
+async function loadAny(name) {
+  for (const b of BASES) { try { await tryScript(b + name); return true; } catch (e) { /* next base */ } }
+  return false;
+}
+
+/* ── utils ── */
+const timeAgo = (ts) => {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return s + "s ago"; if (s < 3600) return Math.floor(s/60) + "m ago";
+  if (s < 86400) return Math.floor(s/3600) + "h ago"; return Math.floor(s/86400) + "d ago";
+};
+const fmtTime = (ts) => new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+const summarize = (b) => {
+  const c = b.content || {};
+  if (b.type === "market") return `${c.rows.length.toLocaleString()} candles · ${c.tags.length} tags`;
+  if (b.type === "sheet") return c.cols ? `${c.rows.length}×${c.cols.length} · ${c.name}` : "no table";
+  if (b.type === "chart") return c.tableId ? `${c.ctype || "line"} · x=${c.xCol || "?"} y=${c.yCol || "?"}` : "awaiting table";
+  if (b.type === "note" || b.type === "code" || b.type === "markdown") { const t = c.text || c.src || ""; return t ? t.slice(0, 26) + (t.length > 26 ? "…" : "") : "—"; }
+  if (b.type === "slider") return `fork draft · ${b.name} = ${c.value}`;
+  if (b.type === "accordion") return (c.items || []).length + " rules";
+  return "—";
+};
+
+/* ── block bodies (lenses on frozen content — reading, not editing) ── */
+
+function NoteBody({ d }) {
+  if (d.content.conclusion)
+    return <div className="concl">{d.content.text}</div>;
+  return <textarea className="taFull" readOnly value={d.content.text || ""} style={{ cursor: "default" }} />;
+}
+function CodeBlockBody({ d }) {
+  return (
+    <div>
+      <div className="row"><label>language</label><span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--amber)" }}>{d.content.lang || "json"}</span></div>
+      <textarea className="taFull taMono" readOnly style={{ minHeight: 180, cursor: "default" }} value={d.content.text || ""} />
+    </div>
+  );
+}
+function SheetBody({ d }) {
+  const c = d.content;
+  if (!c.cols) return <div className="empty"><b>no table</b></div>;
+  return (
+    <div>
+      <div className="row">
+        <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--up)" }}>✓ {c.name}</span>
+        <span style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--mut2)", marginLeft: "auto" }}>{c.rows.length}×{c.cols.length}</span>
+      </div>
+      <div style={{ overflow: "auto", maxHeight: 240 }}>
+        <table className="v"><thead><tr>{c.cols.map(h => <th key={h}>{h}</th>)}</tr></thead>
+          <tbody>{c.rows.map((r, i) => <tr key={i}>{c.cols.map((_, j) => <td key={j}>{r[j] ?? ""}</td>)}</tr>)}</tbody></table>
+      </div>
+    </div>
+  );
+}
+function ChartBody({ d }) {
+  const c = d.content, cRef = useRef(null), inst = useRef(null);
+  const tables = d.tables;
+  const active = tables.find(t => t.id === c.tableId) || tables[0] || null;
+  const xCol = active && (c.xCol && active.cols.includes(c.xCol) ? c.xCol : active.cols[0]);
+  const yCol = active && (c.yCol && active.cols.includes(c.yCol) ? c.yCol : active.cols.find(k => k !== xCol));
+  const type = c.ctype || "line";
+  useEffect(() => {
+    if (!active || !cRef.current) return;
+    const xi = active.cols.indexOf(xCol), yi = active.cols.indexOf(yCol);
+    const ys = active.rows.map(r => { const n = parseFloat(r[yi]); return isNaN(n) ? 0 : n; });
+    inst.current = new window.Chart(cRef.current, {
+      type, data: { labels: active.rows.map(r => r[xi]),
+        datasets: [{ label: yCol, data: ys, borderColor: "#F2A93B", backgroundColor: "rgba(242,169,59,.10)", fill: true, borderWidth: 1.6, pointRadius: 0, tension: .1 }] },
+      options: { responsive: true, maintainAspectRatio: false, animation: { duration: 200 },
+        plugins: { legend: { labels: { color: "#9A937F", font: { family: "IBM Plex Mono", size: 9 } } } },
+        scales: { x: { ticks: { color: "#6E6857", font: { size: 9 }, maxTicksLimit: 8 }, grid: { color: "#262319" } },
+                  y: { ticks: { color: "#6E6857", font: { size: 9 } }, grid: { color: "#262319" } } } },
+    });
+    return () => { inst.current && inst.current.destroy(); };
+  }, [active && active.id, xCol, yCol, type, d.rev]);
+  if (!tables.length) return <div className="empty"><b>nothing to render</b><br />the lens carries no data of its own</div>;
+  return (
+    <div>
+      <div className="row">
+        <label>table</label>
+        <select value={active.id} onChange={e => d.patch({ tableId: e.target.value, xCol: null, yCol: null })}>
+          {tables.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+      </div>
+      <div className="row"><label>x</label>
+        <select value={xCol} onChange={e => d.patch({ xCol: e.target.value })}>{active.cols.map(cc => <option key={cc}>{cc}</option>)}</select>
+        <label>y</label>
+        <select value={yCol || ""} onChange={e => d.patch({ yCol: e.target.value })}>{active.cols.map(cc => <option key={cc}>{cc}</option>)}</select>
+      </div>
+      <div className="chartBox"><canvas ref={cRef} /></div>
+    </div>
+  );
+}
+function AccordionBody({ d }) {
+  const items = d.content.items || [];
+  return (
+    <div>{items.map((it, i) => (
+      <div className="accItem" key={i}>
+        <div className="accHead" onClick={() => d.patch({ items: items.map((x, j) => j === i ? { ...x, open: !x.open } : x) })}>
+          {it.title}<span className="car">{it.open ? "−" : "+"}</span></div>
+        {it.open ? <div className="accBody">{it.body}</div> : null}
+      </div>))}</div>
+  );
+}
+function SliderBody({ d }) {
+  /* the value is a FORK DRAFT — dragging changes nothing that happened;
+     pressing "Fork this run" turns the drafts into pinned params of a child */
+  const c = d.content, v = c.value, lo = c.min, hi = c.max;
+  return (
+    <div>
+      <div className="slVal">{v}</div>
+      <input type="range" min={lo} max={hi} step={c.step || 1} value={v} onChange={e => d.patch({ value: +e.target.value })} />
+      <div className="slHint">bound to the search space [{lo}, {hi}] · draft for a fork — the artifact stays frozen</div>
+    </div>
+  );
+}
+
+/* ── the market lens: candles (what happened) + tags (what it means) ── */
+const RegionPlugin = {
+  id: "regions",
+  afterDatasetsDraw(chart) {
+    const items = (chart.options.plugins.regions && chart.options.plugins.regions.items) || [];
+    const { ctx, chartArea: ca, scales: { x } } = chart;
+    for (const r of items) {
+      const x1 = x.getPixelForValue(r.from) - 3, x2 = x.getPixelForValue(r.to) + 3;
+      ctx.save();
+      ctx.fillStyle = r.fail ? "rgba(229,72,77,.10)" : "rgba(242,169,59,.09)";
+      ctx.fillRect(x1, ca.top, x2 - x1, ca.bottom - ca.top);
+      ctx.strokeStyle = r.fail ? "rgba(229,72,77,.55)" : "rgba(242,169,59,.45)";
+      ctx.setLineDash([3, 3]); ctx.strokeRect(x1, ca.top, x2 - x1, ca.bottom - ca.top); ctx.setLineDash([]);
+      ctx.fillStyle = r.fail ? "#E5484D" : "#F2A93B";
+      ctx.font = "9px 'IBM Plex Mono'"; ctx.fillText(r.label, x1 + 3, ca.top + 11);
+      ctx.restore();
+    }
+  },
+};
+
+function MarketBody({ d }) {
+  const c = d.content;                       // { rows: [[i,t,o,h,l,c]], tags: [...] }
+  const cRef = useRef(null), inst = useRef(null);
+  const [hidden, setHidden] = useState({});  // trial number -> hidden?
+
+  /* aggregate candles so the chart never draws more than ~480 bodies;
+     tags keep their anchor via the same factor */
+  const agg = useMemo(() => {
+    const rows = c.rows, f = Math.max(1, Math.ceil(rows.length / 480)), out = [];
+    for (let i = 0; i < rows.length; i += f) {
+      const g = rows.slice(i, i + f);
+      out.push({ t: g[0][1], o: g[0][2], cl: g[g.length - 1][5],
+                 h: Math.max(...g.map(r => r[3])), l: Math.min(...g.map(r => r[4])) });
+    }
+    return { out, f };
+  }, [c.rows]);
+
+  const trials = useMemo(() => {
+    const m = {};
+    for (const tg of c.tags) {
+      const tr = tg.props.trial;
+      m[tr] = m[tr] || { survivor: false, n: 0 };
+      if (tg.type === "button") m[tr].survivor = true;
+      m[tr].n++;
+    }
+    return m;
+  }, [c.tags]);
+
+  const barOf = (ref) => Math.floor(parseInt(ref.split(":")[1], 10) / agg.f);
+  const n = agg.out.length;
+
+  useEffect(() => {
+    if (!cRef.current) return;
+    const labels = agg.out.map(r => r.t);
+    const upColor = "#4CC38A", dnColor = "#E5484D";
+    const mkEvent = (name, style, color, rot) => ({
+      type: "line", showLine: false, label: name, order: 0,
+      data: Array(n).fill(null),
+      pointStyle: Array(n).fill(null), pointRadius: Array(n).fill(0),
+      pointBackgroundColor: color, pointBorderColor: color, pointRotation: rot || 0,
+    });
+    const buys = mkEvent("BUY", "triangle", upColor), exits = mkEvent("EXIT", "rectRot", "#9A937F"),
+          sells = mkEvent("SELL", "triangle", dnColor, 180), marks = mkEvent("note", "crossRot", "#E5484D");
+    const regions = [];
+    for (const tg of c.tags) {
+      if (hidden[tg.props.trial]) continue;
+      const bar = Math.min(n - 1, barOf(tg.from));
+      const put = (ds, style, r) => { ds.data[bar] = tg.props.price ?? agg.out[bar].cl; ds.pointStyle[bar] = style; ds.pointRadius[bar] = r; };
+      if (tg.type === "button") {
+        if (tg.name === "BUY") put(buys, "triangle", 6);
+        else if (tg.name === "SELL") put(sells, "triangle", 6);
+        else put(exits, "rectRot", 5);
+      } else if (tg.type === "region") {
+        regions.push({ from: bar, to: Math.min(n - 1, barOf(tg.to)), label: `${tg.name} ${tg.value || ""}`, fail: tg.props.severity === "fail" });
+      } else if (tg.type === "note" && tg.props.severity === "fail") {
+        put(marks, "crossRot", 6);
+      }
+    }
+    inst.current = new window.Chart(cRef.current, {
+      type: "bar",
+      data: { labels, datasets: [
+        { label: "range", order: 5, data: agg.out.map(r => [r.l, r.h]), backgroundColor: "#6E6857", barPercentage: 1, categoryPercentage: 1 },
+        { label: "body",  order: 4, data: agg.out.map(r => [Math.min(r.o, r.cl), Math.max(r.o, r.cl)]),
+          backgroundColor: agg.out.map(r => r.cl >= r.o ? upColor : dnColor), barPercentage: .7, categoryPercentage: 1 },
+        buys, sells, exits, marks ] },
+      options: { responsive: true, maintainAspectRatio: false, animation: false,
+        plugins: { legend: { display: false }, regions: { items: regions },
+          tooltip: { mode: "nearest", intersect: true, backgroundColor: "#1C1913", borderColor: "#332E22", borderWidth: 1,
+            titleColor: "#EDEAE0", bodyColor: "#9A937F", bodyFont: { family: "IBM Plex Mono", size: 10 },
+            filter: it => it.raw !== null && it.raw !== undefined } },
+        scales: { x: { ticks: { color: "#6E6857", font: { size: 8 }, maxTicksLimit: 9 }, grid: { display: false } },
+                  y: { position: "right", ticks: { color: "#6E6857", font: { size: 9 } }, grid: { color: "#262319" } } } },
+      plugins: [RegionPlugin],
+    });
+    return () => { inst.current && inst.current.destroy(); };
+  }, [hidden, c.tags, agg]);
+
+  return (
+    <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <div className="trialChips">
+        {Object.keys(trials).map(tr => {
+          const t = trials[tr], on = !hidden[tr];
+          return (
+            <button key={tr} className={`tchip ${t.survivor ? "sv" : "rj"} ${on ? "on" : "off"}`}
+              onClick={() => setHidden(h => ({ ...h, [tr]: !h[tr] }))}
+              title={t.survivor ? "survivor — full trade log" : "rejected — headstone only"}>
+              {t.survivor ? "✓" : "✗"} trial {tr} · {t.n} tags
+            </button>);
+        })}
+        <span style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--mut2)", alignSelf: "center", marginLeft: "auto" }}>
+          ▲ buy ▼ sell ◇ exit ✗ breach · bands = drawdown windows
+        </span>
+      </div>
+      <div className="mktBox" style={{ flex: 1, height: "auto" }}><canvas ref={cRef} /></div>
+    </div>
+  );
+}
+
+const TYPES = {
+  note: { label: "Note", Body: NoteBody, icon: "¶" },
+  code: { label: "Code", Body: CodeBlockBody, icon: "⌨" },
+  sheet: { label: "Sheet", Body: SheetBody, icon: "▦" },
+  chart: { label: "Chart", Body: ChartBody, icon: "∑" },
+  market: { label: "Market", Body: MarketBody, icon: "▮▮" },
+  accordion: { label: "Accordion", Body: AccordionBody, icon: "⌄" },
+  slider: { label: "Slider", Body: SliderBody, icon: "⇹" },
+};
+
+/* ── one block, rendered as a lens — frozen chrome: no renames, no deletes ── */
+function Lens({ b, app, showBody = true, compact = false }) {
+  const T = TYPES[b.type] || TYPES.note;
+  const d = { content: b.content || {}, tables: app.tables, patch: (p) => app.patchBlock(b.id, p), rev: app.rev };
+  return (
+    <div className="blk">
+      <div className="bHead">
+        <span className="bType">{T.label}</span>
+        <span className="bName" style={compact ? { fontSize: 11 } : {}}>{b.name}</span>
+        <span className="bAge">{b.stamp || ""}</span>
+      </div>
+      {showBody ? <div className="bBody"><T.Body d={d} /></div> : null}
+    </div>
+  );
+}
+
+/* ── canvas & graph via React Flow ── */
+function FlowNode({ data }) {
+  return (
+    <div style={{ width: "100%", height: "100%" }}>
+      <Handle type="target" position={Position.Left} />
+      <Handle type="source" position={Position.Right} />
+      <Handle type="target" position={Position.Right} id="r" />
+      <Handle type="source" position={Position.Left} id="l" />
+      <Lens b={data.b} app={data.app} showBody={!data.compact} compact={data.compact} />
+    </div>
+  );
+}
+const flowNodeTypes = { lens: FlowNode };
+
+function CanvasView({ app, layout, setLayout }) {
+  const nodes = app.blocks.map((b, i) => ({
+    id: b.id, type: "lens",
+    position: layout[b.id]?.pos || { x: 50 + (i % 4) * 340, y: 50 + Math.floor(i / 4) * 300 },
+    width: layout[b.id]?.w || 320, height: layout[b.id]?.h || (b.type === "market" ? 420 : 230),
+    resizable: true, data: { b, app },
+  }));
+  const onNodesChange = useCallback((changes) => {
+    setLayout(l => {
+      const n = { ...l };
+      for (const ch of changes) {
+        n[ch.id] = n[ch.id] || {};
+        if (ch.type === "position" && ch.position) n[ch.id] = { ...n[ch.id], pos: ch.position };
+        if (ch.type === "dimensions" && ch.style) {
+          const upd = { ...n[ch.id] };
+          if (ch.style.width) upd.w = parseFloat(ch.style.width);
+          if (ch.style.height) upd.h = parseFloat(ch.style.height);
+          n[ch.id] = upd;
+        }
+      }
+      return n;
+    });
+  }, []);
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  return (
+    <ReactFlow nodes={nodes} edges={[]} nodeTypes={flowNodeTypes} onNodesChange={onNodesChange}
+      nodesConnectable={false} minZoom={.2} proOptions={{ hideAttribution: true }} className="flowFill">
+      <Background gap={22} size={1} color="#262319" />
+      <Controls showInteractive={false} />
+    </ReactFlow>
+  );
+}
+
+/** graph view: edges COMPUTED — market/candles/chart share the artifact's data */
+function GraphView({ app, layout, setLayout }) {
+  const nodes = app.blocks.map((b, i) => ({
+    id: b.id, type: "lens",
+    position: layout[b.id]?.pos || { x: b.type === "chart" || b.type === "market" ? 480 : 60, y: 46 + i * 120 },
+    width: 270, height: 74, data: { b, app, compact: true },
+  }));
+  const edges = [];
+  for (const t of app.tables) {
+    const sheetId = t.id.split(":")[0];
+    const consumers = app.blocks.filter(b => b.type === "chart" && b.content.tableId === t.id && b.id !== sheetId);
+    for (const cn of consumers) edges.push({ id: `${sheetId}-${cn.id}`, source: sheetId, target: cn.id });
+  }
+  /* the market lens and the candles sheet touch the same rows — that's an edge too */
+  const mkt = app.blocks.find(b => b.type === "market"), cnd = app.blocks.find(b => b.type === "sheet" && b.name === "candles");
+  if (mkt && cnd) edges.push({ id: "mkt-cnd", source: cnd.id, target: mkt.id });
+  const onNodesChange = useCallback((changes) => {
+    setLayout(l => { const n = { ...l }; for (const ch of changes) { if (ch.type === "position" && ch.position) n[ch.id] = { ...(n[ch.id] || {}), pos: ch.position }; } return n; });
+  }, []);
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  return (
+    <div style={{ height: "100%", position: "relative" }}>
+      <ReactFlow nodes={nodes} edges={edges} nodeTypes={flowNodeTypes} onNodesChange={onNodesChange}
+        nodesConnectable={false} minZoom={.2} proOptions={{ hideAttribution: true }} className="flowFill">
+        <Background gap={22} size={1} color="#262319" />
+        <Controls showInteractive={false} />
+      </ReactFlow>
+      <div className="graphLegend"><b>{edges.length}</b> computed edges · two blocks connect <b>iff they touch the same data</b></div>
+    </div>
+  );
+}
+
+/* ── the plain projections ── */
+function SequenceView({ app }) {
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  return (
+    <div className="scroller"><div className="wrap">
+      {app.blocks.map((b, i) => (
+        <div className="seqItem" key={b.id}>
+          <span className="seqIdx">[{i}]</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ height: b.type === "market" ? 420 : b.type === "note" ? "auto" : 300, ...(b.type === "note" ? { minHeight: 90 } : {}) }}>
+              <Lens b={b} app={app} />
+            </div>
+          </div>
+        </div>))}
+    </div></div>
+  );
+}
+function ListView({ app }) {
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  return (
+    <div className="scroller"><div className="wrap">
+      {app.blocks.map(b => (
+        <div className="listRow" key={b.id} onClick={() => { app.setView("timeline"); app.setFocusId(b.id); }}>
+          <span className="grip">⋮⋮</span>
+          <span className="bType">{(TYPES[b.type] || TYPES.note).label}</span>
+          <span style={{ fontSize: 12.5, fontWeight: 600 }}>{b.name}</span>
+          <span className="bAge" style={{ marginLeft: "auto" }}>{summarize(b)}</span>
+        </div>))}
+    </div></div>
+  );
+}
+function CodeView({ app }) {
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  return (
+    <div className="scroller"><div className="wrap">
+      <pre className="srcPre" dangerouslySetInnerHTML={{ __html: app.sourceHtml || "…" }} />
+    </div></div>
+  );
+}
+function TableView({ app }) {
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  return (
+    <div className="scroller"><div className="wrap">
+      <table className="blocks">
+        <thead><tr><th>#</th><th>name</th><th>type</th><th>content</th><th>state</th></tr></thead>
+        <tbody>{app.blocks.map((b, i) => (
+          <tr key={b.id} onClick={() => { app.setView("timeline"); app.setFocusId(b.id); }} style={{ cursor: "pointer" }}>
+            <td style={{ fontFamily: "var(--mono)", color: "var(--mut2)" }}>{i}</td>
+            <td style={{ fontWeight: 600 }}>{b.name}</td>
+            <td><span className="bType" style={{ background: "var(--panel3)", color: "var(--mut)" }}>{(TYPES[b.type] || TYPES.note).label}</span></td>
+            <td style={{ color: "var(--mut)" }}>{summarize(b)}</td>
+            <td><span className="pill has">frozen · read</span></td>
+          </tr>))}</tbody>
+      </table>
+    </div></div>
+  );
+}
+
+/* ── timeline — ONE block owns the center; the strip is the artifact seen sideways ── */
+function TimelineView({ app, strip, focusId, setFocusId }) {
+  const stripRef = useRef(null);
+  const cardRefs = useRef({});
+  const dragRef = useRef(null);
+  const focus = app.blocks.find(b => b.id === focusId) || null;
+  const idx = focus ? strip.findIndex(b => b.id === focus.id) : -1;
+  const go = (delta) => { if (strip.length) setFocusId(strip[Math.min(strip.length - 1, Math.max(0, idx + delta))].id); };
+  useEffect(() => { app._go = go; }, [go]);      // toolbar ← → buttons call in
+  useEffect(() => {
+    const el = cardRefs.current[focusId];
+    if (el && stripRef.current) el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [focusId, app.blocks.length]);
+  const onWheel = (e) => { if (stripRef.current) stripRef.current.scrollLeft += (e.deltaY || e.deltaX); };
+  const onDown = (e) => { dragRef.current = { x: e.clientX, sl: stripRef.current.scrollLeft }; stripRef.current.classList.add("drag"); };
+  const onMove = (e) => { if (dragRef.current) stripRef.current.scrollLeft = dragRef.current.sl - (e.clientX - dragRef.current.x); };
+  const onUp = () => { dragRef.current = null; stripRef.current && stripRef.current.classList.remove("drag"); };
+  const FBody = focus ? (TYPES[focus.type] || TYPES.note).Body : null;
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  return (
+    <div className="tlin">
+      <div className="tlStage">
+        {focus ? (
+          <div className="blk">
+            <div className="bHead">
+              <span className="bType">{(TYPES[focus.type] || TYPES.note).label}</span>
+              <span className="bName">{focus.name}</span>
+              <span className="tlStamp">{focus.stamp || ""} · frozen {app.artifactId ? "· artifact " + app.artifactId : ""}</span>
+            </div>
+            <div className="bBody"><FBody d={{ content: focus.content || {}, patch: (p) => app.patchBlock(focus.id, p), tables: app.tables, rev: app.rev }} /></div>
+          </div>
+        ) : (
+          <div className="zero" style={{ height: "100%" }}>
+            <span className="big">no block is focused</span><span>click a card in the strip</span>
+          </div>
+        )}
+      </div>
+      <div className="stripWrap">
+        <div className="stripHead">
+          the strip — the artifact, block by block
+          <span className="stripHint">drag · wheel · click to focus · nothing here is editable — the past is frozen</span>
+        </div>
+        <div id="strip" ref={stripRef} onWheel={onWheel} onMouseDown={onDown} onMouseMove={onMove} onMouseUp={onUp} onMouseLeave={onUp}>
+          {strip.map(b => {
+            const on = focus && b.id === focus.id;
+            return (
+              <div key={b.id} ref={el => cardRefs.current[b.id] = el} className={"scard" + (on ? " on" : "")} onClick={() => setFocusId(b.id)}>
+                <span className="stype">{(TYPES[b.type] || TYPES.note).label}</span>
+                <div className="sname">{b.name}</div>
+                <div className="stime">{b.stamp || ""}</div>
+                <div className="ssum">{summarize(b)}</div>
+              </div>);
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ZeroState({ app }) {
+  if (app.loading) return <div className="zero"><span>opening the notebook…</span></div>;
+  if (app.noIndex && !(app.artifacts || []).length) return (
+    <div className="zero">
+      <span style={{ fontSize: 30 }}>📁</span>
+      <span className="big">no artifacts folder found next to this page</span>
+      <span style={{ maxWidth: 520, textAlign: "center", lineHeight: 1.8 }}>
+        The notebook reads plain files — keep the <code>artifacts/</code> folder beside this page
+        (or beside its <code>static/</code> parent). Nothing else is required.
+        To RUN new studies: <code>uv run python dashboard.py</code> → <b style={{ color: "var(--amber)" }}>http://127.0.0.1:8010</b>.
+      </span>
+    </div>);
+  return (
+    <div className="zero">
+      <span className="big">this notebook has no artifact open</span>
+      <span>every research run lands here — pick one:</span>
+      <div className="artList">
+        {(app.artifacts || []).map(a => (
+          <button className="artRow" key={a.id} onClick={() => app.loadArtifact(a.id)}>
+            <span className="bType">v{a.version}</span>
+            <span className="at">{a.title}</span>
+            {a.derived_from ? <span className="aid">⤴ fork</span> : null}
+            <span className="aid">{a.id}</span>
+          </button>))}
+      </div>
+      {!((app.artifacts || []).length) ? <span style={{ fontSize: 11 }}>no artifacts yet — run a study on the dashboard first</span> : null}
+    </div>
+  );
+}
+
+/* ── the artifact → blocks mapping (the reader, not an importer) ── */
+function artifactToBlocks(a) {
+  const B = { question: null, config: null, rules: null, data: null, candles: null, tags: null,
+              computation: null, strategy: null, metrics: null, chart: null, conclusion: null };
+  for (const b of a.blocks || []) if (B[b.type] === null) B[b.type] = b;
+  const t0 = a.created_at ? Date.parse(a.created_at) : Date.now();
+  let k = 0;
+  const out = [], nid = () => "b" + (++uid);
+  const add = (type, name, content, stamp) => { const b = { id: nid(), type, name, content, createdAt: t0 + (k++) * 60000, lastTouched: t0 + (k++) * 60000, stamp: stamp || "" }; out.push(b); return b; };
+  const age = B.data && B.data.content && B.data.content.source === "binance-public" ? "binance · live data" : "";
+
+  add("note", "The question", { text: (B.question && B.question.text) || a.title || "(untitled research)" }, "opened with the run");
+  const r = (B.rules && B.rules.content) || {}, items = [];
+  const ruleLine = (label, val, unit, why) => val != null && items.push({ title: `${label} — ${val}${unit}`, body: why, open: false });
+  ruleLine("profit target", r.profit_target_pct, "%", "the challenge is passed when equity first reaches this");
+  ruleLine("max daily loss", r.max_daily_loss_pct, "%", "one bad day past this and the account is dead");
+  ruleLine("max total loss", r.max_total_loss_pct, "%", "the drawdown cliff — every breach below is painted on the chart");
+  ruleLine("min trades", r.min_trades, "", "no-phrase-passing: the strategy must actually trade");
+  ruleLine("min trading days", r.min_trading_days, "", "exposure must span days, not one lucky session");
+  ruleLine("target within", r.target_within_days, " days", "time-boxed: slow-and-safe can still fail");
+  add("accordion", `${r.name || "challenge"} — the rules`, { items }, "hard constraints");
+
+  const dm = (B.data && B.data.content) || {};
+  add("note", `${dm.symbol || ""} · ${dm.interval || ""} — the data`,
+      { text: `source: ${dm.source || "?"} · ${dm.bars || (B.candles ? B.candles.rows.length : "?")} candles · ${dm.first || ""} → ${dm.last || ""}\n${a.version >= 2 ? "the candles block below IS the csv substrate: [i, t, open, high, low, close]" : ""}` }, age);
+
+  let marketId = null;
+  if (B.candles) {
+    const tags = (B.tags && B.tags.tags) || [];
+    const m = add("market", `${dm.symbol || "MARKET"} · ${dm.interval || ""} — the battlefield`,
+        { rows: B.candles.rows, tags }, `${tags.length} tags anchored`);
+    marketId = m.id;
+    add("sheet", "candles", { name: "candles", cols: B.candles.content.columns, rows: B.candles.rows.map(r => r.map(String)) }, "what happened");
+  }
+  const cm = (B.computation && B.computation.content) || {};
+  add("note", "the computation", { text: `engine: ${cm.engine || "optuna"} · ${cm.trials_run} trials · ${cm.trials_failed_rules} rejected by the rules · ${cm.trials_survived} survived${cm.reported_top ? ` · top ${cm.reported_top} annotated on the market lens` : ""}` }, "search");
+
+  const st = (B.strategy && B.strategy.content) || {};
+  if (Object.keys(st).length) {
+    add("code", "best strategy", { lang: "json",
+      text: JSON.stringify({ params: st, metrics: (B.metrics && B.metrics.content) || {} }, null, 2) }, "the winner");
+    for (const tg of ((B.tags && B.tags.tags) || []).filter(x => x.type === "slider"))
+      add("slider", tg.name, { value: tg.value, frozen: tg.value, min: tg.props.min, max: tg.props.max, step: tg.props.step || 1 }, "fork draft");
+  }
+  if (B.chart && Array.isArray(B.chart.data) && B.chart.data.length) {
+    const pts = B.chart.data;
+    add("sheet", "equity", { name: "equity", cols: ["t", "equity"], rows: pts.map(p => [p.t, String(p.equity)]) }, "the curve");
+    add("chart", "equity curve", { tableId: null, xCol: "t", yCol: "equity", ctype: "line" }, "lens on equity");
+  }
+  if (a.config) add("code", "the recipe", { lang: "json", text: JSON.stringify(a.config, null, 2) }, "reproducible");
+  add("note", "Conclusion", { text: (B.conclusion && B.conclusion.text) || "", conclusion: true }, "what was found");
+  return { blocks: out, marketId };
+}
+
+/* ── app ── */
+let uid = 0;
+
+const VIEWS = [
+  { key: "sequence", label: "Blocks",   hint: "the artifact, top to bottom" },
+  { key: "canvas",   label: "Canvas",   hint: "positions live in this tab, never in a block" },
+  { key: "list",     label: "List",     hint: "names only — the thinnest projection" },
+  { key: "code",     label: "Code",     hint: "the notebook serialised — click to focus" },
+  { key: "graph",    label: "Graph",    hint: "edges computed from shared data · nothing hand-drawn" },
+  { key: "timeline", label: "Timeline", hint: "one block at the center · the strip is the artifact seen from the side" },
+  { key: "table",    label: "Table",    hint: "the notebook about itself" },
+];
+
+function App() {
+  const [blocks, setBlocks] = useState([]);
+  const [view, setView] = useState("timeline");
+  const [layouts, setLayouts] = useState({ canvas: {}, graph: {} });
+  const [rev, setRev] = useState(0);
+  const [focusId, setFocusId] = useState(null);
+  const [meta, setMeta] = useState(null);
+  const [artifacts, setArtifacts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [runStat, setRunStat] = useState(null);   // {run_id, ...progress} while a fork cooks
+  const [noIndex, setNoIndex] = useState(false);  // no artifacts folder AND no server
+  const strip = blocks;                            // arrival order — the artifact's own sequence
+
+  /* patch stays legal ONLY as lens state / fork drafts — never persisted */
+  const patchBlock = (id, p) => setBlocks(bs => bs.map(b => b.id === id ? { ...b, content: { ...b.content, ...p } } : b));
+
+  const tables = useMemo(
+    () => blocks.filter(b => b.type === "sheet" && b.content && b.content.cols)
+                .map(b => ({ id: b.id + ":" + b.content.name, name: b.content.name, sheetId: b.id, cols: b.content.cols, rows: b.content.rows })),
+    [blocks]);
+
+  /* bind the equity chart lens to whichever sheet the user has (single sheet: equity) */
+  useEffect(() => {
+    const eq = tables.find(t => t.name === "equity");
+    if (!eq) return;
+    setBlocks(bs => bs.map(b => b.type === "chart" && !b.content.tableId ? { ...b, content: { ...b.content, tableId: eq.id } } : b));
+  }, [tables]);
+
+  const sourceHtml = useMemo(() => {
+    if (!blocks.length) return "";
+    const esc = (s) => String(s).replace(/</g, "&lt;");
+    const lines = [`<span class="cm">// research artifact: ${blocks.length} blocks · seven projections of one frozen collection</span>`];
+    blocks.forEach((b, i) => {
+      lines.push(`\n<span class="bl">// ── [${i}] ${b.type} "${b.name}"</span>`);
+      if (b.type === "note") lines.push(`<span class="st">${esc(b.content.text || "")}</span>`);
+      else if (b.type === "market") lines.push(`<span class="kw">@market</span>(candles=${b.content.rows.length}, tags=${b.content.tags.length})  <span class="cm">// the csv + its annotation</span>`);
+      else if (b.type === "slider") lines.push(`{ "param": "${b.name}", "frozen_at": ${b.content.value !== undefined ? suggestOriginal(b) : "null"}, "draft": ${b.content.value} }  <span class="cm">// drag forks</span>`);
+      else lines.push(esc(JSON.stringify(b.content, (k, v) => k === "rows" && Array.isArray(v) && v.length > 50 ? [`…${v.length} rows…`] : v)));
+    });
+    return lines.join("\n");
+  }, [blocks]);
+  function suggestOriginal(b) { return (meta && meta.pinned && meta.pinned[b.name]) ?? b.content.value; }
+
+  async function loadArtifact(id) {
+    setLoading(true);
+    try {
+      /* results are files, not favors: inline copy → sidecar .js → last-resort API */
+      let a = (window.RIEMANN_ARTIFACT && window.RIEMANN_ARTIFACT.id === id) ? window.RIEMANN_ARTIFACT
+              : (window.RIEMANN_ARTIFACTS || {})[id];
+      if (!a && await loadAny(id + ".js")) a = window.RIEMANN_ARTIFACTS[id];
+      if (!a) a = await (await fetch("/api/artifact/" + encodeURIComponent(id))).json();
+      const { blocks: bs, marketId } = artifactToBlocks(a);
+      const cfgBlock = (a.blocks || []).find(b => b.type === "config");
+      setBlocks(bs);
+      setMeta({ id: a.id, title: a.title, config: (cfgBlock && cfgBlock.content) || {}, derivedFrom: a.derived_from, version: a.version });
+      setView("timeline");
+      setFocusId(marketId || bs[0].id);   /* land on the battlefield — it's the dramatic one */
+      history.replaceState(null, "", "?artifact=" + a.id);
+    } catch (e) { console.error(e); }
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    (async function boot() {
+      if (!window.RIEMANN_INDEX) await loadAny("registry.js");
+      if (window.RIEMANN_INDEX) setArtifacts(window.RIEMANN_INDEX);
+      else { try { setArtifacts(await (await fetch("/api/artifacts")).json()); } catch (e) { setNoIndex(true); } }
+      const p = new URLSearchParams(location.search).get("artifact");
+      /* a standalone <id>.html carries its artifact inline — open it, read it, no server */
+      if (p) loadArtifact(p);
+      else if (window.RIEMANN_ARTIFACT) loadArtifact(window.RIEMANN_ARTIFACT.id);
+      else setLoading(false);
+    })();
+  }, []);
+
+  /* ← → scrub the strip (never while typing) */
+  useEffect(() => {
+    const h = (e) => {
+      if (view !== "timeline" || !strip.length) return;
+      const tag = (e.target.tagName || "").toLowerCase();
+      if (tag === "input" || tag === "textarea" || tag === "select") return;
+      const i = strip.findIndex(b => b.id === focusId);
+      if (i < 0) return;
+      if (e.key === "ArrowRight") { e.preventDefault(); setFocusId(strip[Math.min(strip.length - 1, i + 1)].id); }
+      if (e.key === "ArrowLeft")  { e.preventDefault(); setFocusId(strip[Math.max(0, i - 1)].id); }
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  });
+
+  /* ── THE RETURN DOOR: sliders hold draft params; forking pins them in a
+        fresh config; the artifact is never edited — interaction spawns a child ── */
+  async function fork() {
+    if (!meta || runStat) return;
+    /* pin ONLY the params you actually moved — untouched ones stay under search,
+       so a fork is "search again, anchored around my edits", not a replay */
+    const pin = {}, moved = [];
+    blocks.forEach(b => { if (b.type === "slider" && b.content.value !== b.content.frozen) { pin[b.name] = b.content.value; moved.push(`${b.name}: ${b.content.frozen}→${b.content.value}`); } });
+    if (!moved.length) { setRunStat({ note: "move a slider first — a fork pins only what you changed" }); setTimeout(() => setRunStat(null), 3200); return; }
+    const cfg = { ...meta.config, pin, derived_from: meta.id, seed: Math.floor(Math.random() * 10 ** 9), trials: Math.min(meta.config.trials || 120, 240),
+                  question: `Fork of ${meta.id} — ${moved.join(", ")}` };
+    setRunStat({ note: "submitting…" });
+    let r;
+    try {
+      r = await (await fetch("/api/run", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(cfg) })).json();
+      if (!r.run_id) throw new Error(r.detail || "no run id");
+    } catch (e) {
+      /* reading is free and standalone; ONLY forks need the engine */
+      setRunStat({ note: "forking needs the engine — run uv run python dashboard.py, then open :8010" });
+      setTimeout(() => setRunStat(null), 6000);
+      return;
+    }
+    const timer = setInterval(async () => {
+      const e = await (await fetch("/api/run/" + r.run_id)).json();
+      if (e.status === "running") setRunStat({ note: `researching · ${e.progress.trials_done}/${e.progress.trials_total} trials · ${e.progress.survivors} survived` });
+      else if (e.status === "done") {
+        clearInterval(timer);
+        location.href = "/notebook?artifact=" + e.artifact.id;   /* the child opens as its own notebook */
+      } else { clearInterval(timer); setRunStat({ note: "fork failed: " + e.error }); setTimeout(() => setRunStat(null), 4000); }
+    }, 1200);
+  }
+
+  const app = { blocks, patchBlock, tables, rev, view, setView, focusId, setFocusId,
+                artifacts, loadArtifact, loading, sourceHtml, artifactId: meta && meta.id, noIndex, _go: null };
+  const cur = VIEWS.find(v => v.key === view);
+  const setLayout = (key) => (fn) => setLayouts(ls => ({ ...ls, [key]: typeof fn === "function" ? fn(ls[key]) : { ...ls[key], ...fn } }));
+  const sliders = blocks.filter(b => b.type === "slider");
+
+  return (
+    <>
+      <div className="nTop">
+        <div className="nRow1">
+          <span className="nName">{meta ? meta.title : "The Notebook"}</span>
+          <span className="nMeta">{meta ? `artifact ${meta.id} · ` : ""}notebook · {blocks.length} blocks · one frozen collection</span>
+          {meta && meta.derivedFrom ? <a className="provChip" href={"/notebook?artifact=" + meta.derivedFrom} title="this run was forked — click to meet the parent">⤴ fork of {meta.derivedFrom}</a> : null}
+          <span className="nThesis">the notebook is the <b>collection</b> · these seven tabs are <b>projections</b> · nothing here edits the past</span>
+        </div>
+        <div className="tabs">
+          {VIEWS.map((v, i) => (
+            <button key={v.key} className={"tab" + (view === v.key ? " on" : "")} onClick={() => setView(v.key)}>
+              <span className="tnum">{i + 1}</span>{v.label}
+            </button>))}
+        </div>
+      </div>
+
+      <div className="tBar">
+        <span className="vb">{cur.label}</span>
+        <select className="pick" value={meta ? meta.id : ""} onChange={e => e.target.value && loadArtifact(e.target.value)}>
+          <option value="">{meta ? "" : "open an artifact…"}</option>
+          {artifacts.map(a => <option key={a.id} value={a.id}>{a.id}{a.derived_from ? " ⤴" : ""}</option>)}
+        </select>
+        {sliders.length ? <button className="seedBtn" onClick={fork} disabled={!!runStat}>⑂ Fork this run</button> : null}
+        {runStat ? <span className="runStat">{runStat.note}</span> : null}
+        <a className="miniBtn" href="/" style={{ textDecoration: "none", alignSelf: "center" }}>⚙ new study</a>
+        {view === "timeline" && blocks.length ? (
+          <span className="tlNav">
+            <span className="tlHint">← → to scrub · one block owns the center</span>
+            <button onClick={() => app._go && app._go(-1)}>←</button>
+            <span className="tlPos">{focusId ? `${strip.findIndex(b => b.id === focusId) + 1} / ${blocks.length}` : ""}</span>
+            <button onClick={() => app._go && app._go(1)}>→</button>
+          </span>
+        ) : <span className="tHint">{cur.hint}</span>}
+      </div>
+
+      <div id="stage">
+        {view === "sequence" && <SequenceView app={app} />}
+        {view === "canvas" && <CanvasView app={app} layout={layouts.canvas} setLayout={setLayout("canvas")} />}
+        {view === "list" && <ListView app={app} />}
+        {view === "code" && <CodeView app={app} />}
+        {view === "graph" && <GraphView app={app} layout={layouts.graph} setLayout={setLayout("graph")} />}
+        {view === "timeline" && <TimelineView app={app} strip={strip} focusId={focusId} setFocusId={setFocusId} />}
+        {view === "table" && <TableView app={app} />}
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

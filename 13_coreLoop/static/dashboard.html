@@ -62,29 +62,38 @@ button{border:none;border-radius:7px;padding:9px 14px;font-size:13px;font-weight
 .conclusion p{font-size:13.5px;line-height:1.7}
 canvas#eqChart{max-height:280px}
 details summary{cursor:pointer;font-size:11px;color:var(--dim)}
+.nbLink{margin-left:auto;font-size:12px;color:var(--amber);border:1px solid var(--amber);border-radius:7px;padding:5px 12px;text-decoration:none;white-space:nowrap}
+.nbLink:hover{background:rgba(245,166,35,.12)}
+.openNb{display:inline-block;margin:4px 0 10px;background:var(--amber);color:#171204;font-weight:700;border-radius:8px;padding:8px 14px;text-decoration:none;font-size:13px}
+.openNb:hover{filter:brightness(1.08)}
 </style>
 </head>
 <body>
 <header>
   <div class="logo">∫</div>
   <b>RIEMANN 1</b><span>· core loop dashboard — question → search → survivors → research artifact</span>
+  <a class="nbLink" href="/notebook">📓 open the notebook →</a>
 </header>
 <main>
   <aside id="dock">
     <div class="grp"><h3>◈ Market question</h3>
-      <div class="f"><label>prompt</label><textarea id="question"></textarea></div>
+      <div class="f"><label>prompt</label><textarea id="question">Find a BTCUSDT daily strategy that passes the FTMO Challenge: 10% target, max 5% daily loss, max 10% total loss, ≥4 trading days.</textarea></div>
     </div>
     <div class="grp"><h3>◈ Data</h3>
       <div class="row">
-        <div class="f"><label>symbol</label><input id="symbol"></div>
+        <div class="f"><label>symbol</label><input id="symbol" list="syms" value="BTCUSDT"></div>
         <div class="f"><label>interval</label>
           <select id="interval"><option>1m</option><option>5m</option><option>15m</option><option>1h</option><option>4h</option><option selected>1d</option></select>
         </div>
       </div>
+      <datalist id="syms">
+        <option value="BTCUSDT"><option value="ETHUSDT"><option value="BNBUSDT">
+        <option value="SOLUSDT"><option value="XRPUSDT"><option value="DOGEUSDT">
+      </datalist>
       <div class="row">
-        <div class="f"><label>bars (≤1000)</label><input type="number" id="bars" min="50" max="1000"></div>
-        <div class="f"><label>trials</label><input type="number" id="trials" min="10" max="10000" step="10"></div>
-        <div class="f"><label>seed</label><input type="number" id="seed"></div>
+        <div class="f"><label>bars (≤1000)</label><input type="number" id="bars" min="50" max="1000" value="1000"></div>
+        <div class="f"><label>trials</label><input type="number" id="trials" min="10" max="10000" step="10" value="500"></div>
+        <div class="f"><label>seed</label><input type="number" id="seed" value="42"></div>
       </div>
     </div>
     <div class="grp"><h3>◈ Chart type</h3>
@@ -92,32 +101,47 @@ details summary{cursor:pointer;font-size:11px;color:var(--dim)}
         <div class="f"><label>candles</label>
           <select id="chart_type"><option value="ohlc">Raw OHLC</option><option value="heikin_ashi">Heikin-Ashi</option><option value="renko">Renko</option></select>
         </div>
-        <div class="f"><label>renko brick ×range</label><input type="number" id="renko_brick_atr_mult" step="0.1" min="0.1"></div>
+        <div class="f"><label>renko brick ×range</label><input type="number" id="renko_brick_atr_mult" step="0.1" min="0.1" value="1.0"></div>
       </div>
     </div>
     <div class="grp"><h3>◈ Indicators / search space</h3>
       <div class="checks">
-        <label><input type="checkbox" id="ma_sma">SMA</label>
-        <label><input type="checkbox" id="ma_ema">EMA</label>
-        <label><input type="checkbox" id="use_rsi_gate">RSI gate</label>
-        <label><input type="checkbox" id="use_atr_stop">ATR stop</label>
-        <label><input type="checkbox" id="allow_short">Allow shorts</label>
+        <label><input type="checkbox" id="ma_sma" checked>SMA</label>
+        <label><input type="checkbox" id="ma_ema" checked>EMA</label>
+        <label><input type="checkbox" id="use_rsi_gate" checked>RSI gate</label>
+        <label><input type="checkbox" id="use_atr_stop" checked>ATR stop</label>
+        <label><input type="checkbox" id="allow_short" checked>Allow shorts</label>
       </div>
     </div>
     <div class="grp"><h3>◈ Prop-firm rules (hard constraints)</h3>
-      <div class="f"><label>rule set name</label><input id="rules_name"></div>
+      <div class="f"><label>real-world preset</label>
+        <select id="preset" onchange="applyPreset(this.value)">
+          <option value="">— load a firm's actual rules —</option>
+          <option>FTMO Challenge · 2-Step (Stage 1)</option>
+          <option>FTMO Verification · 2-Step (Stage 2)</option>
+          <option>FTMO Challenge · 1-Step</option>
+          <option>Riemann Hard Mode (no flat-passing)</option>
+        </select>
+      </div>
+      <div class="f"><label>rule set name</label><input id="rules_name" value="FTMO Challenge · 2-Step (Stage 1)"></div>
       <div class="row">
-        <div class="f"><label>balance $</label><input type="number" id="initial_balance" step="1000"></div>
-        <div class="f"><label>target %</label><input type="number" id="profit_target_pct" step="0.5"></div>
+        <div class="f"><label>account size $</label>
+          <select id="initial_balance">
+            <option value="10000">$10,000</option><option value="25000">$25,000</option>
+            <option value="50000">$50,000</option><option value="100000" selected>$100,000</option>
+            <option value="150000">$150,000</option><option value="200000">$200,000</option>
+          </select>
+        </div>
+        <div class="f"><label>target %</label><input type="number" id="profit_target_pct" step="0.5" value="10"></div>
       </div>
       <div class="row">
-        <div class="f"><label>max daily loss %</label><input type="number" id="max_daily_loss_pct" step="0.5"></div>
-        <div class="f"><label>max total loss %</label><input type="number" id="max_total_loss_pct" step="0.5"></div>
+        <div class="f"><label>max daily loss %</label><input type="number" id="max_daily_loss_pct" step="0.5" value="5"></div>
+        <div class="f"><label>max total loss %</label><input type="number" id="max_total_loss_pct" step="0.5" value="10"></div>
       </div>
       <div class="row">
-        <div class="f"><label>min trades</label><input type="number" id="min_trades" min="1"></div>
-        <div class="f"><label>min trading days</label><input type="number" id="min_trading_days" min="1"></div>
-        <div class="f"><label>target within (days, ∅=off)</label><input type="number" id="target_within_days" min="1"></div>
+        <div class="f"><label>min trades</label><input type="number" id="min_trades" min="1" value="1"></div>
+        <div class="f"><label>min trading days</label><input type="number" id="min_trading_days" min="1" value="4"></div>
+        <div class="f"><label>target within (days, ∅=off)</label><input type="number" id="target_within_days" min="1" placeholder="off (FTMO has no limit)"></div>
       </div>
     </div>
     <div class="btns">
@@ -135,7 +159,8 @@ details summary{cursor:pointer;font-size:11px;color:var(--dim)}
     <div id="empty"><b>Configure the experiment on the left.<br>Run it. The artifact renders here</b><br><br>
       This page triggers the real core loop: Optuna explores strategy configurations,<br>
       the prop-firm rules you wrote reject every trial that breaks them,<br>
-      and survivors are written as a Riemann research artifact.</div>
+      and survivors are written as a Riemann research artifact.<br><br>
+      Or skip the kitchen: <a href="/notebook" style="color:var(--amber)">read a finished notebook →</a></div>
     <div id="results"></div>
   </section>
 </main>
@@ -143,7 +168,46 @@ details summary{cursor:pointer;font-size:11px;color:var(--dim)}
 <script>
 let DEFAULTS = {}, pollTimer = null, eqChart = null;
 
-fetch('/api/defaults').then(r=>r.json()).then(d=>{ DEFAULTS=d; fillForm(d); });
+/* real published rules, ftmo.com/en/trading-objectives (verified 2026-09-20);
+   Hard Mode is ours: same loss limits + time box + real activity floor */
+const PRESETS = {
+  "FTMO Challenge · 2-Step (Stage 1)":
+    {name:"FTMO Challenge · 2-Step (Stage 1)", target:10, daily:5, total:10, trades:1, days:4, within:""},
+  "FTMO Verification · 2-Step (Stage 2)":
+    {name:"FTMO Verification · Stage 2", target:5, daily:5, total:10, trades:1, days:4, within:""},
+  "FTMO Challenge · 1-Step":
+    {name:"FTMO Challenge · 1-Step", target:10, daily:3, total:10, trades:1, days:4, within:""},
+  "Riemann Hard Mode (no flat-passing)":
+    {name:"Riemann Hard Mode", target:10, daily:5, total:10, trades:10, days:10, within:60},
+};
+function applyPreset(k){
+  const p = PRESETS[k]; if(!p) return;
+  q('rules_name').value=p.name; q('profit_target_pct').value=p.target;
+  q('max_daily_loss_pct').value=p.daily; q('max_total_loss_pct').value=p.total;
+  q('min_trades').value=p.trades; q('min_trading_days').value=p.days;
+  q('target_within_days').value=p.within;
+}
+
+fetch('/api/defaults').then(r=>{
+  if(!r.ok || !(r.headers.get('content-type')||'').includes('json')) throw new Error('not the api');
+  return r.json();
+}).then(d=>{ DEFAULTS=d; fillForm(d); }).catch(()=>wrongServer());
+
+/* opened via Live Server / a file double-click / a static preview? Then the
+   Python engine isn't here — scream about it instead of failing quietly */
+function wrongServer(){
+  if(document.getElementById('noBrain')) return;
+  const d=document.createElement('div'); d.id='noBrain';
+  d.style.cssText='position:fixed;inset:0;z-index:999;background:rgba(11,14,20,.97);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:24px';
+  d.innerHTML=`<div style="font-size:44px">\uD83D\uDEAB</div>
+    <h2 style="color:var(--amber);font-size:20px">This copy of the page is cut off from its brain</h2>
+    <p style="color:var(--dim);max-width:520px;line-height:1.7;font-size:14px">
+      You opened <code>dashboard.html</code> through another server (Live Server on :55xx, a file double-click, or a static preview).
+      The core loop is <b style="color:var(--text)">Python</b> — it only lives at <b style="color:var(--amber)">http://127.0.0.1:8010</b>.<br>
+      If that port is dead, start it: <code>uv run python dashboard.py</code> in folder 13_coreLoop.</p>
+    <a href="http://127.0.0.1:8010/" style="background:var(--amber);color:#171204;font-weight:700;border-radius:9px;padding:10px 18px;text-decoration:none">\u25B6 Open the real dashboard :8010</a>`;
+  document.body.appendChild(d);
+}
 
 function fillForm(d){
   q('question').value = d.question;
@@ -222,7 +286,8 @@ async function poll(id){
 function renderArtifact(art){
   q('progress').style.display='none';
   let html = `<div class="block" style="border-left:3px solid var(--amber)">
-    <h4>artifact <em>${art.id}</em></h4></div>`;
+    <h4>artifact <em>${art.id}</em></h4>
+    <a class="openNb" href="/notebook?artifact=${art.id}">📓 Open this artifact in the notebook →</a></div>`;
   for(const b of art.blocks){
     if(b.type==='question') html += `<div class="block"><h4>question</h4><p style="font-size:14px;line-height:1.6">${esc(b.text)}</p></div>`;
     else if(b.type==='conclusion') html += `<div class="block conclusion"><h4>conclusion</h4><p>${esc(b.text)}</p></div>`;
