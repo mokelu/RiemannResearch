@@ -1,0 +1,9 @@
+/* Catppuccin Mocha — drop-in :root override; apply in-app via Account -> Theme, or replace the :root block. */
+/* derived tokens not listed here (--chrome, --on-accent, --grid-line, etc.) follow their defaults. */
+:root{
+  --bg:#1E1E2E; --panel:#24243E; --panel2:#313244;
+  --panel3:#45475A; --line:#313244; --line2:#45475A;
+  --text:#CDD6F4; --mut:#BAC2DE; --mut2:#A6ADC8;
+  --amber:#89B4FA; --amber-dim:rgba(137,180,250,.14); --up:#A6E3A1;
+  --dn:#F38BA8; --blue:#74C7EC; --violet:#CBA6F7;
+}

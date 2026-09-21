@@ -1,0 +1,9 @@
+/* Tokyo Night — drop-in :root override; apply in-app via Account -> Theme, or replace the :root block. */
+/* derived tokens not listed here (--chrome, --on-accent, --grid-line, etc.) follow their defaults. */
+:root{
+  --bg:#1A1B26; --panel:#1E2030; --panel2:#24283B;
+  --panel3:#2F3348; --line:#292E42; --line2:#3B4261;
+  --text:#C0CAF5; --mut:#A9B1D6; --mut2:#787C99;
+  --amber:#7AA2F7; --amber-dim:rgba(122,162,247,.15); --up:#9ECE6A;
+  --dn:#F7768E; --blue:#7DCFFF; --violet:#BB9AF7;
+}

@@ -1,0 +1,11 @@
+[project]
+name = "riemann-agui-panel"
+version = "0.1.0"
+description = "Folder 16: the right panel, wired to a real AG-UI agent that streams Inception mercury-2.5 writing Optuna strategies"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "openai>=1.55",
+    "ag-ui-protocol>=0.1.10",
+]

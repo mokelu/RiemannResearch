@@ -1,0 +1,9 @@
+/* Rosé Pine — drop-in :root override; apply in-app via Account -> Theme, or replace the :root block. */
+/* derived tokens not listed here (--chrome, --on-accent, --grid-line, etc.) follow their defaults. */
+:root{
+  --bg:#191724; --panel:#1F1D2E; --panel2:#26233A;
+  --panel3:#2D2A45; --line:#26233A; --line2:#403D52;
+  --text:#E0DEF4; --mut:#CDC9E5; --mut2:#908CAA;
+  --amber:#C4A7E7; --amber-dim:rgba(196,167,231,.15); --up:#31748F;
+  --dn:#EB6F92; --blue:#9CCFD8; --violet:#EBBCBA;
+}
