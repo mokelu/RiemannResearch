@@ -1,0 +1,9 @@
+/* Slate Dark — drop-in :root override; apply in-app via Account -> Theme, or replace the :root block. */
+/* derived tokens not listed here (--chrome, --on-accent, --grid-line, etc.) follow their defaults. */
+:root{
+  --bg:#0D1117; --panel:#11161D; --panel2:#161B22;
+  --panel3:#1C2128; --line:#212833; --line2:#303642;
+  --text:#C9D1D9; --mut:#8B98A7; --mut2:#616C7B;
+  --amber:#58A6FF; --amber-dim:rgba(88,166,255,.13); --up:#3FB950;
+  --dn:#DA3633; --blue:#79C0FF; --violet:#BC8CFF;
+}
