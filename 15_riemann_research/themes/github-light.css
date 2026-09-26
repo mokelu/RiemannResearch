@@ -1,9 +1,0 @@
-/* GitHub Light — drop-in :root override; apply in-app via Account -> Theme, or replace the :root block. */
-/* derived tokens not listed here (--chrome, --on-accent, --grid-line, etc.) follow their defaults. */
-:root{
-  --bg:#F6F8FA; --panel:#EDF0F3; --panel2:#FFFFFF;
-  --panel3:#E3E7EC; --line:#D0D7DE; --line2:#AFB8C1;
-  --text:#1F2328; --mut:#59636E; --mut2:#818B98;
-  --amber:#0969DA; --amber-dim:rgba(9,105,218,.10); --up:#1A7F37;
-  --dn:#CF2221; --blue:#0969DA; --violet:#8250DF;
-}

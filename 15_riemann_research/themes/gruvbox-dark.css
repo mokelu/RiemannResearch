@@ -1,9 +1,0 @@
-/* Gruvbox Dark — drop-in :root override; apply in-app via Account -> Theme, or replace the :root block. */
-/* derived tokens not listed here (--chrome, --on-accent, --grid-line, etc.) follow their defaults. */
-:root{
-  --bg:#282828; --panel:#32302F; --panel2:#3C3836;
-  --panel3:#504945; --line:#3C3836; --line2:#504945;
-  --text:#EBDBB2; --mut:#BDAE93; --mut2:#928374;
-  --amber:#FE8019; --amber-dim:rgba(254,128,25,.14); --up:#B8BB26;
-  --dn:#FB4934; --blue:#83A598; --violet:#D3869B;
-}

@@ -1,9 +1,0 @@
-/* Dracula — drop-in :root override; apply in-app via Account -> Theme, or replace the :root block. */
-/* derived tokens not listed here (--chrome, --on-accent, --grid-line, etc.) follow their defaults. */
-:root{
-  --bg:#282A36; --panel:#343746; --panel2:#3E4154;
-  --panel3:#44475A; --line:#44475A; --line2:#565A70;
-  --text:#F8F8F2; --mut:#BFC7D5; --mut2:#6272A4;
-  --amber:#BD93F9; --amber-dim:rgba(189,147,249,.15); --up:#50FA7B;
-  --dn:#FF5555; --blue:#8BE9FD; --violet:#FF79C6;
-}

@@ -1,9 +1,0 @@
-/* High Contrast — drop-in :root override; apply in-app via Account -> Theme, or replace the :root block. */
-/* derived tokens not listed here (--chrome, --on-accent, --grid-line, etc.) follow their defaults. */
-:root{
-  --bg:#000000; --panel:#0A0A0A; --panel2:#141414;
-  --panel3:#1F1F1F; --line:#4A4A4A; --line2:#6A6A6A;
-  --text:#FFFFFF; --mut:#EDEDED; --mut2:#C8C8C8;
-  --amber:#FFD54D; --amber-dim:rgba(255,213,77,.18); --up:#4DFF88;
-  --dn:#FF6B6B; --blue:#5CC8FF; --violet:#D19AFF;
-}

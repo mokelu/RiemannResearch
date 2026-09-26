@@ -1,9 +1,0 @@
-/* One Dark — drop-in :root override; apply in-app via Account -> Theme, or replace the :root block. */
-/* derived tokens not listed here (--chrome, --on-accent, --grid-line, etc.) follow their defaults. */
-:root{
-  --bg:#282C34; --panel:#2C313C; --panel2:#333842;
-  --panel3:#3B4048; --line:#3B4048; --line2:#4B5263;
-  --text:#ABB2BF; --mut:#9DA5B4; --mut2:#7F848E;
-  --amber:#61AFEF; --amber-dim:rgba(97,175,239,.14); --up:#98C379;
-  --dn:#E06C75; --blue:#56B6C2; --violet:#C678DD;
-}

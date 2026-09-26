@@ -1,8 +1,0 @@
-# virtualenv + caches
-.venv/
-__pycache__/
-*.pyc
-
-# secrets — the Inception key never belongs in git
-.env
-server/.env

@@ -1,9 +1,0 @@
-/* Nord — drop-in :root override; apply in-app via Account -> Theme, or replace the :root block. */
-/* derived tokens not listed here (--chrome, --on-accent, --grid-line, etc.) follow their defaults. */
-:root{
-  --bg:#2E3440; --panel:#333B4A; --panel2:#3B4252;
-  --panel3:#434C5E; --line:#3B4252; --line2:#4C566A;
-  --text:#ECEFF4; --mut:#D8DEE9; --mut2:#A7B0C0;
-  --amber:#88C0D0; --amber-dim:rgba(136,192,208,.14); --up:#A3BE8C;
-  --dn:#BF616A; --blue:#81A1C1; --violet:#B48EAD;
-}

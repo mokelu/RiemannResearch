@@ -1,9 +1,0 @@
-/* Solarized Dark — drop-in :root override; apply in-app via Account -> Theme, or replace the :root block. */
-/* derived tokens not listed here (--chrome, --on-accent, --grid-line, etc.) follow their defaults. */
-:root{
-  --bg:#002B36; --panel:#073642; --panel2:#0A4050;
-  --panel3:#0E4B5A; --line:#0A4050; --line2:#1B5C6B;
-  --text:#93A1A1; --mut:#B8C2C2; --mut2:#657B83;
-  --amber:#2AA198; --amber-dim:rgba(42,161,152,.16); --up:#859900;
-  --dn:#DC322F; --blue:#268BD2; --violet:#6C71C4;
-}
