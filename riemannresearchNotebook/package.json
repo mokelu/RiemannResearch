@@ -1,11 +1,10 @@
 {
-  "name": "riemann-naive-di",
+  "name": "riemann-naive-di-js",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "tsc --noEmit",
-    "demo": "tsc --outDir dist && node dist/naive-di/demo.js",
+    "demo": "node notebook/demo.js",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -13,8 +12,6 @@
     "ajv": "^8.17.1"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "typescript": "^5.8.0",
     "vitest": "^3.2.0"
   }
 }
