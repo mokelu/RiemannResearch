@@ -74,8 +74,6 @@ export const NODE_TAGS = [
   ...GRAMMATICAL_TAGS,
 ];
 
-/// This is where we stopped.
-
 /**
  * A relation is any name the AI gives a wire — in other words, any string.
  * It exists to make the connection readable at the point of use, and it
