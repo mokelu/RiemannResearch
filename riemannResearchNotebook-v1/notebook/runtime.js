@@ -1,5 +1,5 @@
 /**
- * The naive DI runtime: valid data becomes a live, queryable structure.
+ * The reasoning runtime: valid data becomes a live, queryable structure.
  *
  * Nothing here invents anything. The AI's JSON has already been through the
  * boundary check, so every tag is registered, every id is unique, and every
@@ -48,44 +48,20 @@ export class RuntimeRelation {
   }
 }
 
-/**
- * A contract: one sentence, plus the thing standing under it and whatever proof
- * was run. It is not a sentence kind and it is not a tag. It points at a
- * sentence node, which is what lets the sentence stay the thing a human edits.
- */
-export class RuntimeContract {
-  constructor(id, sentence, domain, output, proof, verdict) {
-    this.id = id;
-    this.sentence = sentence;
-    this.domain = domain;
-    this.output = output;
-    this.proof = proof;
-    this.verdict = verdict;
-  }
-
-  /** The words of the sentence this contract answers to. */
-  get text() {
-    return this.sentence.text;
-  }
-}
-
 export class ReasoningGraph {
   #nodes;
   #relations;
-  #contracts;
   #byId = new Map();
   #outgoing = new Map();
   #incoming = new Map();
-  #contractId = new Map();
 
   /**
    * Indexes are always derived from the data handed in, so a graph can never
    * hold a wire that its own nodes do not support.
    */
-  constructor(nodes, relations, contracts = []) {
+  constructor(nodes, relations) {
     this.#nodes = Object.freeze([...nodes]);
     this.#relations = Object.freeze([...relations]);
-    this.#contracts = Object.freeze([...contracts]);
 
     for (const node of this.#nodes) {
       if (this.#byId.has(node.id)) {
@@ -103,13 +79,6 @@ export class ReasoningGraph {
       this.#outgoing.get(relation.from.id).push(relation);
       this.#incoming.get(relation.to.id).push(relation);
     }
-
-    for (const contract of this.#contracts) {
-      if (!this.#byId.has(contract.sentence.id)) {
-        throw new Error(`contract ${contract.id} points outside the graph`);
-      }
-      this.#contractId.set(contract.id, contract);
-    }
   }
 
   get size() {
@@ -124,15 +93,6 @@ export class ReasoningGraph {
   /** Every wire, in the order the AI produced them. */
   relations() {
     return this.#relations;
-  }
-
-  /** Every contract standing under a sentence. */
-  contracts() {
-    return this.#contracts;
-  }
-
-  contract(id) {
-    return this.#contractId.get(id);
   }
 
   node(id) {
@@ -208,20 +168,6 @@ export class ReasoningGraph {
         relation,
         to: to.id,
       })),
-      ...(this.#contracts.length > 0
-        ? {
-            contracts: this.#contracts.map(
-              ({ id, sentence, domain, output, proof, verdict }) => ({
-                id,
-                sentence: sentence.id,
-                domain,
-                output,
-                proof,
-                ...(verdict ? { verdict } : {}),
-              }),
-            ),
-          }
-        : {}),
     };
   }
 
@@ -253,7 +199,7 @@ export class ReasoningGraph {
 export function materialize(data) {
   if (!data || data[VALIDATED] !== true) {
     throw new TypeError(
-      "materialize requires data that passed validateNaiveDI; the boundary cannot be skipped",
+      "materialize requires data that passed validateReasoning; the boundary cannot be skipped",
     );
   }
 
@@ -271,17 +217,5 @@ export function materialize(data) {
       ),
   );
 
-  const contracts = (data.contracts ?? []).map(
-    (contract) =>
-      new RuntimeContract(
-        contract.id,
-        byId.get(contract.sentence),
-        contract.domain,
-        contract.output,
-        contract.proof,
-        contract.verdict,
-      ),
-  );
-
-  return new ReasoningGraph(nodes, relations, contracts);
+  return new ReasoningGraph(nodes, relations);
 }

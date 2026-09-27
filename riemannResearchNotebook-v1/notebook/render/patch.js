@@ -16,11 +16,6 @@
  *   { op: "retag", id, tag }
  *   { op: "connect", from, relation, to }
  *   { op: "disconnect", from, relation, to }
- *   { op: "bindContract", contract }
- *   { op: "unbindContract", id }
- *   { op: "setOutput", id, output }
- *   { op: "setProof", id, proof }
- *   { op: "recordVerdict", id, verdict }
  */
 
 /** Thrown when a patch names a node that is not in the structure. */
@@ -28,14 +23,6 @@ export class UnknownNodeError extends Error {
   constructor(id) {
     super(`no node with id "${id}" to edit`);
     this.name = "UnknownNodeError";
-  }
-}
-
-/** Thrown when a patch names a contract that is not in the structure. */
-export class UnknownContractError extends Error {
-  constructor(id) {
-    super(`no contract with id "${id}" to edit`);
-    this.name = "UnknownContractError";
   }
 }
 
@@ -53,9 +40,7 @@ export function applyPatch(input, patch) {
       };
 
     case "removeNode":
-      // Wires touching the removed sentence go with it. Its contracts do not:
-      // a sentence standing under contract cannot be deleted quietly, so the
-      // boundary rejects the edit and says why.
+      // Wires touching the removed sentence go with it.
       return {
         ...input,
         nodes: input.nodes.filter((node) => node.id !== patch.id),
@@ -105,78 +90,5 @@ export function applyPatch(input, patch) {
             ),
         ),
       };
-
-    case "bindContract":
-      return {
-        ...input,
-        contracts: [
-          ...(input.contracts ?? []).filter(
-            (contract) => contract.id !== patch.contract.id,
-          ),
-          patch.contract,
-        ],
-      };
-
-    case "unbindContract":
-      return withContracts(
-        input,
-        (input.contracts ?? []).filter((contract) => contract.id !== patch.id),
-      );
-
-    case "setOutput":
-      return withContracts(
-        input,
-        replaceContract(input, patch.id, (contract) => ({
-          ...contract,
-          output: patch.output,
-        })),
-      );
-
-    case "setProof":
-      return withContracts(
-        input,
-        replaceContract(input, patch.id, (contract) => ({
-          ...contract,
-          proof: patch.proof,
-          // A new proof makes any earlier verdict meaningless, so it goes with it.
-          verdict: undefined,
-        })),
-      );
-
-    case "recordVerdict":
-      return withContracts(
-        input,
-        replaceContract(input, patch.id, (contract) => ({
-          ...contract,
-          verdict: patch.verdict,
-        })),
-      );
   }
-}
-
-function replaceContract(input, id, change) {
-  const contracts = input.contracts ?? [];
-  if (!contracts.some((contract) => contract.id === id)) {
-    throw new UnknownContractError(id);
-  }
-  return contracts.map((contract) =>
-    contract.id === id ? change(contract) : contract,
-  );
-}
-
-function withContracts(input, contracts) {
-  // Keys holding nothing are removed rather than left as undefined, so the
-  // result stays exactly the shape the schema describes.
-  const cleaned = contracts.map((contract) => {
-    const copy = { ...contract };
-    if (copy.verdict === undefined) delete copy.verdict;
-    return copy;
-  });
-
-  if (cleaned.length === 0) {
-    const { contracts: _dropped, ...rest } = input;
-    return rest;
-  }
-
-  return { ...input, contracts: cleaned };
 }

@@ -7,4 +7,3 @@ export * from "./document.js";
 export * from "./table.js";
 export * from "./graph.js";
 export * from "./cells.js";
-export * from "./contracts.js";

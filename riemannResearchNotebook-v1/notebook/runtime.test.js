@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { validateNaiveDI } from "./validate.js";
+import { validateReasoning } from "./validate.js";
 import { materialize, RuntimeNode } from "./runtime.js";
 
 /**
  * A slightly richer graph than the example: a chain plus evidence feeding in.
- * The top level carries only `nodes` and `relations` by decision — prose is a
- * renderer's output, not part of the contract.
+ * The top level carries only `nodes` and `relations` — prose is a renderer's
+ * output, never part of the structure.
  */
 const graphData = {
   nodes: [
@@ -22,7 +22,7 @@ const graphData = {
 };
 
 function build(data) {
-  const result = validateNaiveDI(data);
+  const result = validateReasoning(data);
   if (!result.valid) throw new Error(result.errors.join("; "));
   return materialize(result.data);
 }
@@ -130,7 +130,7 @@ describe("the runtime is unreachable without the validator", () => {
   });
 
   it("refuses a duplicate id at the boundary, not in the runtime", () => {
-    const result = validateNaiveDI({
+    const result = validateReasoning({
       nodes: [
         { id: "n1", text: "First.", tag: "CLAIM" },
         { id: "n1", text: "Second.", tag: "CLAIM" },

@@ -11,13 +11,9 @@
  * view. There is no way to put the surface into an invalid state.
  */
 
-import { validateNaiveDI } from "../validate.js";
+import { validateReasoning } from "../validate.js";
 import { materialize } from "../runtime.js";
-import {
-  applyPatch,
-  UnknownContractError,
-  UnknownNodeError,
-} from "./patch.js";
+import { applyPatch, UnknownNodeError } from "./patch.js";
 
 export class Surface {
   #data;
@@ -32,7 +28,7 @@ export class Surface {
 
   /** Open a surface on AI output, throwing if it is not structurally valid. */
   static open(value) {
-    const result = validateNaiveDI(value);
+    const result = validateReasoning(value);
     if (!result.valid) {
       throw new Error(`rejected at the boundary: ${result.errors.join("; ")}`);
     }
@@ -70,16 +66,13 @@ export class Surface {
     try {
       next = applyPatch(this.#data, patch);
     } catch (error) {
-      if (
-        error instanceof UnknownNodeError ||
-        error instanceof UnknownContractError
-      ) {
+      if (error instanceof UnknownNodeError) {
         return { applied: false, errors: [error.message] };
       }
       throw error;
     }
 
-    const result = validateNaiveDI(next);
+    const result = validateReasoning(next);
     if (!result.valid) {
       return { applied: false, errors: result.errors };
     }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateNaiveDI } from "./validate.js";
+import { validateReasoning } from "./validate.js";
 
 /** The exact example the AI is allowed to produce. */
 const validOutput = {
@@ -12,9 +12,9 @@ const validOutput = {
   ],
 };
 
-describe("validateNaiveDI", () => {
+describe("validateReasoning", () => {
   it("accepts the example structure and hands back the data", () => {
-    const result = validateNaiveDI(validOutput);
+    const result = validateReasoning(validOutput);
 
     expect(result.valid).toBe(true);
     expect(result.errors).toEqual([]);
@@ -22,11 +22,11 @@ describe("validateNaiveDI", () => {
   });
 
   it("accepts an empty graph", () => {
-    expect(validateNaiveDI({ nodes: [], relations: [] }).valid).toBe(true);
+    expect(validateReasoning({ nodes: [], relations: [] }).valid).toBe(true);
   });
 
   it("rejects a tag that is not registered", () => {
-    const result = validateNaiveDI({
+    const result = validateReasoning({
       ...validOutput,
       nodes: [{ id: "n1", text: "John is a dog.", tag: "VIBE" }],
     });
@@ -36,7 +36,7 @@ describe("validateNaiveDI", () => {
 
   it("accepts any relation name the AI invents", () => {
     for (const relation of ["CAUSES", "is", "depends on", "supports"]) {
-      const result = validateNaiveDI({
+      const result = validateReasoning({
         nodes: validOutput.nodes,
         relations: [{ from: "n1", relation, to: "n2" }],
       });
@@ -45,7 +45,7 @@ describe("validateNaiveDI", () => {
   });
 
   it("rejects a relation with no name at all", () => {
-    const result = validateNaiveDI({
+    const result = validateReasoning({
       nodes: validOutput.nodes,
       relations: [{ from: "n1", relation: "", to: "n2" }],
     });
@@ -53,7 +53,7 @@ describe("validateNaiveDI", () => {
   });
 
   it("rejects a missing required field", () => {
-    const result = validateNaiveDI({
+    const result = validateReasoning({
       ...validOutput,
       nodes: [{ id: "n1", text: "John is a dog." }],
     });
@@ -61,7 +61,7 @@ describe("validateNaiveDI", () => {
   });
 
   it("rejects unknown extra properties", () => {
-    const result = validateNaiveDI({
+    const result = validateReasoning({
       ...validOutput,
       extra: "anything",
     });
@@ -69,7 +69,7 @@ describe("validateNaiveDI", () => {
   });
 
   it("rejects a relation pointing at a node that does not exist", () => {
-    const result = validateNaiveDI({
+    const result = validateReasoning({
       nodes: [validOutput.nodes[0]],
       relations: validOutput.relations,
     });
@@ -78,6 +78,6 @@ describe("validateNaiveDI", () => {
   });
 
   it("rejects something that is not JSON at all", () => {
-    expect(validateNaiveDI("John is a dog.").valid).toBe(false);
+    expect(validateReasoning("John is a dog.").valid).toBe(false);
   });
 });

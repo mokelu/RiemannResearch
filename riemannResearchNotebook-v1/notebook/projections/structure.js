@@ -1,15 +1,9 @@
 /**
  * The Structure projection: the canonical object shown as itself.
  *
- * This is the view formerly mistaken for a "code view". It shows the structure,
- * not any implementation, so the word *code* is now free to mean the thing an
- * AI writes underneath a sentence.
- *
  * Zero interpretation: it prints the JSON exactly as the runtime holds it, then
  * the same thing as the objects it was instantiated into.
  */
-
-import { tagLabel } from "../render/wording.js";
 
 export function renderStructure(surface) {
   const graph = surface.graph;
@@ -28,13 +22,6 @@ export function renderStructure(surface) {
       .map(
         (relation) =>
           `new RuntimeRelation(${relation.from.id}, ${JSON.stringify(relation.relation)}, ${relation.to.id});`,
-      ),
-    "",
-    ...graph
-      .contracts()
-      .map(
-        (contract) =>
-          `new RuntimeContract(${JSON.stringify(contract.id)}, ${contract.sentence.id}, ${JSON.stringify(contract.domain)}); // ${tagLabel(contract.sentence.tag)}`,
       ),
   ]
     .join("\n")
