@@ -13,7 +13,7 @@
 
 import { validateReasoning } from "../validate.js";
 import { materialize } from "../runtime.js";
-import { applyPatch, UnknownNodeError } from "./patch.js";
+import { applyPatch, PatchError, UnknownNodeError } from "./patch.js";
 
 export class Surface {
   #data;
@@ -36,7 +36,7 @@ export class Surface {
   }
 
   static empty() {
-    return Surface.open({ nodes: [], relations: [] });
+    return Surface.open({ blocks: [], nodes: [], relations: [] });
   }
 
   /** The live structure. Read-only by construction: no setters are exposed. */
@@ -66,7 +66,7 @@ export class Surface {
     try {
       next = applyPatch(this.#data, patch);
     } catch (error) {
-      if (error instanceof UnknownNodeError) {
+      if (error instanceof UnknownNodeError || error instanceof PatchError) {
         return { applied: false, errors: [error.message] };
       }
       throw error;

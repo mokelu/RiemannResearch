@@ -1,6 +1,6 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Surface } from "../notebook/render/surface.js";
-import { renderDocument } from "../notebook/projections/document.js";
+import { renderDocumentTree } from "../notebook/projections/document.js";
 import { renderStructure } from "../notebook/projections/structure.js";
 import { renderTable } from "../notebook/projections/table.js";
 import { renderGraph } from "../notebook/projections/graph.js";
@@ -72,9 +72,7 @@ export default function App() {
         {/* left dock hidden for now */}
 
         <main className="body" key={tick}>
-          {view === "Document" && (
-            <pre className="prose">{renderDocument(surface)}</pre>
-          )}
+          {view === "Document" && <DocumentView surface={surface} />}
           {view === "Structure" && (
             <pre className="code">{renderStructure(surface)}</pre>
           )}
@@ -87,6 +85,31 @@ export default function App() {
       </div>
     </div>
   );
+}
+
+/**
+ * Mounts the Document projection's described elements as real React nodes.
+ * The projection decides tag, props, and children; this only turns that
+ * description into elements — it adds no wording and no layout of its own.
+ */
+function mountDoc(node) {
+  if (typeof node === "string") return node;
+  const { tag, props = {}, children = [], key } = node;
+  return React.createElement(
+    tag,
+    { ...props, key },
+    ...children.map((child, i) =>
+      typeof child === "string" ? child : mountDoc({ ...child, key: child.key ?? i }),
+    ),
+  );
+}
+
+function DocumentView({ surface }) {
+  const blocks = renderDocumentTree(surface);
+  if (blocks.length === 0)
+    return <p className="empty">Nothing has been reasoned yet.</p>;
+
+  return <article className="prose">{blocks.map((block, i) => mountDoc({ ...block, key: block.key ?? i }))}</article>;
 }
 
 /** Rows and columns, straight from renderTable. */

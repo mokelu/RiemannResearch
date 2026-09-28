@@ -74,6 +74,19 @@ export const NODE_TAGS = [
   ...GRAMMATICAL_TAGS,
 ];
 
+/*
+ * The document dimension, same kind of closed list as the tags. Blocks say how
+ * the answer READS; a run is one piece of a block — either a pointer to a
+ * reasoning node ("node") or page-only writing ("text"). Marks are inline
+ * styling as data, never markdown characters inside text.
+ */
+
+export const BLOCK_TYPES = ["heading", "paragraph", "list", "quote", "code"];
+
+export const RUN_KINDS = ["node", "text"];
+
+export const MARK_TYPES = ["strong", "em", "code", "link"];
+
 /**
  * A relation is any name the AI gives a wire — in other words, any string.
  * It exists to make the connection readable at the point of use, and it

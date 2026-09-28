@@ -2,15 +2,28 @@
  * The reasoning runtime: valid data becomes a live, queryable structure.
  *
  * Nothing here invents anything. The AI's JSON has already been through the
- * boundary check, so every tag is registered, every id is unique, and every
- * edge points at a real node. What the edge is *called* is the AI's business,
- * and stays unexamined here. This file's only job is to turn that flat text
- * into objects wired to each other, and to answer questions about the result.
+ * boundary check, so every tag is registered, every id is unique, every edge
+ * points at a real node, and every block reference resolves. What the edge is
+ * *called* is the AI's business, and stays unexamined here. This file's only
+ * job is to turn that JSON into objects wired to each other, hold the document
+ * dimension alongside them, and answer questions about the result.
  *
  * Reasoning about *meaning* still lives nowhere. That is JEV's job.
  */
 
 import { VALIDATED } from "./validate.js";
+
+/**
+ * Freeze a plain nested value all the way down, so the document dimension is
+ * as read-only from the graph as the reasoning dimension already is.
+ */
+function deepFreeze(value) {
+  if (value && typeof value === "object") {
+    for (const inner of Object.values(value)) deepFreeze(inner);
+    Object.freeze(value);
+  }
+  return value;
+}
 
 /** One sentence, with its registered tag. */
 export class RuntimeNode {
@@ -51,17 +64,21 @@ export class RuntimeRelation {
 export class ReasoningGraph {
   #nodes;
   #relations;
+  #blocks;
   #byId = new Map();
   #outgoing = new Map();
   #incoming = new Map();
 
   /**
    * Indexes are always derived from the data handed in, so a graph can never
-   * hold a wire that its own nodes do not support.
+   * hold a wire that its own nodes do not support. `blocks` is the document
+   * dimension: carried, never indexed — the reasoning graph does not learn
+   * that a heading exists.
    */
-  constructor(nodes, relations) {
+  constructor(nodes, relations, blocks = []) {
     this.#nodes = Object.freeze([...nodes]);
     this.#relations = Object.freeze([...relations]);
+    this.#blocks = deepFreeze(blocks);
 
     for (const node of this.#nodes) {
       if (this.#byId.has(node.id)) {
@@ -93,6 +110,11 @@ export class ReasoningGraph {
   /** Every wire, in the order the AI produced them. */
   relations() {
     return this.#relations;
+  }
+
+  /** The document dimension — how the answer reads. Plain, frozen data. */
+  blocks() {
+    return this.#blocks;
   }
 
   node(id) {
@@ -162,6 +184,7 @@ export class ReasoningGraph {
   /** Plain data again, for storage or for sending back to the AI. */
   toJSON() {
     return {
+      blocks: structuredClone(this.#blocks),
       nodes: this.#nodes.map(({ id, text, tag }) => ({ id, text, tag })),
       relations: this.#relations.map(({ from, relation, to }) => ({
         from: from.id,
@@ -217,5 +240,5 @@ export function materialize(data) {
       ),
   );
 
-  return new ReasoningGraph(nodes, relations);
+  return new ReasoningGraph(nodes, relations, data.blocks);
 }

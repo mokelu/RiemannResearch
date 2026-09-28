@@ -99,6 +99,85 @@ pre.prose {
   margin: 0;
 }
 
+/* The Document view mounts real elements from the block projection. */
+article.prose {
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.7;
+  max-width: 74ch;
+  color: var(--text);
+}
+
+article.prose > :first-child {
+  margin-top: 0;
+}
+
+article.prose h1,
+article.prose h2,
+article.prose h3,
+article.prose h4,
+article.prose h5,
+article.prose h6 {
+  line-height: 1.25;
+  margin: 1.4em 0 0.5em;
+  font-weight: 650;
+}
+
+article.prose h1 {
+  font-size: 1.7em;
+}
+article.prose h2 {
+  font-size: 1.35em;
+}
+article.prose h3 {
+  font-size: 1.15em;
+}
+
+article.prose p {
+  margin: 0.65em 0;
+}
+
+article.prose ul,
+article.prose ol {
+  margin: 0.65em 0;
+  padding-left: 1.4em;
+}
+
+article.prose li {
+  margin: 0.25em 0;
+}
+
+article.prose blockquote {
+  margin: 0.9em 0;
+  padding: 0.2em 0.9em;
+  border-left: 3px solid var(--accent, #888);
+  color: var(--muted, inherit);
+  font-style: italic;
+}
+
+article.prose pre {
+  background: var(--code-bg, rgba(127, 127, 127, 0.12));
+  padding: 0.7em 0.9em;
+  border-radius: 6px;
+  overflow: auto;
+}
+
+article.prose code {
+  font-family: var(--mono);
+  font-size: 0.92em;
+}
+
+/* A reasoning sentence rides the page with its tag as metadata, not printed. */
+article.prose .riemann-sentence {
+  cursor: default;
+  border-radius: 3px;
+  transition: background 0.12s ease;
+}
+
+article.prose .riemann-sentence:hover {
+  background: rgba(127, 127, 127, 0.16);
+}
+
 pre.code {
   font-family: var(--mono);
   font-size: 13px;

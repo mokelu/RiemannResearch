@@ -3,12 +3,90 @@
  * tried without a live model call. It is NOT the source of the Space — that is
  * a validated AI reply adopted through the chat.
  *
- * Nodes are listed in reading order, so the Document view reads as a coherent
- * write-up; the tags and relations stay as metadata for the other views.
+ * `blocks` are how the answer reads; `nodes` are the reasoning sentences the
+ * graph knows. Each block points at a node by id and never copies its text.
+ * Every node is shown by at least one block, or the boundary would reject it.
  */
 
 export const SEEDS = {
   Reasoning: {
+    blocks: [
+      { type: "heading", level: 1, runs: [{ kind: "text", text: "Does Morning Coffee Really Sharpen Focus?" }] },
+      {
+        type: "paragraph",
+        runs: [
+          { kind: "node", ref: "Q" },
+          { kind: "text", text: " " },
+          { kind: "node", ref: "C1" },
+        ],
+      },
+      { type: "heading", level: 2, runs: [{ kind: "text", text: "The case for it" }] },
+      {
+        type: "paragraph",
+        runs: [
+          { kind: "text", text: "The mechanism is well described: " },
+          { kind: "node", ref: "P1" },
+          { kind: "text", text: " " },
+          { kind: "node", ref: "P2" },
+        ],
+      },
+      {
+        type: "list",
+        ordered: false,
+        items: [
+          { runs: [{ kind: "node", ref: "E1" }] },
+          { runs: [{ kind: "node", ref: "E2" }] },
+        ],
+      },
+      {
+        type: "paragraph",
+        runs: [
+          { kind: "text", text: "Put together, " },
+          { kind: "node", ref: "I1" },
+          { kind: "text", text: " which supports the weaker claim that " },
+          { kind: "node", ref: "C2" },
+        ],
+      },
+      { type: "heading", level: 2, runs: [{ kind: "text", text: "The case against" }] },
+      {
+        type: "paragraph",
+        runs: [
+          { kind: "text", text: "But " },
+          { kind: "node", ref: "O1" },
+          { kind: "text", text: " " },
+          { kind: "node", ref: "E3" },
+          { kind: "text", text: " " },
+          { kind: "node", ref: "I2" },
+        ],
+      },
+      {
+        type: "paragraph",
+        runs: [
+          { kind: "text", text: "There is a confound too: " },
+          { kind: "node", ref: "K1" },
+          { kind: "text", text: " " },
+          { kind: "node", ref: "R1" },
+        ],
+      },
+      {
+        type: "quote",
+        runs: [{ kind: "node", ref: "H1" }],
+      },
+      {
+        type: "paragraph",
+        runs: [
+          { kind: "text", text: "If that hypothesis holds, then " },
+          { kind: "node", ref: "PR1" },
+        ],
+      },
+      {
+        type: "paragraph",
+        runs: [
+          { kind: "text", text: "On balance, " },
+          { kind: "node", ref: "C3" },
+        ],
+      },
+    ],
     nodes: [
       { id: "Q", text: "Does drinking coffee every morning improve sustained focus across a workday?", tag: "QUESTION" },
       { id: "C1", text: "Daily morning coffee improves sustained focus across a workday.", tag: "CLAIM" },

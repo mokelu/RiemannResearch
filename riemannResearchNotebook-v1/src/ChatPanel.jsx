@@ -25,7 +25,7 @@ function greeting() {
     id: nextId(),
     role: "assistant",
     text:
-      "Ask me to reason about something. I turn your request into tagged sentences and the connections between them, and that structure becomes what the center shows.",
+      "Ask me to reason about something. I write it back as a real document — titles, paragraphs, lists — while each claim is tagged and wired, so the structure becomes what the center shows.",
     ts: Date.now(),
   };
 }
@@ -83,7 +83,9 @@ export function ChatPanel({ onAdopt }) {
       onAdopt(candidate);
       push({
         role: "assistant",
-        text: `Adopted: ${candidate.nodes.length} sentence${
+        text: `Adopted: ${candidate.blocks.length} block${
+          candidate.blocks.length === 1 ? "" : "s"
+        }, ${candidate.nodes.length} sentence${
           candidate.nodes.length === 1 ? "" : "s"
         } and ${candidate.relations.length} connection${
           candidate.relations.length === 1 ? "" : "s"

@@ -61,7 +61,19 @@ export function CellsView({ surface, onEdit }) {
           </select>
           <button
             onClick={() => {
-              run(ops.addCell(newId.trim(), newText, newTag));
+              // A new sentence must appear somewhere in the document, so we
+              // place it at the end of the last block that can hold runs. If
+              // the structure has no such block, the boundary refuses and the
+              // banner says why — we never add an invisible node.
+              const blocks = surface.graph.blocks();
+              let placement = null;
+              for (let i = blocks.length - 1; i >= 0; i -= 1) {
+                if (blocks[i].type !== "code" && blocks[i].type !== "list") {
+                  placement = { block: i };
+                  break;
+                }
+              }
+              run(ops.addCell(newId.trim(), newText, newTag, placement ?? {}));
               setNewId("");
               setNewText("");
             }}

@@ -37,8 +37,8 @@ export function cellOps(surface) {
       surface.propose({ op: "connect", from, relation, to }),
     disconnect: (from, relation, to) =>
       surface.propose({ op: "disconnect", from, relation, to }),
-    addCell: (id, text, tag) =>
-      surface.propose({ op: "addNode", id, text, tag }),
+    addCell: (id, text, tag, placement) =>
+      surface.propose({ op: "addNode", id, text, tag, placement }),
     removeCell: (id) => surface.propose({ op: "removeNode", id }),
   };
 }

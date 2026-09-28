@@ -7,10 +7,17 @@
  * the same validator the AI's output faces, so an edit made by dragging a card
  * is held to exactly the standard as one made by a model.
  *
+ * Because the structure has two dimensions, an edit that touches one must keep
+ * the other honest: a new sentence names where it appears in the document (or
+ * the boundary would reject it as invisible), and a removed sentence is
+ * un-referenced from every block in the same patch (or the boundary would
+ * reject the dangling pointer). One patch, one validation — never two
+ * half-editable lists.
+ *
  * Nothing here mutates its input. A patch produces a new object or fails.
  *
  * A patch is one of:
- *   { op: "addNode", id, text, tag }
+ *   { op: "addNode", id, text, tag, placement: { block, position? } }
  *   { op: "removeNode", id }
  *   { op: "setText", id, text }
  *   { op: "retag", id, tag }
@@ -26,23 +33,80 @@ export class UnknownNodeError extends Error {
   }
 }
 
+/** Thrown when a patch cannot be applied as asked, before any validation. */
+export class PatchError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "PatchError";
+  }
+}
+
+/** Drop every pointer to one node, and any block left with nothing to show. */
+function unreferenced(blocks, id) {
+  const clean = (runs) =>
+    runs.filter((run) => !(run.kind === "node" && run.ref === id));
+
+  const kept = [];
+  for (const block of blocks) {
+    if (block.type === "code") {
+      kept.push(block);
+      continue;
+    }
+    if (block.type === "list") {
+      const items = block.items
+        .map((item) => ({ ...item, runs: clean(item.runs) }))
+        .filter((item) => item.runs.length > 0);
+      if (items.length > 0) kept.push({ ...block, items });
+      continue;
+    }
+    const runs = clean(block.runs);
+    if (runs.length > 0) kept.push({ ...block, runs });
+  }
+  return kept;
+}
+
 export function applyPatch(input, patch) {
   const has = (id) => input.nodes.some((node) => node.id === id);
 
   switch (patch.op) {
-    case "addNode":
+    case "addNode": {
+      const placement = patch.placement ?? {};
+      const index = placement.block;
+      const target = input.blocks[index];
+      // v1 places into the blocks that are a plain run list. A sentence for a
+      // list is a fresh item — a later pass, said no to honestly here.
+      if (!target || target.type === "code" || target.type === "list") {
+        throw new PatchError(
+          `a new sentence must name a heading, paragraph, or quote block: "placement.block" must pick one of the ${input.blocks.length} existing blocks`,
+        );
+      }
+      const position = Math.max(
+        0,
+        Math.min(placement.position ?? target.runs.length, target.runs.length),
+      );
+      const withRun = (runs) => [
+        ...runs.slice(0, position),
+        { kind: "node", ref: patch.id },
+        ...runs.slice(position),
+      ];
       return {
         ...input,
+        blocks: input.blocks.map((block, i) =>
+          i === index ? { ...block, runs: withRun(block.runs) } : block,
+        ),
         nodes: [
           ...input.nodes,
           { id: patch.id, text: patch.text, tag: patch.tag },
         ],
       };
+    }
 
     case "removeNode":
-      // Wires touching the removed sentence go with it.
+      // Wires touching the removed sentence go with it, and so do the places
+      // in the document that showed it.
       return {
         ...input,
+        blocks: unreferenced(input.blocks, patch.id),
         nodes: input.nodes.filter((node) => node.id !== patch.id),
         relations: input.relations.filter(
           (relation) => relation.from !== patch.id && relation.to !== patch.id,
