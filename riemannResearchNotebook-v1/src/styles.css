@@ -317,13 +317,23 @@ button.ghost {
   padding-left: 18px;
 }
 
-/* ---- workspace split (content + right chat dock) ---- */
+/* ---- workspace split (left dock + content + right chat dock) ---- */
 .workspace {
   flex: 1;
   min-height: 0;
   display: flex;
 }
 
+/* ---- left dock (empty for now) ---- */
+.left-dock {
+  width: 260px;
+  min-width: 200px;
+  flex: none;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+}
+
+.dock-toggle,
 .chat-toggle {
   background: transparent;
   border: 1px solid var(--border);
@@ -334,6 +344,7 @@ button.ghost {
   font-size: 13px;
 }
 
+.dock-toggle:hover,
 .chat-toggle:hover {
   border-color: var(--accent-2);
   color: #fff;

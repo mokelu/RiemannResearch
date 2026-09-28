@@ -15,6 +15,7 @@ export default function App() {
   const [view, setView] = useState("Document");
   const [tick, setTick] = useState(0);
   const [chatOpen, setChatOpen] = useState(true);
+  const [docksOpen, setDocksOpen] = useState(true);
 
   // One live Surface per dataset. `tick` only exists to force a re-render after
   // an edit — the Surface changes underneath us without a new object identity.
@@ -63,6 +64,14 @@ export default function App() {
         </span>
 
         <button
+          className="dock-toggle"
+          onClick={() => setDocksOpen((o) => !o)}
+          aria-pressed={docksOpen}
+        >
+          {docksOpen ? "Minimize panels" : "Show panels"}
+        </button>
+
+        <button
           className="chat-toggle"
           onClick={() => setChatOpen((o) => !o)}
           aria-pressed={chatOpen}
@@ -72,6 +81,8 @@ export default function App() {
       </header>
 
       <div className="workspace">
+        {docksOpen && <aside className="left-dock" />}
+
         <main className="body" key={`${seedName}:${tick}`}>
           {view === "Document" && (
             <pre className="prose">{renderDocument(surface)}</pre>
@@ -84,7 +95,7 @@ export default function App() {
           {view === "Cells" && <CellsView surface={surface} onEdit={rerender} />}
         </main>
 
-        {chatOpen && <ChatPanel />}
+        {docksOpen && chatOpen && <ChatPanel />}
       </div>
     </div>
   );
