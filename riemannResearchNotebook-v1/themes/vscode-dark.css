@@ -1,0 +1,14 @@
+/* VS Code Dark+ — drop-in :root override; apply in-app via Account -> Theme, or replace the :root block. */
+/* Values taken from microsoft/vscode theme-defaults (dark_vs.json + dark_plus.json):
+   editor #1E1E1E, sidebar #252526, tabs/header #303031, selection #3A3D41, brand blue #007ACC,
+   foreground #D4D4D4, sideBarTitle #BBBBBB, inactive #808080, numbers #B5CEA8, invalid #F44747,
+   variables #9CDCFE, keywords #C586C0, widget.border #303031, menu.border #454545, scrollbar #424242/#4F4F4F */
+:root{
+  --bg:#1E1E1E; --panel:#252526; --panel2:#2D2D30;
+  --panel3:#3A3A3D; --line:#303031; --line2:#454545;
+  --text:#D4D4D4; --mut:#BBBBBB; --mut2:#808080;
+  --amber:#007ACC; --amber-dim:rgba(0,122,204,.20); --up:#B5CEA8;
+  --dn:#F44747; --blue:#9CDCFE; --violet:#C586C0;
+  --card:#252526; --text-2:#D4D4D4; --msg-user:#3A3D41;
+  --edge-active:#007ACC; --hover-2:#707070; --thumb:#424242;
+}

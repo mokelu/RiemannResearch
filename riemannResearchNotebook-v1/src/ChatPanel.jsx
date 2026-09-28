@@ -1,17 +1,20 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { validateReasoning } from "../notebook/validate.js";
+import { askRiemann } from "./aiClient.js";
 
 /**
- * A modern AI chat dock. It is a self-contained UI — no network calls. The
- * "assistant" replies are simulated locally (see `fakeAssistantReply`) so the
- * panel feels alive without a backend. Wire `send()` to a real model later by
- * swapping that one function.
+ * The chat that feeds the Space. A message goes to the model with the Riemann
+ * contract prompt; the model's raw reply is parsed and pushed through the same
+ * validation boundary every other edit faces. If it is valid, the structure is
+ * handed up to become the Space. If it is not — prose, markdown, a bad tag, a
+ * dangling relation — the reason is shown here, and nothing is adopted. The
+ * model is never quietly repaired.
  */
 
 const SUGGESTIONS = [
-  "Explain this dataset",
-  "What tag fits this sentence?",
-  "Find weak reasoning",
-  "What connects these sentences?",
+  "Break this claim into sentences and tag them",
+  "What assumptions underlie this argument?",
+  "Map how these points support or contradict each other",
 ];
 
 let counter = 0;
@@ -22,50 +25,79 @@ function greeting() {
     id: nextId(),
     role: "assistant",
     text:
-      "I'm Laya, your notebook assistant. Ask me to tag sentences, stress-test a chain of reasoning, or trace how two sentences connect. This is a UI preview — replies here are simulated.",
+      "Ask me to reason about something. I turn your request into tagged sentences and the connections between them, and that structure becomes what the center shows.",
     ts: Date.now(),
   };
 }
 
-export function ChatPanel() {
+export function ChatPanel({ onAdopt }) {
   const [messages, setMessages] = useState([greeting]);
   const [draft, setDraft] = useState("");
-  const [typing, setTyping] = useState(false);
+  const [busy, setBusy] = useState(false);
   const scrollRef = useRef(null);
-  const timerRef = useRef(null);
 
-  // Keep the newest message in view whenever the thread or typing state changes.
+  const push = (msg) =>
+    setMessages((m) => [...m, { id: nextId(), ts: Date.now(), ...msg }]);
+
+  // Keep the newest message in view whenever the thread or busy state changes.
   useLayoutEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages, typing]);
+  }, [messages, busy]);
 
-  useEffect(() => () => clearTimeout(timerRef.current), []);
-
-  function send(text) {
+  async function send(text) {
     const content = (text ?? draft).trim();
-    if (!content || typing) return;
+    if (!content || busy) return;
 
-    const userMsg = { id: nextId(), role: "user", text: content, ts: Date.now() };
-    setMessages((m) => [...m, userMsg]);
+    push({ role: "user", text: content });
     setDraft("");
-    setTyping(true);
+    setBusy(true);
 
-    timerRef.current = setTimeout(() => {
-      const reply = {
-        id: nextId(),
+    try {
+      const raw = await askRiemann(content);
+
+      let candidate;
+      try {
+        candidate = JSON.parse(raw);
+      } catch {
+        push({
+          role: "error",
+          text:
+            "The model did not return valid JSON, so nothing was adopted. It replied:\n\n" +
+            raw,
+        });
+        return;
+      }
+
+      const result = validateReasoning(candidate);
+      if (!result.valid) {
+        push({
+          role: "error",
+          text:
+            "The boundary rejected the model's structure:\n• " +
+            result.errors.join("\n• "),
+        });
+        return;
+      }
+
+      onAdopt(candidate);
+      push({
         role: "assistant",
-        text: fakeAssistantReply(content),
-        ts: Date.now(),
-      };
-      setMessages((m) => [...m, reply]);
-      setTyping(false);
-    }, 700 + Math.random() * 700);
+        text: `Adopted: ${candidate.nodes.length} sentence${
+          candidate.nodes.length === 1 ? "" : "s"
+        } and ${candidate.relations.length} connection${
+          candidate.relations.length === 1 ? "" : "s"
+        }. The center now shows this structure.`,
+      });
+    } catch (error) {
+      push({ role: "error", text: error.message });
+    } finally {
+      setBusy(false);
+    }
   }
 
   function newChat() {
-    clearTimeout(timerRef.current);
-    setTyping(false);
+    setBusy(false);
     setMessages([greeting()]);
   }
 
@@ -74,7 +106,7 @@ export function ChatPanel() {
       <header className="chat-head">
         <span className="chat-dot" aria-hidden="true" />
         <span className="chat-title">Assistant</span>
-        <span className="chat-model">Riemann · local preview</span>
+        <span className="chat-model">Riemann · live boundary</span>
         <button className="chat-new" onClick={newChat} title="Start a new chat">
           New chat
         </button>
@@ -84,10 +116,10 @@ export function ChatPanel() {
         {messages.map((m) => (
           <Message key={m.id} msg={m} />
         ))}
-        {typing && <TypingRow />}
+        {busy && <TypingRow />}
       </div>
 
-      {messages.length <= 1 && !typing && (
+      {messages.length <= 1 && !busy && (
         <div className="chat-suggest">
           {SUGGESTIONS.map((s) => (
             <button key={s} className="suggestion" onClick={() => send(s)}>
@@ -101,7 +133,7 @@ export function ChatPanel() {
         <textarea
           className="chat-input"
           rows={1}
-          placeholder="Message the assistant…"
+          placeholder="Ask the assistant to reason…"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
@@ -114,7 +146,7 @@ export function ChatPanel() {
         <button
           className="chat-send"
           onClick={() => send()}
-          disabled={!draft.trim() || typing}
+          disabled={!draft.trim() || busy}
           title="Send"
         >
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -126,13 +158,26 @@ export function ChatPanel() {
         </button>
       </footer>
       <div className="chat-foot">
-        Replies here are simulated. The assistant can be wrong — check the structure.
+        Replies become the Space only if they clear the validation boundary.
       </div>
     </aside>
   );
 }
 
 function Message({ msg }) {
+  if (msg.role === "error") {
+    return (
+      <div className="msg bot">
+        <div className="avatar error" aria-hidden="true">
+          !
+        </div>
+        <div className="bubble-wrap">
+          <div className="bubble error">{msg.text}</div>
+        </div>
+      </div>
+    );
+  }
+
   const isUser = msg.role === "user";
   return (
     <div className={isUser ? "msg user" : "msg bot"}>
@@ -158,35 +203,11 @@ function TypingRow() {
       <div className="avatar" aria-hidden="true">
         AI
       </div>
-      <div className="bubble typing" aria-label="assistant is typing">
+      <div className="bubble typing" aria-label="assistant is thinking">
         <span />
         <span />
         <span />
       </div>
     </div>
   );
-}
-
-// A stand-in for a real model: keyword-pick a plausible, on-topic reply so the
-// panel demonstrates its full range (empty answer, long answer, list, code).
-function fakeAssistantReply(prompt) {
-  const p = prompt.toLowerCase();
-
-  if (p.includes("tag")) {
-    return "Give me the sentence and I'll pick a registered tag. For a statement you're treating as established, FACT or EVIDENCE fit; for something you're betting on, HYPOTHESIS or PREDICTION.";
-  }
-  if (p.includes("connect") || p.includes("relation") || p.includes("wire")) {
-    return "Connections are the AI's own writing: a relation names how one sentence joins another — implies, supports, leans on. The names are free text on purpose; the structure only asks that both ends exist.";
-  }
-  if (p.includes("weak") || p.includes("reason") || p.includes("chain")) {
-    return "Reading the chain top to bottom: a few premises feed the conclusion, but one hop looks like an assumption doing the work of evidence. I'd pin that node and ask what it rests on.";
-  }
-  if (p.includes("dataset") || p.includes("explain")) {
-    return "This dataset is a small reasoning graph: nodes are tagged sentences, wires are named relations. Flip to the Document tab for the prose read, or Cells to edit them.";
-  }
-  if (p.includes("json")) {
-    return "Here's the shape the AI returns and the validator checks:\n\n{\n  \"nodes\": [ { \"id\": \"n1\", \"text\": \"…\", \"tag\": \"CLAIM\" } ],\n  \"relations\": [ { \"from\": \"n1\", \"relation\": \"implies\", \"to\": \"n2\" } ]\n}";
-  }
-
-  return "Noted. In the real build I'd answer from your live structure — for now this preview only simulates the assistant. Try asking me about tags, connections, or the reasoning chain.";
 }

@@ -465,6 +465,16 @@ button.ghost {
   color: #fff;
 }
 
+.bubble.error {
+  background: rgba(244, 71, 71, 0.12);
+  border-color: var(--error);
+  color: #f4b3b3;
+}
+
+.avatar.error {
+  background: var(--error);
+}
+
 .stamp {
   color: var(--muted);
   font-size: 10px;

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Surface } from "../notebook/render/surface.js";
 import { renderDocument } from "../notebook/projections/document.js";
 import { renderStructure } from "../notebook/projections/structure.js";
@@ -11,41 +11,29 @@ import { SEEDS } from "./seed.js";
 const VIEWS = ["Document", "Graph", "Table", "Cells", "Structure"];
 
 export default function App() {
-  const [seedName, setSeedName] = useState("Reasoning");
   const [view, setView] = useState("Document");
   const [tick, setTick] = useState(0);
   const [chatOpen, setChatOpen] = useState(true);
   const [docksOpen, setDocksOpen] = useState(true);
 
-  // One live Surface per dataset. `tick` only exists to force a re-render after
-  // an edit — the Surface changes underneath us without a new object identity.
-  const surface = useMemo(
-    () => Surface.open(structuredClone(SEEDS[seedName])),
-    [seedName],
-  );
+  // The Space is the live structure. It starts empty and becomes real only when
+  // a validated AI reply is adopted, or an example is loaded to try the views.
+  const [surface, setSurface] = useState(() => Surface.empty());
+
+  // `tick` only exists to force a re-render after an in-place edit — the
+  // Surface changes underneath us without a new object identity.
   const rerender = () => setTick((t) => t + 1);
+  const adopt = (structure) => setSurface(Surface.open(structure));
+  const loadExample = () => adopt(structuredClone(SEEDS.Reasoning));
 
   return (
     <div className="app">
       <header className="topbar">
         <span className="brand">Riemann Notebook</span>
 
-        <label className="picker">
-          dataset&nbsp;
-          <select
-            value={seedName}
-            onChange={(e) => {
-              setSeedName(e.target.value);
-              setTick(0);
-            }}
-          >
-            {Object.keys(SEEDS).map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <button className="chat-toggle" onClick={loadExample}>
+          Load example
+        </button>
 
         <nav className="tabs">
           {VIEWS.map((v) => (
@@ -81,9 +69,9 @@ export default function App() {
       </header>
 
       <div className="workspace">
-        {docksOpen && <aside className="left-dock" />}
+        {/* left dock hidden for now */}
 
-        <main className="body" key={`${seedName}:${tick}`}>
+        <main className="body" key={tick}>
           {view === "Document" && (
             <pre className="prose">{renderDocument(surface)}</pre>
           )}
@@ -95,7 +83,7 @@ export default function App() {
           {view === "Cells" && <CellsView surface={surface} onEdit={rerender} />}
         </main>
 
-        {docksOpen && chatOpen && <ChatPanel />}
+        {docksOpen && chatOpen && <ChatPanel onAdopt={adopt} />}
       </div>
     </div>
   );

@@ -1,0 +1,11 @@
+/* Riemann Paper — drop-in :root override; apply in-app via Account -> Theme, or replace the :root block. */
+/* derived tokens not listed here (--chrome, --on-accent, --grid-line, etc.) follow their defaults. */
+:root{
+  --bg:#FBFAF7; --panel:#F4F3EE; --panel2:#FFFFFF;
+  --panel3:#ECEAE3; --line:#E6E5DF; --line2:#D6D5CE;
+  --text:#14130F; --mut:#45443F; --mut2:#76756E;
+  --amber:#1A4D3E; --amber-dim:#EAF1ED; --up:#1A7F37;
+  --dn:#CF2221; --blue:#0969DA; --violet:#8250DF;
+  --card:#FFFFFF; --text-2:#3A3933; --msg-user:#E7E6DF;
+  --edge-active:#CFCFC7; --hover-2:#C3C2BA; --thumb:#C9C7BE;
+}
