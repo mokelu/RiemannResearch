@@ -1,0 +1,28 @@
+# =====================================================================
+#  UserCollapsesAll.ab
+# =====================================================================
+#  sentence   User Collapse Tree
+#  v4         two call sites, one behavior
+#               line 850     empty-area context menu "Collapse All"
+#                            -> state.expanded.clear()
+#               line 861     header button #btnCollapse
+#                            -> state.expanded.clear()
+#  triggers   header collapse button (line 861) · empty-area context
+#             menu "Collapse All" (line 850)
+#
+#  v4's two sites are literally the same expression: expanded.clear()
+#  then renderTree().  so is this program — one term, one catch, one
+#  Redraw.
+#
+#  note there is no folder-scoped collapse in v4.  the folder context
+#  menu (lines 760-776) offers Expand All and nothing to undo it with.
+#  if that is ever added it lands on this same sentence with an
+#  `onto folder` term, exactly as UserExpandsAll carries its scope.
+
+program UserCollapsesAll
+
+sentence  User Collapse Tree
+enter     tree.collapse.requested
+
+step system collapse tree
+  catch tree.collapse.ok goto Redraw

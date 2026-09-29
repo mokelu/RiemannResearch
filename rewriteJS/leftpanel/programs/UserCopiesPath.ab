@@ -1,0 +1,29 @@
+# =====================================================================
+#  UserCopiesPath.ab
+# =====================================================================
+#  sentence   User Copy Path
+#  v4         copyPath(id)  — IMPLEMENTED
+#             leftpanel_v4.html line 791; menu at line 768 (folder)
+#             and line 785 (file).
+#  triggers   context menu "Copy Path" · the row "more" button
+#
+#  pathOf(id) walks to root and joins the names with "/" (line
+#  792).  no separator logic, no platform branch — that is a
+#  property of v4, not of this program, and it is the sort of thing
+#  the machine will have to be told about when Path stops being a
+#  string and starts being a real object.
+#
+#  `failed` is declared and caught here, and v4 can reach it: line
+#  793 is `navigator.clipboard?.writeText(p).catch(() => {})`.
+#  the rejection happens, and then it is thrown away — a denied
+#  clipboard permission produces silence.  ReportFailure is what the
+#  spec says should happen instead.  specified, not built.
+
+program UserCopiesPath
+
+sentence  User Copy Path
+enter     path.copy.requested
+
+step system copy path
+  catch path.copy.ok     goto Redraw
+  catch path.copy.failed goto ReportFailure

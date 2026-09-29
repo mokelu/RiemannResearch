@@ -1,0 +1,33 @@
+# =====================================================================
+#  UserExpandsFolder.ab
+# =====================================================================
+#  sentence   User Expand Folder
+#  v4         toggleFolder(id)  — IMPLEMENTED, half of it
+#             leftpanel_v4.html line 511.
+#  triggers   click a folder row (line 427-431: select + toggle)
+#             press Enter on a selected folder (line 886-889)
+#             the chevron
+#
+#  v4 DOES NOT SPLIT THIS.  there is one function and it flips a
+#  flag: expanded.has(id) ? delete : add (line 512-513).  the panel
+#  has no "Expand Folder" menu item either — only "Expand All"
+#  (lines 769 and 846).  tasks 29 and 30 in leftpanel_tasks.md both
+#  point at that one flip.
+#
+#  the SENTENCE still splits, and it splits for a reason that has
+#  nothing to do with today's code: expand and collapse are
+#  different intentions with different consequences once the panel
+#  remembers things.  "collapse the folder you just closed" is a
+#  plausible system act; "expand it" is not.  the day collapse
+#  starts doing something extra, the program is already here.
+#
+#  no `failed` result: Expand declares `ok` only (alphabet.ab).
+#  a folder that will not appear is render.failed, once.
+
+program UserExpandsFolder
+
+sentence  User Expand Folder
+enter     folder.expand.requested
+
+step system expand folder
+  catch folder.expand.ok goto Redraw

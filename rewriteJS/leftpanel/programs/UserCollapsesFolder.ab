@@ -1,0 +1,24 @@
+# =====================================================================
+#  UserCollapsesFolder.ab
+# =====================================================================
+#  sentence   User Collapse Folder
+#  v4         toggleFolder(id)  — IMPLEMENTED, the other half
+#             leftpanel_v4.html line 511.
+#  triggers   click an expanded folder row (line 427-431)
+#             press Enter on an expanded folder (line 886-889)
+#             the chevron
+#
+#  see UserExpandsFolder.ab for why this is a separate program from
+#  a single v4 function.  short version: the flip is shared, the
+#  intent is not.
+#
+#  Collapse declares `ok` only — same line of the alphabet, same
+#  reason: it is a flag flip.
+
+program UserCollapsesFolder
+
+sentence  User Collapse Folder
+enter     folder.collapse.requested
+
+step system collapse folder
+  catch folder.collapse.ok goto Redraw

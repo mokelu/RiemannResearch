@@ -1,0 +1,91 @@
+# =====================================================================
+#  grammar.ab   ·   how the symbols may be arranged
+# =====================================================================
+#
+#  Layer 2 of 3:   ALPHABET  ->  GRAMMAR  ->  PROGRAMS
+#
+#  The alphabet does not do anything.  The grammar does not do
+#  anything.  They are both definitions.  This file is the second
+#  definition.  Programs are the first thing in this folder that
+#  can run.
+
+
+# ---------------------------------------------------------------------
+#  shape
+# ---------------------------------------------------------------------
+
+program    = "program"  <Name>
+             "sentence" <actor> <action> <resource> [ "onto" <resource> ]
+             "enter"    <response>
+             <body>
+
+behavior   = "behavior" <Name>
+             <body>
+
+body       = <step>+
+
+step       = "step"    <term>
+             ( "catch" <response>  "goto" <target> )*
+
+term       = <actor> <action> <resource> [ "onto" <resource> ]
+
+target     = <term>          # a step in this same program
+           | <Name>          # a behavior in behaviors/
+           | "halt"
+
+response   = <resource> "." <action> "." <result>
+
+
+# ---------------------------------------------------------------------
+#  rules
+# ---------------------------------------------------------------------
+
+R1   A program has exactly one sentence.  That sentence is its entry.
+
+R2   A behavior has no sentence.  It is reached only by `goto <Name>`.
+
+R3   Every step must catch EVERY result its action declares in
+     alphabet.ab.  A missing catch is a hole, not an omission.
+
+R4   `goto <term>` must name a step inside the same program.
+     Steps are addressed by their term, so terms are unique
+     inside one program.
+
+R5   `goto <Name>` must name a file in behaviors/.  Behavior files
+     are terminal: they end in `halt`.
+
+R6   `enter` must be <sentence-resource>.<sentence-action>.requested
+
+R7   The actor of a step may differ from the actor of the sentence.
+     That is the whole point: a person says `User Open File`,
+     the system answers with `system validate file`.
+
+
+# ---------------------------------------------------------------------
+#  two kinds of user act — do not confuse them
+# ---------------------------------------------------------------------
+#
+#  (a) a user act that STARTS work
+#        -> a sentence
+#        -> gets its own program
+#        example: right-click a file, choose Rename
+#
+#  (b) a user act that ANSWERS the system mid-program
+#        -> a response
+#        -> caught by the program already running
+#        example: click "Delete" in the confirmation dialog
+#                 -> dialog.confirm.accepted
+#                 -> caught by UserDeletesFile
+#
+#  There is no "UserConfirmsDeletion.ab".  Confirmation is an
+#  answer, not a start.
+
+
+# ---------------------------------------------------------------------
+#  suspension
+# ---------------------------------------------------------------------
+#
+#  A step may wait.  `system commit rename` returns nothing until
+#  the person hits Enter, Esc, or clicks away.  The program simply
+#  does not advance until the step emits a response.  No new syntax
+#  is needed for this — it is stated as a comment on the step.

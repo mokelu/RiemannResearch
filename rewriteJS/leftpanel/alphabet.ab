@@ -1,0 +1,131 @@
+# =====================================================================
+#  alphabet.ab   ·   the left panel's vocabulary
+# =====================================================================
+#
+#  Layer 1 of 3 in this folder:   ALPHABET  ->  GRAMMAR  ->  PROGRAMS
+#
+#  This file answers one question only:   WHAT SYMBOLS EXIST?
+#  Nothing here executes. Nothing here points at anything.
+#  A name that is not declared here cannot appear in a program.
+#
+#  source of truth for capability:
+#    riemannResearchNotebook-v1/mockups/leftpanel/leftpanel_v4.html
+#    riemannResearchNotebook-v1/mockups/leftpanel/leftpanel_tasks.md
+#
+#  naming note:  the first column is the ACTOR column.  "User" is a
+#  MEMBER of it, not its name  (rewriteJS foundation §2.5).
+#
+#  authorization is a separate layer and is absent here by design
+#  (rewriteJS foundation SET3).  no "denied" result exists in this
+#  alphabet on purpose.
+
+
+# ---------------------------------------------------------------------
+#  ACTOR      extensible by declare
+# ---------------------------------------------------------------------
+
+declare actor   User          # a person at the panel
+declare actor   System        # the panel itself
+declare actor   App           # declared, unused by this panel
+declare actor   Plugin        # declared, unused by this panel
+
+
+# ---------------------------------------------------------------------
+#  ACTION     shared by every actor.
+#             no action belongs to one actor.  User can Select;
+#             System can Select.  the actor is the third argument,
+#             not a property of the verb.
+#
+#  `results` lists what a STEP of this action may produce.
+#  the word `requested` is available to every action, but only ever
+#  at program entry (see grammar.ab R6).
+#
+#  THE LINE, stated once so you can check every row against it:
+#     an action gets a `failed` result exactly when the machine has
+#     somewhere real to fail TO.  Load reads bytes.  Render paints.
+#     Report writes to a sink.  Those can fail.
+#     Select, Expand and Collapse are in-memory flips of a flag —
+#     they have nothing to fail into, so they declare `ok` only.
+#     A folder that will not expand shows up as render.failed, not
+#     as expand.failed.  One failure per real event, no duplicates.
+# ---------------------------------------------------------------------
+
+# ---- what a person asks for -----------------------------------------
+declare action   Create      results: ok | invalid | failed
+declare action   Rename      results: ok | invalid | exists | cancelled
+declare action   Delete      results: ok | failed
+declare action   Duplicate   results: ok | exists | failed
+declare action   Move        results: ok | invalid | cycle | ignored | failed
+declare action   Open        results: ok | failed
+declare action   Close       results: ok | failed
+declare action   Select      results: ok
+declare action   Expand      results: ok
+declare action   Collapse    results: ok
+declare action   Search      results: ok | empty
+declare action   Copy        results: ok | failed
+declare action   Cancel      results: ok
+
+# ---- what the system does about it ---------------------------------
+declare action   Validate    results: ok | invalid | already_open
+declare action   Load        results: ok | failed
+declare action   Update      results: ok | failed
+declare action   Focus       results: ok | failed
+declare action   Resolve     results: selected | root
+declare action   Render      results: ok | failed
+declare action   Begin       results: ok | failed
+declare action   Confirm     results: accepted | cancelled
+declare action   Report      results: ok | failed
+
+
+# ---------------------------------------------------------------------
+#  RESOURCE
+# ---------------------------------------------------------------------
+
+declare resource File        # a file row
+declare resource Folder      # a folder row
+declare resource Node        # a row of either kind; the untyped view
+declare resource Tree        # the explorer as a whole
+declare resource Tab         # the open-file strip
+declare resource Editor      # the centre surface
+declare resource Path        # the full path string of a node
+declare resource Edit        # a rename in progress
+declare resource Dialog      # a confirmation box
+declare resource Stats       # the "n files / n folders" counters
+declare resource Failure     # what ReportFailure reports.  no v4 surface.
+declare resource Workspace   # declared, unused by this panel
+
+
+# ---------------------------------------------------------------------
+#  RESULT      the third segment of a response
+# ---------------------------------------------------------------------
+
+declare result   ok
+declare result   failed
+declare result   invalid
+declare result   exists
+declare result   cancelled
+declare result   cycle
+declare result   ignored
+declare result   empty
+declare result   requested
+declare result   root
+declare result   selected
+declare result   already_open
+declare result   accepted
+
+
+# ---------------------------------------------------------------------
+#  RESPONSE    the fourth column — derived, never declared
+# ---------------------------------------------------------------------
+#
+#     response  =  resource . action . result
+#
+#     load + file  + ok       ->  file.load.ok
+#     open + file             ->  file.open.requested
+#     resolve + folder        ->  folder.resolve.selected
+#
+#  so the fourth column of the table exists, but you never write it,
+#  and the alphabet can never disagree with itself about it.
+#
+#  "response" is what rewriteJS foundation §2.4 calls EVENT.
+#  "response catcher" is the `catch` line in a program.

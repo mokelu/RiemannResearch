@@ -1,0 +1,33 @@
+# =====================================================================
+#  ReportFailure.ab   ·   shared terminal behavior
+# =====================================================================
+#  reached by:   every `goto ReportFailure` in programs/
+#
+#  decision D4:  ReportFailure is COMPOSED.  it is not a primitive
+#  and it is not a magic `throw`.  it is built out of the same
+#  alphabet as everything else:
+#
+#       system report failure   ->  failure.report.ok | failed
+#
+#  that is the whole composition.  one step, one response, one halt.
+#  the point is that the failure becomes a TERM in the trace like any
+#  other term.  if the panel goes quiet after a bad delete, the trace
+#  still shows that the failure was reported.
+#
+#  v4 equivalence:  none.  leftpanel_v4.html has no failure surface.
+#                   commitEdit() silently restores the original name
+#                   (line 538); moveNode() silently returns on all
+#                   four of its guard branches (lines 616-623);
+#                   copyPath() swallows the clipboard rejection with
+#                   `.catch(() => {})` (line 793).
+#
+#  this is the first place where the machine is AHEAD of the build.
+#  that is allowed and is recorded here rather than hidden: I7 says
+#  the code must emit what the spec declares, and these emissions do
+#  not exist yet.  they are specified, not built.
+
+behavior ReportFailure
+
+step system report failure
+  catch failure.report.ok     halt
+  catch failure.report.failed halt

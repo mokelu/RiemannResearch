@@ -1,0 +1,40 @@
+# =====================================================================
+#  UserDeletesFile.ab
+# =====================================================================
+#  sentence   User Delete File
+#  v4         deleteNode(id) + showConfirm(...)  — IMPLEMENTED
+#             leftpanel_v4.html line 580; dialog at line 799.
+#  triggers   context menu "Delete" (line 783) · Del · Backspace
+#             (lines 885-886)
+#
+#  the confirmation is NOT its own program.  clicking "Delete" in
+#  the dialog is an answer — dialog.confirm.accepted — caught by the
+#  program already running (grammar.ab (b)).  there is no
+#  UserConfirmsDeletion.ab.
+#
+#  term note:  the step is `system confirm dialog`, not
+#  `system confirm deletion`.  a response is resource.action.result,
+#  so the resource must be the declared one — Dialog, not the verb
+#  "deletion".  the English reads worse; the grammar reads correct.
+
+program UserDeletesFile
+
+sentence  User Delete File
+enter     file.delete.requested
+
+# suspends: the dialog waits for a click, an overlay click, or Esc
+# (lines 815-817 and 822-824).  all three are answers.
+step system confirm dialog
+  catch dialog.confirm.accepted  goto system delete file
+  catch dialog.confirm.cancelled goto halt
+
+step system delete file
+  catch file.delete.ok     goto system close tab
+  catch file.delete.failed goto ReportFailure
+
+# v4 closes the tab of the deleted file inside the same callback
+# (line 594) and reassigns state.active (595-597).  written out as
+# its own step so the tab change is a separate event in the trace.
+step system close tab
+  catch tab.close.ok     goto Redraw
+  catch tab.close.failed goto Redraw

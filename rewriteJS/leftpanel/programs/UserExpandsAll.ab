@@ -1,0 +1,37 @@
+# =====================================================================
+#  UserExpandsAll.ab
+# =====================================================================
+#  sentence   User Expand Tree
+#  v4         three separate inlined lambdas, one behavior
+#               line 769-775   folder context menu "Expand All"
+#                              -> expands only that folder's subtree
+#               line 846-849   empty-area menu "Expand All"
+#                              -> walk(root), every folder
+#               (no header button for this)
+#  triggers   folder context menu "Expand All" · empty-area context
+#             menu "Expand All"
+#
+#  TWO THINGS worth seeing here.
+#
+#  1.  the resource is TREE, not FOLDER, even when the menu sat on
+#      a folder.  the response the machine routes on is tree.expand.*
+#      either way, so the scope does not earn a second step.  it is
+#      the act's second resource, carried in the term as `onto` —
+#      grammar.ab already allows it:
+#
+#          step system expand tree onto folder     # scoped, line 769
+#          step system expand tree                 # whole, line 846
+#
+#      one step, one catch, two call sites.  what the panel expanded
+#      is in the term; what the machine waits for is not.
+#
+#  2.  v4 wrote this three times as three anonymous lambdas.  here
+#      it is one sentence and one program, because it is one act.
+
+program UserExpandsAll
+
+sentence  User Expand Tree
+enter     tree.expand.requested
+
+step system expand tree onto folder
+  catch tree.expand.ok goto Redraw

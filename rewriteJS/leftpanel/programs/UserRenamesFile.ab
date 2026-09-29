@@ -1,0 +1,34 @@
+# =====================================================================
+#  UserRenamesFile.ab
+# =====================================================================
+#  sentence   User Rename File
+#  v4         startRename(id) + commitEdit(id, value)  — IMPLEMENTED
+#             leftpanel_v4.html lines 517 and 524.
+#  triggers   context menu "Rename" (line 781) · F2 (line 884)
+#             double-click a file row (line 433-435)
+#
+#  there is NO "cancel" program.  Esc is an ANSWER, not a start —
+#  grammar.ab (a)/(b).  it arrives as file.rename.cancelled from the
+#  input keydown at line 401 and is caught below.  a blur commits
+#  instead (line 403-404), which is why `cancelled` exists at all:
+#  only Esc produces it.
+#
+#  `exists` is declared and caught but v4 never emits it.
+#  commitEdit() writes node.name with no sibling check (line 541).
+#  see README "specified, not built".
+
+program UserRenamesFile
+
+sentence  User Rename File
+enter     file.rename.requested
+
+step system begin edit
+  catch edit.begin.ok     goto system rename file
+  catch edit.begin.failed goto ReportFailure
+
+# suspends until Enter, Esc, or blur (line 400-405).
+step system rename file
+  catch file.rename.ok        goto Redraw
+  catch file.rename.invalid   goto Redraw
+  catch file.rename.exists    goto Redraw
+  catch file.rename.cancelled goto Redraw

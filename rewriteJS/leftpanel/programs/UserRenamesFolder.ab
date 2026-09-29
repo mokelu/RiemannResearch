@@ -1,0 +1,34 @@
+# =====================================================================
+#  UserRenamesFolder.ab
+# =====================================================================
+#  sentence   User Rename Folder
+#  v4         startRename(id) + commitEdit(id, value)  — IMPLEMENTED
+#             leftpanel_v4.html lines 517 and 524.
+#  triggers   context menu "Rename" (line 765) · F2 (line 884)
+#
+#  v4 has no branch of its own here: startRename and commitEdit do
+#  not test node.type, so file-rename and folder-rename run through
+#  identical code today.  The SENTENCE is still distinct, because the
+#  resource is distinct — folder.rename.* is a different response
+#  from file.rename.*, and a different program must catch it.
+#
+#  The day folder-rename gains its own rule — "a folder may not take
+#  the name of its sibling file", or "renaming the root is refused" —
+#  the program is already waiting for it.  Nothing has to be added
+#  except a step.  That is why the split exists before the need does.
+
+program UserRenamesFolder
+
+sentence  User Rename Folder
+enter     folder.rename.requested
+
+step system begin edit
+  catch edit.begin.ok     goto system rename folder
+  catch edit.begin.failed goto ReportFailure
+
+# suspends until Enter, Esc, or blur (line 400-405).
+step system rename folder
+  catch folder.rename.ok        goto Redraw
+  catch folder.rename.invalid   goto Redraw
+  catch folder.rename.exists    goto Redraw
+  catch folder.rename.cancelled goto Redraw

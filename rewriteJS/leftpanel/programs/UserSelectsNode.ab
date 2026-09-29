@@ -1,0 +1,30 @@
+# =====================================================================
+#  UserSelectsNode.ab
+# =====================================================================
+#  sentence   User Select Node
+#  v4         selectNode(id)  — IMPLEMENTED
+#             leftpanel_v4.html line 506.
+#  triggers   click a row (line 427-432) · the row "more" button
+#             (line 419) · right-click (line 439)
+#
+#  NOTE the term is `system select node` with resource NODE, even
+#  when a File was clicked.  selection is the untyped view —
+#  grammar R7 lets the actor change between sentence and step, and
+#  the resource changes for the same reason: nothing about being
+#  selected knows what kind of row it is.
+#
+#  this program HALTS instead of going to Redraw, and that is the
+#  honest answer.  v4's selectNode() sets state.selected and calls
+#  updateSelection() (lines 485-509), which walks existing rows
+#  toggling the `.selected` class.  it repaints nothing, because
+#  nothing structural changed — no counts, no tabs, no editor.
+#  sending it to Redraw would claim four paints that never happen.
+#  an unimplemented repaint is as wrong a trace as a missing one.
+
+program UserSelectsNode
+
+sentence  User Select Node
+enter     node.select.requested
+
+step system select node
+  catch node.select.ok halt

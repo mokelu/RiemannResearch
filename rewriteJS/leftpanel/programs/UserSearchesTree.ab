@@ -1,0 +1,33 @@
+# =====================================================================
+#  UserSearchesTree.ab
+# =====================================================================
+#  sentence   User Search Tree
+#  v4         $('#search') input listener  — IMPLEMENTED
+#             leftpanel_v4.html lines 872-875.
+#  triggers   every keystroke in the search field
+#             the field also swallows keydowns (line 876) so F2/Del
+#             never reach the tree while typing.
+#
+#  IS THIS A START OR AN ANSWER?  grammar.ab (a)/(b) says a start:
+#  each keystroke is its OWN act and re-fires the SAME sentence.
+#  Compare rename, where typing is part of a suspended step — the
+#  difference is that rename commits once, on Enter, while search
+#  has no commit.  there is nothing to wait for.
+#
+#  so: one sentence, fired per key, each firing runs the program
+#  once and halts.  no loop, no self-goto.  v4 agrees — the handler
+#  sets state.query and calls renderTree() and returns.
+#
+#  `empty` is a real result, not an error: v4 line 350-355 swaps the
+#  tree body for "No matching files" when the filter matches nothing
+#  but a query is present.  it still goes to Redraw, because the
+#  empty state is drawn by the same paint as the full tree.
+
+program UserSearchesTree
+
+sentence  User Search Tree
+enter     tree.search.requested
+
+step system search tree
+  catch tree.search.ok     goto Redraw
+  catch tree.search.empty  goto Redraw
