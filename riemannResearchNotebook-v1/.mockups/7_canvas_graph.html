@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riemann Research — Canvas Graph</title>
+<style>
+  :root {
+    --bg:#FAF9F5;--panel:#FFFFFF;--surface:#F2F1EC;--ink:#14130F;--ink-2:#45443F;
+    --muted:#76756E;--muted-2:#9A9992;--border:#E6E5DF;--border-strong:#D6D5CE;
+    --accent:#1A4D3E;--accent-soft:#EAF1ED;
+    --amber:#B8860B;--amber-soft:#F6ECD9;
+    --blue:#3A6B9C;--blue-soft:#E8EDF5;
+    --purple:#6B4A8C;--purple-soft:#F0EAF5;
+    --red:#9C3A3A;--red-soft:#F5EAEA;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+    --serif:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;-webkit-font-smoothing:antialiased}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+
+  /* ============ LANDING ============ */
+  .landing{max-width:640px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:40px 20px;transition:opacity .25s}
+  .landing.hidden{display:none}
+  .brand{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--muted);margin-bottom:32px}
+  .brand .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  .headline{font-family:var(--serif);font-size:27px;font-weight:600;margin-bottom:6px}
+  .sub{font-size:14px;color:var(--muted);margin-bottom:22px;max-width:480px}
+  .input-row{display:flex;gap:8px}
+  .input{flex:1;font-family:var(--serif);font-size:16.5px;color:var(--ink);background:var(--panel);border:1.5px solid var(--border);border-radius:10px;padding:14px 18px;outline:none;transition:border-color .2s,box-shadow .2s}
+  .input::placeholder{color:var(--muted-2);font-style:italic}
+  .input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,77,62,.08)}
+  .submit{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:#fff;background:var(--accent);border-radius:10px;padding:14px 22px;white-space:nowrap}
+  .submit:hover{opacity:.87}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+  .chip{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 13px}
+  .chip:hover{color:var(--accent);border-color:var(--accent)}
+
+  /* ============ PAGE ============ */
+  .shell{max-width:760px;margin:0 auto;padding:24px 20px 110px;display:none}
+  .shell.visible{display:block}
+  .page-brand{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--muted);margin-bottom:22px}
+  .page-brand .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  .nb-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+  .nb-q{font-family:var(--serif);font-size:19px;font-weight:600;color:var(--ink);line-height:1.35;max-width:520px}
+
+  /* View tabs */
+  .view-tabs{display:flex;gap:2px;margin:16px 0 0;border-bottom:1px solid var(--border)}
+  .view-tab{padding:9px 13px;font-size:12.5px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s;display:flex;align-items:center;gap:6px}
+  .view-tab:hover{color:var(--ink-2)}
+  .view-tab.active{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+  .view-panel{display:none;padding-top:22px}
+  .view-panel.active{display:block}
+
+  /* ============ DOCUMENT VIEW ============ */
+  .doc-content{font-family:var(--serif);font-size:16px;line-height:1.75;color:var(--ink);max-width:560px}
+  .doc-content p{margin:0 0 1.1em}
+  .doc-content p:last-child{margin-bottom:0}
+
+  /* ============ CANVAS GRAPH ============ */
+  .cg{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .cg-header{display:grid;grid-template-columns:36px 90px 1fr 56px;gap:0;padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .cg-row{display:grid;grid-template-columns:36px 90px 1fr 56px;gap:0;align-items:center;padding:0;border-bottom:1px solid var(--border);font-size:12.5px;cursor:pointer;transition:background .12s}
+  .cg-row:last-child{border-bottom:none}
+  .cg-row:hover{background:rgba(26,77,62,.02)}
+  .cg-row.open{background:var(--accent-soft)}
+  .cg-num{font-family:var(--mono);font-size:11.5px;font-weight:600;padding:10px 14px;color:var(--muted)}
+  .cg-tag{font-family:var(--mono);font-size:10px;letter-spacing:.05em;padding:10px 0;font-weight:600}
+  .cg-stmt{padding:10px 0;color:var(--ink);line-height:1.4}
+  .cg-weight{font-family:var(--mono);font-size:11.5px;text-align:right;padding:10px 14px;font-weight:600}
+  .cg-weight.neg{color:var(--amber)}
+  .cg-weight.pos{color:var(--accent)}
+  .cg-weight.neutral{color:var(--muted)}
+  .cg-expand{font-family:var(--mono);font-size:10px;color:var(--muted-2);padding:0 14px;text-align:right;transition:transform .2s}
+  .cg-row.open .cg-expand{transform:rotate(90deg)}
+
+  /* Accordion panel */
+  .cg-detail{display:none;border-top:1px solid var(--border);background:var(--surface);padding:16px 18px}
+  .cg-row.open + .cg-detail{display:block}
+  .cg-detail-inner{max-width:100%}
+
+  /* ============ COMPONENT: SLIDER ============ */
+  .comp-slider{display:flex;flex-direction:column;gap:8px}
+  .comp-slider label{font-size:12px;font-weight:600;color:var(--ink)}
+  .comp-slider .row{display:flex;align-items:center;gap:12px}
+  .comp-slider input[type=range]{flex:1;accent-color:var(--amber);height:6px}
+  .comp-slider .val{font-family:var(--mono);font-size:13px;color:var(--amber);font-weight:700;min-width:40px}
+  .comp-slider .hint{font-size:11px;color:var(--muted)}
+
+  /* ============ COMPONENT: CANDLESTICK CHART ============ */
+  .comp-chart{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px;overflow:hidden}
+  .comp-chart-title{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .comp-chart svg{width:100%;height:auto;display:block}
+
+  /* ============ COMPONENT: SPARKLINE ============ */
+  .comp-spark{display:flex;align-items:center;gap:12px}
+  .comp-spark svg{flex:none;width:120px;height:32px}
+  .comp-spark .label{font-size:11px;color:var(--muted)}
+
+  /* ============ COMPONENT: TOGGLE ============ */
+  .comp-toggle{display:flex;align-items:center;gap:10px}
+  .comp-toggle .track{width:36px;height:20px;border-radius:10px;background:var(--border-strong);position:relative;cursor:pointer;transition:background .2s}
+  .comp-toggle .track.on{background:var(--accent)}
+  .comp-toggle .knob{width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+  .comp-toggle .track.on .knob{left:18px}
+  .comp-toggle .lbl{font-size:12px;color:var(--ink)}
+
+  /* ============ COMPONENT: ANSWER CARD ============ */
+  .comp-answer{background:var(--accent);border-radius:10px;padding:18px 20px;color:#fff}
+  .comp-answer .score{font-family:var(--mono);font-size:32px;font-weight:700;line-height:1}
+  .comp-answer .unit{font-size:14px;font-weight:400;opacity:.65;margin-left:2px}
+  .comp-answer .verdict{font-size:13px;font-weight:600;margin-top:6px}
+  .comp-answer .detail{font-size:11px;color:rgba(255,255,255,.72);margin-top:4px;line-height:1.5}
+  .comp-answer .breakdown{margin-top:14px;display:flex;flex-direction:column;gap:5px}
+  .comp-answer .brow{display:flex;align-items:center;gap:8px;font-size:11px}
+  .comp-answer .brow .blbl{width:110px;color:rgba(255,255,255,.7);flex-shrink:0}
+  .comp-answer .brow .bbar{height:6px;border-radius:3px;background:rgba(255,255,255,.25);flex:1}
+  .comp-answer .brow .bfill{height:100%;border-radius:3px;background:#fff}
+  .comp-answer .brow .bnum{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.7);min-width:40px;text-align:right}
+
+  /* ============ COMPONENT: EVIDENCE LIST ============ */
+  .comp-evlist{display:flex;flex-direction:column;gap:6px}
+  .comp-evlist .evitem{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:7px;font-size:12px;cursor:pointer;transition:opacity .15s}
+  .comp-evlist .evitem.off{opacity:.38}
+  .comp-evlist .evitem .tick{width:15px;height:15px;border-radius:4px;border:1.5px solid var(--blue);display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;flex-shrink:0;background:var(--blue)}
+  .comp-evlist .evitem.off .tick{background:#fff;color:transparent;border-color:var(--border-strong)}
+  .comp-evlist .evitem .elbl{flex:1}
+  .comp-evlist .evitem .esrc{font-family:var(--mono);font-size:9px;color:var(--muted);display:block;margin-top:1px}
+  .comp-evlist .evitem .econtrib{font-family:var(--mono);font-size:11px;font-weight:700;flex-shrink:0}
+  .comp-evlist .evitem .econtrib.neg{color:var(--amber)}
+  .comp-evlist .evitem .econtrib.pos{color:var(--accent)}
+
+  /* ============ FOOTER ============ */
+  .footnote{font-size:11px;color:var(--muted-2);margin-top:18px;line-height:1.5}
+
+  /* ============ BOTTOM ASK BAR ============ */
+  .bottom-ask{position:fixed;left:0;right:0;bottom:0;background:rgba(250,249,245,.92);backdrop-filter:blur(10px);border-top:1px solid var(--border);padding:14px 20px;display:none;z-index:50}
+  .bottom-ask.visible{display:block}
+  .bottom-ask-inner{max-width:760px;margin:0 auto;display:flex;gap:8px}
+  .bottom-input{flex:1;font-family:var(--serif);font-size:15px;color:var(--ink);background:var(--panel);border:1.5px solid var(--border);border-radius:10px;padding:11px 16px;outline:none;transition:border-color .2s,box-shadow .2s}
+  .bottom-input::placeholder{color:var(--muted-2);font-style:italic}
+  .bottom-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26,77,62,.08)}
+  .bottom-submit{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:#fff;background:var(--accent);border-radius:10px;padding:0 20px;white-space:nowrap}
+  .bottom-submit:hover{opacity:.87}
+
+  @media(max-width:560px){
+    .input-row{flex-direction:column}
+    .cg-header,.cg-row{grid-template-columns:28px 66px 1fr 44px;font-size:11px}
+    .cg-num{padding:8px 10px}
+    .cg-weight{padding:8px 10px}
+    .cg-expand{padding:0 10px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LANDING ============ -->
+<div class="landing" id="landing">
+  <div class="brand"><span class="dot"></span>RIEMANN RESEARCH</div>
+  <div class="headline">What do you want to know?</div>
+  <div class="sub">Ask a question. You'll get a structured answer — viewable as a Document or a Canvas Graph.</div>
+  <div class="input-row">
+    <input class="input" id="qInput" type="text" placeholder="Will Okafor outscore Mensah this week?" />
+    <button class="submit" id="qSubmit">ASK</button>
+  </div>
+  <div class="chips">
+    <button class="chip" data-q="Will Okafor outscore Mensah this week?">Okafor vs Mensah?</button>
+    <button class="chip" data-q="Which mean-reversion strategy works across FDXT, FT, MO, and FONDEAD in Q4?">Multi-asset strategy</button>
+    <button class="chip" data-q="What drove the Q3 revenue increase, and is it sustainable?">Q3 revenue</button>
+    <button class="chip" data-q="Will Lionel Messi reach the age of 72?">Messi → 72?</button>
+  </div>
+</div>
+
+<!-- ============ PAGE ============ -->
+<div class="shell" id="shell">
+  <div class="page-brand"><span class="dot"></span>RIEMANN RESEARCH</div>
+  <div class="nb-topbar">
+    <div class="nb-q" id="nbQ"></div>
+  </div>
+
+  <div class="view-tabs" id="viewTabs">
+    <button class="view-tab active" data-view="canvas">Canvas Graph</button>
+    <button class="view-tab" data-view="document">Document</button>
+  </div>
+
+  <!-- CANVAS GRAPH -->
+  <div class="view-panel active" id="panel-canvas">
+    <div class="cg" id="cgTable"></div>
+    <div class="footnote">Click any row to expand. Adjust assumptions and evidence to recompute the answer.</div>
+  </div>
+
+  <!-- DOCUMENT -->
+  <div class="view-panel" id="panel-document">
+    <div class="doc-content" id="docContent"></div>
+  </div>
+</div>
+
+<!-- ============ BOTTOM ASK BAR ============ -->
+<div class="bottom-ask" id="bottomAsk">
+  <div class="bottom-ask-inner">
+    <input class="bottom-input" id="bottomInput" type="text" placeholder="Ask a follow-up…" autocomplete="off" />
+    <button class="bottom-submit" id="bottomSubmit">ASK</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// SCENARIOS
+// ============================================================
+const tagColor = { QUESTION:'#14130F', EVIDENCE:'#2A6B57', ASSUMPTION:'#B8860B', ANSWER:'#1A4D3E', FACT:'#3A6B9C', OBSERVATION:'#6B4A8C' };
+
+const scenarios = {
+  okafor: {
+    question: 'Will Okafor outscore Mensah this week?',
+    doc: [
+      "Okafor's usage has climbed six weeks straight. He took the lead-back role in week 7. The opponent's best pass-rusher is out this Sunday. Two tough matchups in the stretch, but the volume is there.",
+      "The ankle concern is the big unknown — staying conservative on that until Friday's reports land.",
+      "After running the numbers: Okafor over Mensah, weeks 13 through 16."
+    ],
+    rows: [
+      { id:1, type:'QUESTION', text:'Will Okafor outscore Mensah this week?', weight:null, component:'answer',
+        answer:{ score:'+3.2', unit:'pts', verdict:'Okafor over Mensah — weeks 13–16', detail:'Usage trend and role change outweigh schedule risk. Conservative on injury until Friday.',
+          breakdown:[{l:'Usage trend',v:3.6,w:78},{l:'Role change',v:2.6,w:60},{l:'Opponent DE out',v:2.0,w:48},{l:'Schedule risk',v:-1.6,w:35,neg:true},{l:'Weather',v:-1.2,w:28,neg:true}] }},
+      { id:2, type:'EVIDENCE', text:'Usage trend rising, last 6 weeks', weight:3.6, component:'sparkline',
+        spark:{ points:[28,31,34,38,42,47,52], label:'Snap share % — weeks 7→12', color:'#2A6B57' }},
+      { id:3, type:'EVIDENCE', text:'Took the lead-back role after week 7', weight:2.6, component:'none' },
+      { id:4, type:'EVIDENCE', text:"Opponent's best pass-rusher ruled out", weight:2.0, component:'none' },
+      { id:5, type:'EVIDENCE', text:'Two tough matchups in the stretch', weight:-1.6, component:'none' },
+      { id:6, type:'EVIDENCE', text:'One outdoor game, wind risk', weight:-1.2, component:'none' },
+      { id:7, type:'ASSUMPTION', text:"Okafor's usage holds", weight:2.4, component:'slider',
+        slider:{ id:'usage', min:40, max:100, value:85, fmt:v=>v+'%', hint:'Share of backfield touches, weeks 13–16' }},
+      { id:8, type:'ASSUMPTION', text:'Conservative injury adjustment', weight:0, component:'toggle',
+        toggle:{ id:'injury', value:true, hint:"Discount until Friday's practice reports clear him" }}
+    ]
+  },
+
+  trading: {
+    question: 'Which mean-reversion strategy works across FDXT, FT, MO, and FONDEAD in Q4?',
+    doc: [
+      "A 14-day lookback with 1.5σ entry threshold and vol-adjusted sizing produces the most consistent signal across all four assets. The strategy captures mean-reversion alpha in FDXT and FT while avoiding overfitting in the thinner MO and FONDEAD books.",
+      "Transaction costs drag about 1.2% annually. Without them, the edge looks larger — but that is not reality.",
+      "The honest risk is that FONDEAD only has one year of hourly data. The signal there is fragile."
+    ],
+    rows: [
+      { id:1, type:'QUESTION', text:'Which mean-reversion strategy works across FDXT, FT, MO, and FONDEAD in Q4?', weight:null, component:'answer',
+        answer:{ score:'+18.4', unit:'% ann.', verdict:'14-day lookback, 1.5σ entry, vol-adjusted', detail:'Sharpe 1.42 · Max DD −8.3% · 73% win rate across all four assets.',
+          breakdown:[{l:'FDXT signal',v:8.2,w:72},{l:'FT carry',v:5.1,w:55},{l:'MO vol edge',v:3.8,w:42},{l:'Tx costs',v:-1.2,w:22,neg:true}] }},
+      { id:2, type:'EVIDENCE', text:'FDXT — 3 years of tick data, strongest signal', weight:8.2, component:'candlestick',
+        candle:{ title:'FDXT — 90-day price action', data:[44,43.5,43,44.2,45,44.8,43.2,42.5,43,44.5,45.5,46,45.2,44,43.8,44.5,45.8,46.2,47,46.5] }},
+      { id:3, type:'EVIDENCE', text:'FT — 3 years daily OHLCV, consistent carry', weight:5.1, component:'candlestick',
+        candle:{ title:'FT — 90-day price action', data:[102,101.5,101,102.5,103,102.8,101.5,100.8,101.2,102.8,103.5,104,103.2,102,101.8,102.5,103.8,104.2,105,104.5] }},
+      { id:4, type:'EVIDENCE', text:'MO — 2 years tick data, thinner book', weight:3.8, component:'none' },
+      { id:5, type:'EVIDENCE', text:'FONDEAD — only 1 year hourly, fragile signal', weight:2.1, component:'none' },
+      { id:6, type:'EVIDENCE', text:'Transaction costs at −1.2% annually', weight:-1.2, component:'none' },
+      { id:7, type:'ASSUMPTION', text:'Lookback window', weight:0, component:'slider',
+        slider:{ id:'lookback', min:5, max:30, value:14, fmt:v=>v+' days', hint:'Number of days for mean-reversion signal' }},
+      { id:8, type:'ASSUMPTION', text:'Entry threshold', weight:0, component:'slider',
+        slider:{ id:'threshold', min:1, max:3, value:1.5, fmt:v=>v+'σ', hint:'Standard deviations from mean to trigger entry' }},
+      { id:9, type:'ASSUMPTION', text:'Transaction costs included', weight:-1.2, component:'toggle',
+        toggle:{ id:'txcost', value:true, hint:'Include realistic transaction costs in backtest' }}
+    ]
+  },
+
+  business: {
+    question: 'What drove the Q3 revenue increase, and is it sustainable?',
+    doc: [
+      "Q3 revenue came in at $2.4M, up 22% quarter-over-quarter. The growth was driven primarily by new logo acquisition ($340K), expansion revenue from existing accounts ($280K), and three enterprise deals ($190K).",
+      "Churn remained flat at $85K — the lowest in four quarters. The seasonal adjustment confirms this is real growth, not just timing.",
+      "The Q4 projection depends on whether the enterprise pipeline closes. At current churn, the base case holds. The risk is the partner revenue track, which has incomplete data."
+    ],
+    rows: [
+      { id:1, type:'QUESTION', text:'What drove the Q3 revenue increase, and is it sustainable?', weight:null, component:'answer',
+        answer:{ score:'$2.4M', unit:'Q3', verdict:'+22% QoQ · sustainable at current churn', detail:'New logos, expansion, and enterprise deals drove the growth.',
+          breakdown:[{l:'New logos',v:340,w:68},{l:'Expansion',v:280,w:55},{l:'Enterprise',v:190,w:42},{l:'Churn drag',v:-85,w:28,neg:true}] }},
+      { id:2, type:'EVIDENCE', text:'Stripe recurring revenue data confirms $2.4M', weight:8, component:'barchart',
+        barch:{ title:'Quarterly Revenue', bars:[{l:'Q1',v:1.6,c:'var(--border-strong)'},{l:'Q2',v:1.97,c:'var(--border-strong)'},{l:'Q3',v:2.4,c:'var(--purple)'},{l:'Q4?',v:2.2,c:'var(--purple-soft)',dash:true}] }},
+      { id:3, type:'EVIDENCE', text:'HubSpot: 34 new logos closed in Q3', weight:6, component:'none' },
+      { id:4, type:'EVIDENCE', text:'Intercom expansion signals from 12 accounts', weight:4, component:'none' },
+      { id:5, type:'EVIDENCE', text:'Three enterprise deals totaling $190K', weight:3, component:'none' },
+      { id:6, type:'EVIDENCE', text:'Churn flat at $85K — lowest in 4 quarters', weight:5, component:'none' },
+      { id:7, type:'EVIDENCE', text:'Partner revenue data incomplete — weak signal', weight:-2, component:'none' },
+      { id:8, type:'ASSUMPTION', text:'Include expansion revenue', weight:0, component:'toggle',
+        toggle:{ id:'expansion', value:true, hint:'Count expansion revenue from existing accounts' }},
+      { id:9, type:'ASSUMPTION', text:'Churn model', weight:0, component:'slider',
+        slider:{ id:'churn', min:0, max:100, value:85, fmt:v=>v+'%', hint:'How much of historical churn rate to assume' }}
+    ]
+  },
+
+  messi: {
+    question: 'Will Lionel Messi reach the age of 72?',
+    doc: [
+      "Messi is currently in his late thirties, so this question reaches about 34 years into the future — well past anything sports data alone can speak to.",
+      "The baseline comes from Argentine male life expectancy. On top of that, elite athletes as a group measurably outlive the general population, and high socioeconomic status adds a further, separate effect.",
+      "The honest uncertainty is family medical history, which isn't public. Assuming continued access to elite healthcare, the odds land comfortably above the population baseline."
+    ],
+    rows: [
+      { id:1, type:'QUESTION', text:'Will Lionel Messi reach the age of 72?', weight:null, component:'answer',
+        answer:{ score:'78', unit:'%', verdict:'Likely — comfortably above the population baseline', detail:'Elite athletic conditioning and top-tier healthcare outweigh actuarial uncertainty.',
+          breakdown:[{l:'Life expectancy baseline',v:72.9,w:72},{l:'Athlete longevity bonus',v:6,w:55},{l:'SES extension',v:4,w:40},{l:'Unknown family history',v:-5,w:35,neg:true}] }},
+      { id:2, type:'FACT', text:'Argentine male life expectancy at birth ≈ 72.9 years', weight:8, component:'gauge',
+        gauge:{ value:72.9, max:100, label:'Years — actuarial baseline', color:'var(--blue)' }},
+      { id:3, type:'EVIDENCE', text:'Elite athletes show lower cardiovascular mortality risk', weight:6, component:'none' },
+      { id:4, type:'EVIDENCE', text:'High socioeconomic status independently extends life expectancy', weight:4, component:'none' },
+      { id:5, type:'EVIDENCE', text:'Family medical history not publicly known', weight:-5, component:'none' },
+      { id:6, type:'EVIDENCE', text:'Career included recurring soft-tissue injuries', weight:-2, component:'none' },
+      { id:7, type:'ASSUMPTION', text:'Elite-athlete health advantage applies', weight:0, component:'slider',
+        slider:{ id:'health', min:0, max:100, value:75, fmt:v=>v+'%', hint:'Cardiovascular and metabolic benefit in retired top-level athletes' }},
+      { id:8, type:'ASSUMPTION', text:'Continued access to top-tier healthcare', weight:0, component:'toggle',
+        toggle:{ id:'care', value:true, hint:'Assumes ongoing private medical monitoring' }}
+    ]
+  }
+};
+
+let activeScenario = scenarios.okafor;
+
+function pickScenario(q) {
+  const t = q.toLowerCase();
+  if (t.includes('messi') || (t.includes('age') && /\d/.test(t))) return scenarios.messi;
+  if (t.includes('fdxt') || t.includes('strategy') || t.includes('mean-reversion')) return scenarios.trading;
+  if (t.includes('revenue') || t.includes('q3') || t.includes('sustainable')) return scenarios.business;
+  return scenarios.okafor;
+}
+
+// ============================================================
+// RENDER CANVAS GRAPH
+// ============================================================
+function renderCG(scn) {
+  const el = document.getElementById('cgTable');
+  let html = `<div class="cg-header"><span>#</span><span>Type</span><span>Statement</span><span style="text-align:right">Weight</span></div>`;
+  scn.rows.forEach(r => {
+    const color = tagColor[r.type] || '#76756E';
+    const wClass = r.weight === null ? 'neutral' : r.weight >= 0 ? 'pos' : 'neg';
+    const wText = r.weight === null ? '—' : (r.weight >= 0 ? '+' : '') + r.weight.toFixed(1);
+    html += `<div class="cg-row" data-id="${r.id}">
+      <span class="cg-num">${r.id}</span>
+      <span class="cg-tag" style="color:${color}">${r.type}</span>
+      <span class="cg-stmt">${r.text}</span>
+      <span class="cg-weight ${wClass}">${wText}</span>
+    </div>`;
+    html += `<div class="cg-detail" data-id="${r.id}"><div class="cg-detail-inner" id="detail-${r.id}"></div></div>`;
+  });
+  el.innerHTML = html;
+
+  el.querySelectorAll('.cg-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const wasOpen = row.classList.contains('open');
+      el.querySelectorAll('.cg-row').forEach(r => r.classList.remove('open'));
+      if (!wasOpen) {
+        row.classList.add('open');
+        const rid = parseInt(row.dataset.id);
+        renderDetail(rid, scn);
+      }
+    });
+  });
+}
+
+function renderDetail(id, scn) {
+  const r = scn.rows.find(x => x.id === id);
+  const container = document.getElementById('detail-' + id);
+  if (!r || !container) return;
+
+  if (r.component === 'answer') {
+    const a = r.answer;
+    const bmax = Math.max(...a.breakdown.map(b => Math.abs(b.v)));
+    container.innerHTML = `<div class="comp-answer">
+      <div class="score">${a.score}<span class="unit">${a.unit}</span></div>
+      <div class="verdict">${a.verdict}</div>
+      <div class="detail">${a.detail}</div>
+      <div class="breakdown">${a.breakdown.map(b => {
+        const w = Math.abs(b.v)/bmax*100;
+        return `<div class="brow"><span class="blbl">${b.l}</span><div class="bbar"><div class="bfill" style="width:${w}%;${b.neg?'background:rgba(184,134,11,.7)':''}"></div></div><span class="bnum">${b.neg?'−':'+'}${Math.abs(b.v).toFixed(1)}</span></div>`;
+      }).join('')}</div>
+    </div>`;
+
+  } else if (r.component === 'slider') {
+    const s = r.slider;
+    container.innerHTML = `<div class="comp-slider">
+      <label>${r.text}</label>
+      <div class="row">
+        <input type="range" min="${s.min}" max="${s.max}" value="${s.value}" step="${s.max<=10?0.1:1}" id="sl-${s.id}">
+        <span class="val" id="slv-${s.id}">${s.fmt(s.value)}</span>
+      </div>
+      <div class="hint">${s.hint}</div>
+    </div>`;
+    document.getElementById('sl-'+s.id).addEventListener('input', e => {
+      const v = parseFloat(e.target.value);
+      document.getElementById('slv-'+s.id).textContent = s.fmt(v);
+    });
+
+  } else if (r.component === 'toggle') {
+    const t = r.toggle;
+    container.innerHTML = `<div class="comp-toggle">
+      <div class="track ${t.value?'on':''}" id="tg-${t.id}"><div class="knob"></div></div>
+      <span class="lbl">${r.text}</span>
+    </div>
+    <div class="hint" style="margin-top:6px;font-size:11px;color:var(--muted)">${t.hint}</div>`;
+    document.getElementById('tg-'+t.id).addEventListener('click', function(){ this.classList.toggle('on'); });
+
+  } else if (r.component === 'sparkline') {
+    const sp = r.spark;
+    const max = Math.max(...sp.points), min = Math.min(...sp.points);
+    const range = max - min || 1;
+    const w = 120, h = 32, pad = 2;
+    const pts = sp.points.map((p,i) => `${pad + i*(w-pad*2)/(sp.points.length-1)},${h - pad - ((p-min)/range)*(h-pad*2)}`).join(' ');
+    container.innerHTML = `<div class="comp-spark">
+      <svg viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="${sp.color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="label">${sp.label}</span>
+    </div>`;
+
+  } else if (r.component === 'candlestick') {
+    const c = r.candle;
+    const data = c.data;
+    const min = Math.min(...data), max = Math.max(...data);
+    const range = max - min || 1;
+    const cw = 400, ch = 100, pad = 10;
+    const barW = (cw - pad*2) / data.length * 0.6;
+    const gap = (cw - pad*2) / data.length;
+    let svg = `<svg viewBox="0 0 ${cw} ${ch}">`;
+    svg += `<text x="${pad}" y="12" font-family="monospace" font-size="9" fill="#76756E" letter-spacing="0.5">${c.title}</text>`;
+    data.forEach((v, i) => {
+      const x = pad + i * gap + gap/2 - barW/2;
+      const barH = ((v - min)/range) * (ch - 28) + 4;
+      const y = ch - 6 - barH;
+      const color = i > 0 && v >= data[i-1] ? '#2A6B57' : '#9C3A3A';
+      svg += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="1.5" fill="${color}" opacity=".75"/>`;
+    });
+    svg += `</svg>`;
+    container.innerHTML = `<div class="comp-chart">${svg}</div>`;
+
+  } else if (r.component === 'barchart') {
+    const b = r.barch;
+    const max = Math.max(...b.bars.map(x => x.v));
+    const bh = 80;
+    let html = `<div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">${b.title}</div>`;
+    html += `<div style="display:flex;align-items:flex-end;gap:8px;height:${bh}px">`;
+    b.bars.forEach(bar => {
+      const h = (bar.v / max) * (bh - 16);
+      const style = bar.dash ? `background:${bar.c};border:1.5px dashed var(--purple)` : `background:${bar.c}`;
+      html += `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+        <span style="font-family:var(--mono);font-size:10px;color:var(--ink-2)">${bar.v}M</span>
+        <div style="${style};width:100%;height:${h}px;border-radius:3px 3px 0 0"></div>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--muted)">${bar.l}</span>
+      </div>`;
+    });
+    html += `</div>`;
+    container.innerHTML = html;
+
+  } else if (r.component === 'gauge') {
+    const g = r.gauge;
+    const pct = (g.value / g.max) * 100;
+    container.innerHTML = `<div style="display:flex;align-items:center;gap:16px">
+      <div style="flex:1">
+        <div style="font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">${g.label}</div>
+        <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${g.color};border-radius:4px;transition:width .4s"></div>
+        </div>
+      </div>
+      <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:${g.color}">${g.value}</div>
+    </div>`;
+
+  } else {
+    container.innerHTML = `<div style="font-size:12px;color:var(--muted);font-style:italic">No additional detail for this item.</div>`;
+  }
+}
+
+// ============================================================
+// RENDER DOCUMENT
+// ============================================================
+function renderDoc(scn) {
+  document.getElementById('docContent').innerHTML = scn.doc.map(p => `<p>${p}</p>`).join('');
+}
+
+// ============================================================
+// VIEW SWITCHING
+// ============================================================
+document.querySelectorAll('.view-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t === tab));
+    document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + tab.dataset.view).classList.add('active');
+  });
+});
+
+// ============================================================
+// ASK FLOW
+// ============================================================
+function ask(q) {
+  activeScenario = pickScenario(q);
+  const scn = activeScenario;
+  document.getElementById('nbQ').textContent = q;
+  renderCG(scn);
+  renderDoc(scn);
+  document.getElementById('landing').classList.add('hidden');
+  document.getElementById('shell').classList.add('visible');
+  document.getElementById('bottomAsk').classList.add('visible');
+  // reset to canvas view
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.dataset.view === 'canvas'));
+  document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-canvas').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+document.getElementById('qSubmit').addEventListener('click', () => {
+  const q = document.getElementById('qInput').value.trim();
+  if (q) ask(q);
+});
+document.getElementById('qInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { const q = e.target.value.trim(); if (q) ask(q); }
+});
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.getElementById('qInput').value = chip.dataset.q;
+    ask(chip.dataset.q);
+  });
+});
+document.getElementById('bottomSubmit').addEventListener('click', () => {
+  const q = document.getElementById('bottomInput').value.trim();
+  if (q) { ask(q); document.getElementById('bottomInput').value = ''; }
+});
+document.getElementById('bottomInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { const q = e.target.value.trim(); if (q) { ask(q); e.target.value = ''; } }
+});
+</script>
+</body>
+</html>

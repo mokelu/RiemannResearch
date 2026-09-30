@@ -1,0 +1,18 @@
+# =====================================================================
+#  UserSelectsView.ab
+# =====================================================================
+#  sentence   User Select View
+#  app        src/App.jsx — the viewbar in the centre panel,
+#             `view` state (Document · Graph · Table · Cells ·
+#             Structure)
+#  triggers   a click on any view tab (one widget, one sentence —
+#             README §3: the widget count does not make programs)
+#  status     IMPLEMENTED — setView() swaps the projection.
+
+program UserSelectsView
+
+sentence  User Select View
+enter     view.select.requested
+
+step system select view
+  catch view.select.ok goto Redraw

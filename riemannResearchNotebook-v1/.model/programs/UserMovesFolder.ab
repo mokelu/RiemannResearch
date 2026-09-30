@@ -1,0 +1,32 @@
+# =====================================================================
+#  UserMovesFolder.ab
+# =====================================================================
+#  sentence   User Move Folder
+#  v4         moveNode(sourceId, targetId)  — IMPLEMENTED
+#             leftpanel_v4.html line 615.
+#  triggers   drag a folder row onto another folder row
+#
+#  identical to UserMovesFile except the resource.  the branch that
+#  matters is `cycle`: isDescendantOf(targetId, sourceId) (line 620)
+#  is the guard that stops a folder being dropped inside its own
+#  subtree.  it is still declared on the File program too, because
+#  the RESULT belongs to the ACTION Move — not to whichever resource
+#  happened to be dragged.  one declaration, two catchers.
+#
+#  like UserMovesFile: success expands the target (v4 :627) so the
+#  moved row is visible.  the React app does not — GAP-CODE §10.
+
+program UserMovesFolder
+
+sentence  User Move Folder
+enter     folder.move.requested
+
+step system move folder onto folder
+  catch folder.move.ok      goto system expand folder
+  catch folder.move.invalid goto Redraw
+  catch folder.move.cycle   goto Redraw
+  catch folder.move.ignored goto Redraw
+  catch folder.move.failed  goto ReportFailure
+
+step system expand folder
+  catch folder.expand.ok goto Redraw

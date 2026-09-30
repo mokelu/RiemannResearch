@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riemann Research — Canvas Blocks · React Flow (CDN)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- React Flow v11 + React 18 + Babel standalone — everything from CDN, no build step -->
+<link rel="stylesheet" href="https://unpkg.com/reactflow@11.11.4/dist/style.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/reactflow@11.11.4/dist/umd/index.js"></script>
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
+<style>
+  :root{
+    --bg:#0C0B09; --panel:#12110E; --panel2:#17150F; --panel3:#1C1913;
+    --line:#262319; --line2:#332E22;
+    --text:#EDEAE0; --mut:#9A937F; --mut2:#6E6857;
+    --amber:#F2A93B; --amber-dim:rgba(242,169,59,.14);
+    --up:#4CC38A; --dn:#E5484D;
+    --blue:#6FA8DC; --violet:#A78BFA;
+    --sans:"Space Grotesk",sans-serif; --mono:"IBM Plex Mono",monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  ::selection{background:rgba(242,169,59,.28);color:var(--text)}
+  html,body,#root{height:100%}
+  body{background:var(--panel);color:var(--text);font-family:var(--sans);overflow:hidden;caret-color:var(--amber);display:flex;flex-direction:column}
+  .lucide{stroke-width:1.8}
+
+  .cTop{height:42px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:0 16px;flex:none;background:var(--bg)}
+  .cTitle{font-size:13px;font-weight:600}
+  .cView{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);border:1px solid var(--line2);border-radius:99px;padding:2px 10px}
+  .cLib{font-family:var(--mono);font-size:9px;color:var(--mut2);border:1px solid var(--line);border-radius:99px;padding:2px 9px}
+  .cHint{margin-left:auto;font-size:11px;color:var(--mut2)}
+  #flow{flex:1}
+  #root{height:100%}
+  .react-flow{background:var(--panel)}
+  .react-flow__attribution{display:none}
+  .react-flow__edge-path{stroke:#4A422E;stroke-width:1.4}
+  .react-flow__edge.selected .react-flow__edge-path{stroke:var(--amber)}
+  .react-flow__edge-text{font-family:var(--mono);font-size:9px;fill:var(--mut)}
+  .react-flow__handle{opacity:0;width:6px;height:6px;border:none}
+  .react-flow__controls{box-shadow:none;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .react-flow__controls-button{background:var(--panel2);border-bottom:1px solid var(--line);color:var(--mut);fill:var(--mut)}
+  .react-flow__controls-button:hover{background:var(--panel3)}
+  .react-flow__minimap{background:var(--bg);border:1px solid var(--line);border-radius:8px}
+
+  /* block node */
+  .node{width:308px;background:var(--panel2);border:1px solid var(--line2);border-radius:13px;transition:border-color .15s,box-shadow .15s}
+  .node:hover{border-color:#4A422E}
+  .node.sel{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber),0 10px 34px rgba(0,0,0,.55)}
+  .nHead{display:flex;align-items:center;gap:8px;padding:10px 13px;border-bottom:1px solid var(--line)}
+  .nHead .lucide{width:14px;height:14px}
+  .nName{font-size:12.5px;font-weight:600}
+  .nKind{margin-left:auto;font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2)}
+  .nBody{padding:12px 13px;font-size:11.5px;color:var(--mut);line-height:1.55}
+  .nTags{display:flex;flex-wrap:wrap;gap:4px;padding:0 13px 11px}
+  .chip{font-family:var(--mono);font-size:8.5px;letter-spacing:.05em;border-radius:4px;padding:1.5px 6px;border:1px solid}
+  .ch-struct{color:var(--blue);border-color:rgba(111,168,220,.35);background:rgba(111,168,220,.07)}
+  .ch-sem{color:var(--amber);border-color:rgba(242,169,59,.35);background:var(--amber-dim)}
+  .ch-src{color:var(--mut2);border-color:var(--line2)}
+  .sat{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--up)}
+  .ic-chart{color:var(--amber)}.ic-note{color:var(--blue)}.ic-sheet{color:var(--up)}.ic-rule{color:var(--violet)}.ic-code{color:var(--dn)}
+  .tv{color:var(--blue);font-weight:600}
+  .tf{color:var(--violet);font-weight:600}
+  .tw{color:var(--amber);font-weight:600}
+  table.mini{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px}
+  table.mini th{color:var(--mut2);font-weight:500;text-align:left;padding:3px 6px;border-bottom:1px solid var(--line2);letter-spacing:.05em}
+  table.mini td{padding:3px 6px;border-bottom:1px solid var(--line);color:var(--text)}
+  td.pos{color:var(--up)}td.neg{color:var(--dn)}
+  .ruleRow{display:flex;align-items:center;gap:6px;padding:4.5px 0;border-bottom:1px dashed var(--line);font-family:var(--mono);font-size:9.5px}
+  .ruleRow:last-child{border-bottom:none}
+  .ruleRow b{color:var(--text);font-weight:500}
+  .ruleOut{margin-left:auto;color:var(--up)}
+  .ruleOut.hide{color:var(--mut2)}
+  pre.code{font-family:var(--mono);font-size:9.5px;line-height:1.7;color:var(--mut);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;overflow:hidden;white-space:pre}
+  pre.code .kw{color:var(--violet)}pre.code .fn{color:var(--amber)}pre.code .str{color:var(--blue)}
+  .contract{margin:0 13px 12px;background:var(--bg);border:1px solid var(--line2);border-radius:9px;padding:9px 11px}
+  .contract .ct{font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut2);margin-bottom:6px}
+  .contractRow{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;padding:2.5px 0}
+  .contractRow .ok{color:var(--up)}
+  .contractRow .req{color:var(--mut)}
+  .contractRow .bind{margin-left:auto;color:var(--mut2)}
+</style>
+</head>
+<body>
+
+<div class="cTop">
+  <span class="cTitle">BTC Q3 Thesis</span>
+  <span class="cView">canvas view</span>
+  <span class="cLib">reactflow · cdn</span>
+  <span class="cHint">drag blocks · click to reveal the contract · edges carry verbs</span>
+</div>
+<div id="flow"><div id="root"></div></div>
+
+<script type="text/babel" data-presets="react">
+const { useEffect } = React;
+const { ReactFlow, Background, Controls, MiniMap, Handle, Position, MarkerType } = window.ReactFlow;
+
+/* ── block bodies ─────────────────────────── */
+
+const NoteBody = () => (
+  <>
+    &ldquo;BTC <span className="tv">drawdown</span> <span className="tf">exceeds</span>{" "}
+    <span className="tv">20%</span> marks a <span className="tw">cycle floor</span>.&rdquo;
+  </>
+);
+
+const SheetBody = () => (
+  <table className="mini">
+    <tbody>
+      <tr><th>DATE</th><th>ASSET</th><th>PNL</th></tr>
+      <tr><td>09-01</td><td>BTC</td><td className="pos">+120</td></tr>
+      <tr><td>09-02</td><td>BTC</td><td className="neg">−40</td></tr>
+      <tr><td>09-03</td><td>BTC</td><td className="pos">+88</td></tr>
+    </tbody>
+  </table>
+);
+
+/* the Riemann sum: one chart, each data point rendered under a different clause */
+const ChartBody = () => (
+  <>
+    <svg width="264" height="96" viewBox="0 0 264 96">
+      <line x1="4" y1="88" x2="258" y2="88" stroke="#332E22"/>
+      <rect x="22" y="54" width="28" height="34" fill="#4CC38A" opacity=".85"/>
+      <rect x="62" y="70" width="28" height="18" fill="#E5484D" opacity=".85"/>
+      <circle cx="120" cy="60" r="11" fill="none" stroke="#F2A93B" strokeWidth="2"/>
+      <circle cx="120" cy="60" r="3.5" fill="#F2A93B"/>
+      <rect x="156" y="38" width="28" height="50" fill="#4CC38A" opacity=".85"/>
+      <path d="M212 88 L212 30 M205 30 L219 44" stroke="#A78BFA" strokeWidth="2.4" fill="none"/>
+      <text x="22" y="14" fontFamily="IBM Plex Mono" fontSize="7.5" fill="#6E6857">bar</text>
+      <text x="62" y="14" fontFamily="IBM Plex Mono" fontSize="7.5" fill="#6E6857">bar</text>
+      <text x="106" y="14" fontFamily="IBM Plex Mono" fontSize="7.5" fill="#F2A93B">dot</text>
+      <text x="156" y="14" fontFamily="IBM Plex Mono" fontSize="7.5" fill="#6E6857">bar</text>
+      <text x="200" y="14" fontFamily="IBM Plex Mono" fontSize="7.5" fill="#A78BFA">annotation</text>
+    </svg>
+    <div className="sat" style={{marginTop:6}}>✓ contract satisfied · re-renders when bound tags move</div>
+  </>
+);
+
+const CodeBody = () => (
+  <pre className="code">
+    <span className="kw">fn</span> <span className="fn">drawdown</span>(p: &amp;[<span className="fn">Num</span>]) -&gt; <span className="fn">Num</span>{" {"}
+    {"\n  "}<span className="kw">let</span> peak = p.<span className="fn">iter</span>().<span className="fn">max</span>().<span className="fn">unwrap</span>();
+    {"\n  "}peak - p.<span className="fn">last</span>().<span className="fn">unwrap</span>() <span className="str">// 21.4</span>
+    {"\n"}{"}"}
+  </pre>
+);
+
+const ZenBody = () => (
+  <div style={{paddingTop:6}}>
+    <div className="ruleRow"><b>dd ≥ 20%</b><span>→</span><span className="ruleOut">FLOOR</span></div>
+    <div className="ruleRow"><b>pnl &lt; 0</b><span>→</span><span className="ruleOut hide">dim</span></div>
+  </div>
+);
+
+/* ── the custom block node ────────────────── */
+
+function BlockNode({ data, selected }) {
+  const bodies = { note: <NoteBody/>, sheet: <SheetBody/>, chart: <ChartBody/>, code: <CodeBody/>, zen: <ZenBody/> };
+  return (
+    <div className={"node" + (selected ? " sel" : "")}>
+      <Handle type="target" position={Position.Left} id="t-left"/>
+      <Handle type="target" position={Position.Top} id="t-top"/>
+      <Handle type="target" position={Position.Bottom} id="t-bottom"/>
+      <Handle type="source" position={Position.Right} id="s-right"/>
+      <Handle type="source" position={Position.Bottom} id="s-bottom"/>
+      <Handle type="source" position={Position.Top} id="s-top"/>
+
+      <div className="nHead">
+        <i data-lucide={data.icon} className={"lucide " + data.iconCls}></i>
+        <span className="nName">{data.label}</span>
+        <span className="nKind">{data.kind}</span>
+      </div>
+      <div className="nBody">{bodies[data.variant]}</div>
+      <div className="nTags">
+        {data.tags.map(t => <span key={t[0]} className={"chip " + t[1]}>{t[0]}</span>)}
+      </div>
+      {selected && (
+        <div className="contract">
+          <div className="ct">{data.variant} contract · demands</div>
+          {data.contract.map(c => (
+            <div className="contractRow" key={c[0]}>
+              <span className="ok">✓</span><span className="req">{c[0]}</span><span className="bind">{c[1]}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+const nodeTypes = { block: BlockNode };
+
+/* ── the notebook: blocks + meaningful edges ─ */
+
+const initialNodes = [
+  { id:"nNote", type:"block", position:{x:40,y:120}, data:{
+    icon:"sticky-note", iconCls:"ic-note", label:"Q3 thesis", kind:"note", variant:"note",
+    tags:[["SENTENCE","ch-struct"],["OBSERVATION","ch-sem"],["research.md · parser + AI","ch-src"]],
+    contract:[["BODY : TEXT","1 sentence"],["EPISTEMIC : ≥1 tag","OBSERVATION"]] }},
+  { id:"nSheet", type:"block", position:{x:40,y:430}, data:{
+    icon:"table-2", iconCls:"ic-sheet", label:"Daily P&L", kind:"sheet", variant:"sheet",
+    tags:[["ROW ×3","ch-struct"],["COLUMN ×3","ch-struct"],["DATE","ch-struct"],["NUMBER","ch-struct"],["pnl.csv · parser only","ch-src"]],
+    contract:[["GRID : ROW[] × COLUMN[]","3 × 3"],["CELL : ATOM tag","DATE·STRING·NUMBER"]] }},
+  { id:"nChart", type:"block", position:{x:690,y:320}, selected:true, data:{
+    icon:"bar-chart-3", iconCls:"ic-chart", label:"Equity curve", kind:"chart", variant:"chart",
+    tags:[["COLUMN","ch-struct"],["ASSET=BTC","ch-sem"],["FLOOR","ch-sem"],["tag query — reads no file","ch-src"]],
+    contract:[["x : COLUMN[DATE]","← sheet.date"],["y : COLUMN[NUMBER]","← sheet.pnl"],["series : TAG[asset=BTC]","tag query"],["marks : TAG[] optional","← FLOOR"]] }},
+  { id:"nCode", type:"block", position:{x:1130,y:60}, data:{
+    icon:"code-2", iconCls:"ic-code", label:"Rolling dd", kind:"code · escape hatch", variant:"code",
+    tags:[["FUNCTION","ch-struct"],["VARIABLE","ch-struct"],["LITERAL","ch-struct"],["AST · parser only","ch-src"]],
+    contract:[["LANG : one of {rust, ts, py}","rust"],["OUT : ATOM | TABLE","NUMBER 21.4"]] }},
+  { id:"nZen", type:"block", position:{x:780,y:660}, data:{
+    icon:"git-branch", iconCls:"ic-rule", label:"Signal rules", kind:"zen · edge computer", variant:"zen",
+    tags:[],
+    contract:[["INPUT : ROW stream","← sheet"],["OUT : TAG | HIDE","→ chart"]] }},
+];
+
+const labelStyle = { fontFamily:"IBM Plex Mono", fontSize:9, letterSpacing:"0.08em", textTransform:"uppercase", fill:"#9A937F" };
+const labelBg = { fill:"#17150F", stroke:"#332E22", strokeWidth:1, rx:99 };
+const lbl = { labelBgStyle:labelBg, labelBgPadding:[7,4], labelBgBorderRadius:99 };
+
+const initialEdges = [
+  { id:"e-note-chart", source:"nNote", sourceHandle:"s-right", target:"nChart", targetHandle:"t-left",
+    label:"supplies annotation", labelStyle, ...lbl,
+    markerEnd:{ type: MarkerType.ArrowClosed, color:"#4A422E", width:14, height:14 }},
+  { id:"e-sheet-zen", source:"nSheet", sourceHandle:"s-right", target:"nZen", targetHandle:"t-left",
+    label:"feeds rows", labelStyle, ...lbl,
+    markerEnd:{ type: MarkerType.ArrowClosed, color:"#4A422E", width:14, height:14 }},
+  { id:"e-zen-chart", source:"nZen", sourceHandle:"s-top", target:"nChart", targetHandle:"t-bottom",
+    label:"qualifies ▸ zen", labelStyle, ...lbl,
+    markerEnd:{ type: MarkerType.ArrowClosed, color:"#4A422E", width:14, height:14 }},
+  { id:"e-sheet-chart", source:"nSheet", sourceHandle:"s-right", target:"nChart", targetHandle:"t-left",
+    label:"produces", labelStyle, ...lbl, style:{ strokeDasharray:"4 4" },
+    markerEnd:{ type: MarkerType.ArrowClosed, color:"#4A422E", width:14, height:14 }},
+  { id:"e-code-sheet", source:"nCode", sourceHandle:"s-bottom", target:"nSheet", targetHandle:"t-top",
+    label:"derives", labelStyle, ...lbl, style:{ strokeDasharray:"4 4" },
+    markerEnd:{ type: MarkerType.ArrowClosed, color:"#4A422E", width:14, height:14 }},
+];
+
+const minimapColor = (n) =>
+  ({ note:"#6FA8DC", sheet:"#4CC38A", chart:"#F2A93B", code:"#E5484D", zen:"#A78BFA" }[n.data.variant]);
+
+/* ── app ──────────────────────────────────── */
+
+function App() {
+  /* lucide glyphs live inside React-rendered DOM, so (re)build icons after every paint */
+  useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+  return (
+    <ReactFlow
+      nodes={initialNodes}
+      edges={initialEdges}
+      nodeTypes={nodeTypes}
+      nodesDraggable
+      nodesConnectable={false}   /* edges appear when contracts bind, not when wires are dragged */
+      elementsSelectable
+      fitView
+      fitViewOptions={{ padding: .18 }}
+      minZoom={.3}
+      proOptions={{ hideAttribution: true }}
+    >
+      <Background gap={22} size={1} color="#262319"/>
+      <MiniMap nodeColor={minimapColor} maskColor="rgba(8,7,5,.7)" pannable zoomable/>
+      <Controls showInteractive={false}/>
+    </ReactFlow>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

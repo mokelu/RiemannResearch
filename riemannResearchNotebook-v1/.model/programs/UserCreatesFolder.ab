@@ -1,0 +1,54 @@
+# =====================================================================
+#  UserCreatesFolder.ab
+# =====================================================================
+#  sentence   User Create Folder
+#  v4         createNode(currentTarget(), 'folder')  — IMPLEMENTED
+#             leftpanel_v4.html line 563; wired at line 860 (header),
+#             763 (folder context menu), empty-area menu.
+#  triggers   header "New Folder" button · tree context menu
+#             "New Folder" · empty-area context menu "New Folder"
+#
+#  reuse      identical to UserCreatesFile except for the resource
+#             on the create step — File becomes Folder, and with it
+#             file.create.requested becomes folder.create.requested.
+#             nothing else moves.  that is the Lego claim, written
+#             out twice so you can see there is no third thing.
+
+program UserCreatesFolder
+
+sentence  User Create Folder
+enter     folder.create.requested
+
+step system resolve folder
+  catch folder.resolve.selected goto system create folder onto folder
+  catch folder.resolve.root      goto system create folder onto folder
+
+step system create folder onto folder
+  catch folder.create.ok       goto system expand folder
+  catch folder.create.invalid  goto ReportFailure
+  catch folder.create.failed   goto ReportFailure
+
+# see UserCreatesFile: the app expands the parent (LeftPanel:215)
+# so the new row is visible.  one Lego claim, written twice.
+step system expand folder
+  catch folder.expand.ok goto system select node
+
+step system select node
+  catch node.select.ok goto system begin edit
+
+step system begin edit
+  catch edit.begin.ok     goto system rename folder
+  catch edit.begin.failed goto Redraw
+
+# suspends until Enter, Esc, or blur.  the empty-name, Esc and
+# invalid semantics are identical to UserCreatesFile — typed name
+# or empty -> "Untitled" (kept), Esc -> discarded, refusal -> kept.
+step system rename folder
+  catch folder.rename.ok        goto Redraw
+  catch folder.rename.invalid   goto Redraw
+  catch folder.rename.cancelled goto system delete node
+  catch folder.rename.exists    goto Redraw
+
+step system delete node
+  catch node.delete.ok     goto Redraw
+  catch node.delete.failed goto ReportFailure

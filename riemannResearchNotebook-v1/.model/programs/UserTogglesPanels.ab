@@ -1,0 +1,23 @@
+# =====================================================================
+#  UserTogglesPanels.ab
+# =====================================================================
+#  sentence   User Toggle Panel
+#  app        src/App.jsx — header "Minimize panels"/"Show panels"
+#             (line 152), `docksOpen` state
+#  triggers   the dock toggle button
+#  status     IMPLEMENTED
+#
+#  KNOWN CONFLATION, recorded here rather than hidden: in the app
+#  `docksOpen` gates the left dock AND the chat
+#  (line 212: docksOpen && chatOpen && ChatPanel), so this one
+#  sentence currently swallows the chat with the dock.  the model
+#  keeps them separate (Panel vs Chat, two programs) — the code
+#  must be pulled apart to match the spec, not the other way.
+
+program UserTogglesPanels
+
+sentence  User Toggle Panel
+enter     panel.toggle.requested
+
+step system toggle panel
+  catch panel.toggle.ok goto Redraw

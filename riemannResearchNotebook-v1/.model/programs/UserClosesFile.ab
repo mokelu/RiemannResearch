@@ -1,0 +1,18 @@
+# =====================================================================
+#  UserClosesFile.ab
+# =====================================================================
+#  sentence   User Close File
+#  v4         closeTab(id)  — IMPLEMENTED
+#  triggers   the x on a tab · nothing else in v4
+
+program UserClosesFile
+
+sentence  User Close File
+enter     file.close.requested
+
+step system close tab
+  catch tab.close.ok     goto system update editor
+  catch tab.close.failed goto ReportFailure
+
+step system update editor
+  catch editor.update.ok     goto Redraw

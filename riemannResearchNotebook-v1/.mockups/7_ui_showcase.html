@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riemann Research — UI Showcase</title>
+<style>
+  :root{
+    --bg:#FBFAF7;--panel:#FFFFFF;--surface:#F4F3EE;--ink:#14130F;--ink-2:#45443F;
+    --muted:#76756E;--muted-2:#9A9992;--border:#E6E5DF;--border-strong:#D6D5CE;
+    --accent:#1A4D3E;--accent-2:#2A6B57;--accent-soft:#EAF1ED;
+    --blue:#2D5F8A;--blue-soft:#E8EFF6;--purple:#5A3D7A;--purple-soft:#F0EAF5;
+    --amber:#8B6914;--amber-soft:#F5EDDA;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+    --serif:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;padding:56px 32px 120px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto}
+  .page-head{margin-bottom:56px;padding-bottom:28px;border-bottom:1px solid var(--border)}
+  .page-head h1{font-family:var(--serif);font-weight:500;font-size:32px;letter-spacing:-.02em;margin-bottom:8px}
+  .page-head p{font-size:14px;color:var(--muted);max-width:44em}
+  section{margin-bottom:56px}
+  .section-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:18px}
+  .stage{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:40px;display:flex;align-items:center;justify-content:center;min-height:120px;position:relative;overflow:hidden}
+  .stage.grid{background:radial-gradient(circle at 1px 1px,rgba(20,19,15,.06) 1px,transparent 0) 0 0/22px 22px,var(--panel)}
+  .stage.dark{background:#14130F;border-color:#14130F}
+  .caption{margin-top:14px;font-family:var(--mono);font-size:11px;color:var(--muted-2);letter-spacing:.04em}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  @media(max-width:720px){.grid-2,.grid-3{grid-template-columns:1fr}.stage{padding:28px 16px}}
+
+  /* =========== THE UI CARD =========== */
+  .uc{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;width:100%;box-shadow:0 4px 20px -6px rgba(20,19,15,.12)}
+  .uc-bar{display:flex;align-items:center;gap:6px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface)}
+  .uc-dot{width:8px;height:8px;border-radius:50%;background:var(--border-strong)}
+  .uc-path{margin-left:8px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .uc-body{display:grid;grid-template-columns:1.15fr .85fr;gap:0}
+  .uc-left{padding:22px 24px 20px}
+  .uc-right{border-left:1px solid var(--border);background:var(--bg);padding:22px 24px;display:flex;flex-direction:column}
+  .uc-chip{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:0 6px;font-family:var(--mono);font-size:10px;vertical-align:1px;margin-bottom:6px}
+  .uc-q{font-family:var(--serif);font-size:19px;line-height:1.35}
+  .uc-label{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+  .uc-ctrl{margin-bottom:14px}
+  .uc-ctrl label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+  .uc-ctrl .val{font-family:var(--mono);color:var(--accent);font-size:12px}
+  .uc-range{width:100%;accent-color:var(--accent);height:4px}
+  .uc-seg{display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+  .uc-seg button{flex:1;padding:6px 0;background:#fff;border:none;font-size:12px;cursor:pointer;color:var(--muted);border-right:1px solid var(--border)}
+  .uc-seg button:last-child{border-right:none}
+  .uc-seg button.on{background:var(--accent);color:#fff;font-weight:600}
+  .uc-tog{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none;margin-bottom:14px}
+  .uc-tog input{accent-color:var(--accent);width:14px;height:14px}
+  .uc-ev{display:flex;align-items:center;gap:8px;padding:6px 9px;border:1px solid var(--border);border-radius:6px;margin-bottom:5px;font-size:12px;background:#fff}
+  .uc-ev.off{opacity:.35;text-decoration:line-through}
+  .uc-ev .w{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--muted)}
+  .uc-big{font-family:var(--serif);font-size:44px;font-weight:700;line-height:1;letter-spacing:-.01em}
+  .uc-big small{font-size:18px;color:var(--muted);font-weight:400}
+  .uc-sub{font-size:12px;color:var(--muted);margin-top:5px}
+  .uc-contrib{margin-top:18px}
+  .uc-crow{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px}
+  .uc-crow .lbl{width:100px;color:var(--muted);flex-shrink:0}
+  .uc-crow .bar{height:7px;border-radius:4px;background:var(--accent);transition:width .35s;min-width:2px}
+  .uc-crow .bar.neg{background:var(--amber)}
+  .uc-crow .num{font-family:var(--mono);font-size:10px;color:var(--muted)}
+  .uc-foot{margin-top:auto;padding-top:16px;font-size:11px;color:var(--muted);font-style:italic}
+  .uc-btn{margin-top:14px;font-family:var(--mono);font-size:11px;padding:5px 11px;border:1px solid var(--border);background:#fff;border-radius:5px;cursor:pointer;color:var(--ink)}
+  .uc-btn:hover{border-color:var(--muted)}
+  .uc-badge{display:inline-block;font-family:var(--mono);font-size:10px;background:var(--accent-soft);color:var(--accent);padding:2px 8px;border-radius:12px;margin-bottom:6px}
+
+  /* =========== CHART (inside trading card) =========== */
+  .uc-chart{width:100%;height:100px;margin:8px 0}
+  .uc-chart svg{width:100%;height:100%}
+
+  /* =========== NOTEBOOK SHELL =========== */
+  .shell{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;width:100%}
+  .shell-top{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--border);background:var(--surface)}
+  .shell-top .logo{display:flex;align-items:center;gap:7px;font-family:var(--serif);font-size:13px;font-weight:500}
+  .shell-top .logo svg{display:block}
+  .shell-top nav{display:flex;gap:14px;font-size:11px;color:var(--muted)}
+  .shell-body{display:grid;grid-template-columns:180px 1fr;min-height:320px}
+  .shell-side{border-right:1px solid var(--border);padding:14px 0;font-size:12px;color:var(--muted)}
+  .shell-side .item{padding:5px 16px;cursor:pointer}
+  .shell-side .item.on{color:var(--ink);background:var(--accent-soft);font-weight:500}
+  .shell-side .item:hover{background:var(--surface)}
+  .shell-side .head{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);padding:12px 16px 6px}
+  .shell-main{padding:20px 24px;overflow:hidden}
+  @media(max-width:720px){.shell-body{grid-template-columns:1fr}.shell-side{display:none}}
+
+  /* =========== LOADING STATE =========== */
+  .uc-loading{position:relative}
+  .uc-loading::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;border-radius:0 0 12px 12px}
+  .spinner{width:24px;height:24px;border:2.5px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* =========== RESPONSIVE MOCK-UPS =========== */
+  .mock-tablet{max-width:600px;margin:0 auto}
+  .mock-mobile{max-width:360px;margin:0 auto}
+
+  /* =========== DARK CARD =========== */
+  .uc.dark-card{background:#1E1D1A;border-color:#2A2926;color:#E8E6DF}
+  .uc.dark-card .uc-bar{background:#252420;border-color:#2A2926}
+  .uc.dark-card .uc-dot{background:#3A3835}
+  .uc.dark-card .uc-path{color:#8A877F}
+  .uc.dark-card .uc-right{background:#16150F;border-color:#2A2926}
+  .uc.dark-card .uc-q{color:#E8E6DF}
+  .uc.dark-card .uc-label{color:#8A877F}
+  .uc.dark-card .uc-ctrl label{color:#C5C2B8}
+  .uc.dark-card .uc-seg button{background:#252420;color:#8A877F;border-color:#2A2926}
+  .uc.dark-card .uc-seg button.on{background:var(--accent);color:#fff}
+  .uc.dark-card .uc-tog{color:#C5C2B8}
+  .uc.dark-card .uc-ev{background:#252420;border-color:#2A2926;color:#C5C2B8}
+  .uc.dark-card .uc-big{color:#E8E6DF}
+  .uc.dark-card .uc-crow .lbl{color:#8A877F}
+  .uc.dark-card .uc-crow .num{color:#8A877F}
+  .uc.dark-card .uc-foot{color:#8A877F}
+  .uc.dark-card .uc-btn{background:#252420;border-color:#2A2926;color:#C5C2B8}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="page-head">
+    <h1>UI Showcase — The Notebook Card</h1>
+    <p>The core interactive UI of Riemann Research shown in different sizes, domains, states, and contexts. Each mock-up is the same component — a notebook card — wearing different clothes.</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 1. DESKTOP — FANTASY SPORTS (the canonical version)          -->
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-label">Sizes · Desktop</div>
+    <div class="stage">
+      <div class="uc">
+        <div class="uc-bar">
+          <span class="uc-dot"></span><span class="uc-dot"></span><span class="uc-dot"></span>
+          <span class="uc-path">league-2027.riemann — notebook</span>
+        </div>
+        <div class="uc-body">
+          <div class="uc-left">
+            <span class="uc-chip">QUESTION</span>
+            <div class="uc-q">"Will D. Okafor outscore S. Mensah in fantasy points over the next four weeks?"</div>
+            <div style="margin-top:16px">
+              <div class="uc-label">Assumptions — edit and recompute</div>
+              <div class="uc-ctrl">
+                <label>Okafor's usage holds <span class="val">85%</span></label>
+                <input type="range" class="uc-range" value="85" disabled>
+              </div>
+              <div class="uc-ctrl">
+                <label>Opponent defensive strength</label>
+                <div class="uc-seg">
+                  <button>Weak</button>
+                  <button class="on">Average</button>
+                  <button>Strong</button>
+                </div>
+              </div>
+              <label class="uc-tog"><input type="checkbox" checked disabled> Apply conservative injury adjustment</label>
+              <div>
+                <div class="uc-label">Evidence — click to include / remove</div>
+                <div class="uc-ev"><span>Usage trend, last 6 weeks</span><span class="w">× 1.0</span></div>
+                <div class="uc-ev"><span>Role change after week 7</span><span class="w">× 0.9</span></div>
+                <div class="uc-ev"><span>Opponent edge rusher ruled out</span><span class="w">× 0.8</span></div>
+                <div class="uc-ev"><span>Schedule strength, next 4 games</span><span class="w">× 0.7</span></div>
+                <div class="uc-ev off"><span>One outdoor game, wind risk</span><span class="w">× 0.5</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="uc-right">
+            <div class="uc-label">Answer — a composition, not a paragraph</div>
+            <span class="uc-badge">recomputed ✓</span>
+            <div class="uc-big" style="color:var(--accent)">+4.2 <small>pts</small></div>
+            <div class="uc-sub">projected margin, Okafor over Mensah, next 4 weeks</div>
+            <div class="uc-contrib">
+              <div class="uc-label" style="margin-top:10px">What the margin is made of</div>
+              <div class="uc-crow"><span class="lbl">Usage trend, last 6 wks</span><div style="flex:1"><div class="bar" style="width:78%"></div></div><span class="num">+3.1</span></div>
+              <div class="uc-crow"><span class="lbl">Role change</span><div style="flex:1"><div class="bar" style="width:60%"></div></div><span class="num">+2.2</span></div>
+              <div class="uc-crow"><span class="lbl">Opponent DE out</span><div style="flex:1"><div class="bar" style="width:48%"></div></div><span class="num">+1.5</span></div>
+              <div class="uc-crow"><span class="lbl">Schedule strength</span><div style="flex:1"><div class="bar neg" style="width:30%"></div></div><span class="num">−0.8</span></div>
+              <div class="uc-crow"><span class="lbl">Assumptions</span><div style="flex:1"><div class="bar" style="width:55%"></div></div><span class="num">+2.6</span></div>
+            </div>
+            <div class="uc-foot">Every change above rewrote this answer.</div>
+            <button class="uc-btn">Reset assumptions</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Desktop · full-width card · the canonical UI</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 2. TABLET — FANTASY SPORTS                                   -->
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-label">Sizes · Tablet</div>
+    <div class="stage">
+      <div class="mock-tablet">
+        <div class="uc">
+          <div class="uc-bar">
+            <span class="uc-dot"></span><span class="uc-dot"></span><span class="uc-dot"></span>
+            <span class="uc-path">league-2027.riemann</span>
+          </div>
+          <div class="uc-body">
+            <div class="uc-left">
+              <span class="uc-chip">QUESTION</span>
+              <div class="uc-q">"Will D. Okafor outscore S. Mensah in fantasy points over the next four weeks?"</div>
+              <div style="margin-top:14px">
+                <div class="uc-label">Assumptions</div>
+                <div class="uc-ctrl">
+                  <label>Usage rate <span class="val">85%</span></label>
+                  <input type="range" class="uc-range" value="85" disabled>
+                </div>
+                <label class="uc-tog"><input type="checkbox" checked disabled> Injury adjustment</label>
+                <div class="uc-ev"><span>Usage trend, last 6 weeks</span><span class="w">× 1.0</span></div>
+                <div class="uc-ev"><span>Role change after week 7</span><span class="w">× 0.9</span></div>
+                <div class="uc-ev off"><span>Opponent edge rusher ruled out</span><span class="w">× 0.8</span></div>
+              </div>
+            </div>
+            <div class="uc-right">
+              <div class="uc-label">Answer</div>
+              <div class="uc-big" style="color:var(--accent)">+4.2 <small>pts</small></div>
+              <div class="uc-sub">projected margin, next 4 weeks</div>
+              <div class="uc-contrib">
+                <div class="uc-label" style="margin-top:10px">Breakdown</div>
+                <div class="uc-crow"><span class="lbl">Usage</span><div style="flex:1"><div class="bar" style="width:78%"></div></div><span class="num">+3.1</span></div>
+                <div class="uc-crow"><span class="lbl">Role change</span><div style="flex:1"><div class="bar" style="width:60%"></div></div><span class="num">+2.2</span></div>
+                <div class="uc-crow"><span class="lbl">Opponent</span><div style="flex:1"><div class="bar" style="width:48%"></div></div><span class="num">+1.5</span></div>
+                <div class="uc-crow"><span class="lbl">Schedule</span><div style="flex:1"><div class="bar neg" style="width:30%"></div></div><span class="num">−0.8</span></div>
+              </div>
+              <div class="uc-foot">Every change rewrote this answer.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Tablet · 600px max · same card, tighter layout</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 3. MOBILE — FANTASY SPORTS                                   -->
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-label">Sizes · Mobile</div>
+    <div class="stage">
+      <div class="mock-mobile">
+        <div class="uc">
+          <div class="uc-bar">
+            <span class="uc-dot"></span><span class="uc-dot"></span><span class="uc-dot"></span>
+            <span class="uc-path">league-2027</span>
+          </div>
+          <div style="padding:18px 18px 16px">
+            <span class="uc-chip">QUESTION</span>
+            <div class="uc-q" style="font-size:16px">"Will Okafor outscore Mensah next 4 weeks?"</div>
+            <div style="margin-top:14px">
+              <div class="uc-label">Assumptions</div>
+              <div class="uc-ctrl">
+                <label>Usage <span class="val">85%</span></label>
+                <input type="range" class="uc-range" value="85" disabled>
+              </div>
+              <label class="uc-tog"><input type="checkbox" checked disabled> Injury adj.</label>
+              <div class="uc-ev"><span>Usage trend</span><span class="w">× 1.0</span></div>
+              <div class="uc-ev"><span>Role change</span><span class="w">× 0.9</span></div>
+            </div>
+          </div>
+          <div style="border-top:1px solid var(--border);background:var(--bg);padding:18px">
+            <div class="uc-label">Answer</div>
+            <div class="uc-big" style="font-size:36px;color:var(--accent)">+4.2 <small>pts</small></div>
+            <div class="uc-contrib">
+              <div class="uc-label" style="margin-top:10px">Breakdown</div>
+              <div class="uc-crow"><span class="lbl">Usage</span><div style="flex:1"><div class="bar" style="width:78%"></div></div><span class="num">+3.1</span></div>
+              <div class="uc-crow"><span class="lbl">Role</span><div style="flex:1"><div class="bar" style="width:60%"></div></div><span class="num">+2.2</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Mobile · 360px · stacked layout, compressed labels</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 4. TRADING — strategy across multiple assets                 -->
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-label">Domain · Trading</div>
+    <div class="stage">
+      <div class="uc">
+        <div class="uc-bar">
+          <span class="uc-dot"></span><span class="uc-dot"></span><span class="uc-dot"></span>
+          <span class="uc-path">multi-asset-q4.riemann — notebook</span>
+        </div>
+        <div class="uc-body">
+          <div class="uc-left">
+            <span class="uc-chip" style="background:var(--blue-soft);color:var(--blue)">QUESTION</span>
+            <div class="uc-q">"Which mean-reversion strategy works across FDXT, FT, MO, and FONDEAD in Q4?"</div>
+            <div style="margin-top:16px">
+              <div class="uc-label">Assumptions — edit and recompute</div>
+              <div class="uc-ctrl">
+                <label>Lookback window <span class="val" style="color:var(--blue)">14 days</span></label>
+                <input type="range" class="uc-range" style="accent-color:var(--blue)" value="60" disabled>
+              </div>
+              <div class="uc-ctrl">
+                <label>Entry threshold</label>
+                <div class="uc-seg">
+                  <button>1σ</button>
+                  <button class="on" style="background:var(--blue)">1.5σ</button>
+                  <button>2σ</button>
+                </div>
+              </div>
+              <div class="uc-ctrl">
+                <label>Position sizing</label>
+                <div class="uc-seg">
+                  <button>Fixed</button>
+                  <button class="on" style="background:var(--blue)">Vol-adjusted</button>
+                  <button>Kelly</button>
+                </div>
+              </div>
+              <label class="uc-tog"><input type="checkbox" checked disabled> Transaction costs included</label>
+              <div>
+                <div class="uc-label">Evidence — data sources</div>
+                <div class="uc-ev"><span>FDXT — 3yr tick data</span><span class="w">× 1.0</span></div>
+                <div class="uc-ev"><span>FT — 3yr daily OHLCV</span><span class="w">× 0.9</span></div>
+                <div class="uc-ev"><span>MO — 2yr tick data</span><span class="w">× 0.8</span></div>
+                <div class="uc-ev off"><span>FONDEAD — 1yr hourly</span><span class="w">× 0.6</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="uc-right">
+            <div class="uc-label">Answer — strategy performance</div>
+            <span class="uc-badge" style="background:var(--blue-soft);color:var(--blue)">backtested ✓</span>
+            <div class="uc-big" style="color:var(--blue)">+18.4% <small>ann.</small></div>
+            <div class="uc-sub">Sharpe 1.42 · Max DD −8.3% · 73% win rate</div>
+            <!-- Mini chart -->
+            <div class="uc-chart">
+              <svg viewBox="0 0 400 100" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#2D5F8A" stop-opacity=".18"/>
+                    <stop offset="100%" stop-color="#2D5F8A" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path d="M0,85 Q30,82 60,78 T120,70 T180,58 T240,52 T300,40 T360,28 L400,22 L400,100 L0,100Z" fill="url(#cg)"/>
+                <path d="M0,85 Q30,82 60,78 T120,70 T180,58 T240,52 T300,40 T360,28 L400,22" fill="none" stroke="#2D5F8A" stroke-width="2"/>
+                <path d="M0,88 Q30,87 60,86 T120,84 T180,82 T240,80 T300,78 T360,76 L400,74" fill="none" stroke="#D6D5CE" stroke-width="1.2" stroke-dasharray="4,3"/>
+              </svg>
+            </div>
+            <div class="uc-contrib">
+              <div class="uc-label">What drives the return</div>
+              <div class="uc-crow"><span class="lbl">FDXT signal</span><div style="flex:1"><div class="bar" style="background:var(--blue);width:72%"></div></div><span class="num">+8.2%</span></div>
+              <div class="uc-crow"><span class="lbl">FT carry</span><div style="flex:1"><div class="bar" style="background:var(--blue);width:55%"></div></div><span class="num">+5.1%</span></div>
+              <div class="uc-crow"><span class="lbl">MO vol edge</span><div style="flex:1"><div class="bar" style="background:var(--blue);width:40%"></div></div><span class="num">+3.8%</span></div>
+              <div class="uc-crow"><span class="lbl">Transaction costs</span><div style="flex:1"><div class="bar neg" style="width:22%"></div></div><span class="num">−1.2%</span></div>
+            </div>
+            <div class="uc-foot">Every slider change rewrote this backtest.</div>
+            <button class="uc-btn">Reset assumptions</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Trading · strategy backtest across four assets · blue accent · chart with benchmark line</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 5. BUSINESS — quarterly revenue analysis                     -->
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-label">Domain · Business</div>
+    <div class="stage">
+      <div class="uc">
+        <div class="uc-bar">
+          <span class="uc-dot"></span><span class="uc-dot"></span><span class="uc-dot"></span>
+          <span class="uc-path">q3-review.riemann — notebook</span>
+        </div>
+        <div class="uc-body">
+          <div class="uc-left">
+            <span class="uc-chip" style="background:var(--purple-soft);color:var(--purple)">QUESTION</span>
+            <div class="uc-q">"What drove the Q3 revenue increase, and is it sustainable into Q4?"</div>
+            <div style="margin-top:16px">
+              <div class="uc-label">Assumptions — edit and recompute</div>
+              <div class="uc-ctrl">
+                <label>Include expansion revenue <span class="val" style="color:var(--purple)">Yes</span></label>
+                <div class="uc-seg">
+                  <button class="on" style="background:var(--purple)">Yes</button>
+                  <button>No</button>
+                </div>
+              </div>
+              <div class="uc-ctrl">
+                <label>Churn model</label>
+                <div class="uc-seg">
+                  <button class="on" style="background:var(--purple)">Historical</button>
+                  <button>Conservative</button>
+                  <button>Aggressive</button>
+                </div>
+              </div>
+              <label class="uc-tog"><input type="checkbox" checked disabled> Adjust for seasonal pattern</label>
+              <div>
+                <div class="uc-label">Evidence — data sources</div>
+                <div class="uc-ev"><span>Stripe — recurring revenue</span><span class="w">× 1.0</span></div>
+                <div class="uc-ev"><span>HubSpot — new logos</span><span class="w">× 0.9</span></div>
+                <div class="uc-ev"><span>Intercom — expansion signals</span><span class="w">× 0.8</span></div>
+                <div class="uc-ev"><span>CSV — enterprise deals</span><span class="w">× 0.7</span></div>
+                <div class="uc-ev off"><span>Manual — partner revenue</span><span class="w">× 0.5</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="uc-right">
+            <div class="uc-label">Answer — revenue composition</div>
+            <span class="uc-badge" style="background:var(--purple-soft);color:var(--purple)">analyzed ✓</span>
+            <div class="uc-big" style="color:var(--purple)">$2.4M <small>Q3</small></div>
+            <div class="uc-sub">+22% QoQ · sustainable at current churn</div>
+            <!-- Mini bar chart -->
+            <div style="display:flex;align-items:flex-end;gap:6px;height:60px;margin:14px 0 8px">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1"><div style="background:var(--border-strong);width:100%;height:36px;border-radius:3px 3px 0 0"></div><span style="font-family:var(--mono);font-size:9px;color:var(--muted)">Q1</span></div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1"><div style="background:var(--border-strong);width:100%;height:42px;border-radius:3px 3px 0 0"></div><span style="font-family:var(--mono);font-size:9px;color:var(--muted)">Q2</span></div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1"><div style="background:var(--purple);width:100%;height:56px;border-radius:3px 3px 0 0"></div><span style="font-family:var(--mono);font-size:9px;color:var(--muted)">Q3</span></div>
+              <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1"><div style="background:var(--purple-soft);border:1.5px dashed var(--purple);width:100%;height:52px;border-radius:3px 3px 0 0"></div><span style="font-family:var(--mono);font-size:9px;color:var(--purple)">Q4?</span></div>
+            </div>
+            <div class="uc-contrib">
+              <div class="uc-label">What the growth is made of</div>
+              <div class="uc-crow"><span class="lbl">New logos</span><div style="flex:1"><div class="bar" style="background:var(--purple);width:68%"></div></div><span class="num">+$340K</span></div>
+              <div class="uc-crow"><span class="lbl">Expansion</span><div style="flex:1"><div class="bar" style="background:var(--purple);width:55%"></div></div><span class="num">+$280K</span></div>
+              <div class="uc-crow"><span class="lbl">Enterprise</span><div style="flex:1"><div class="bar" style="background:var(--purple);width:42%"></div></div><span class="num">+$190K</span></div>
+              <div class="uc-crow"><span class="lbl">Churn drag</span><div style="flex:1"><div class="bar neg" style="width:28%"></div></div><span class="num">−$85K</span></div>
+            </div>
+            <div class="uc-foot">Every slider change rewrote this forecast.</div>
+            <button class="uc-btn">Reset assumptions</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Business · quarterly revenue analysis · purple accent · bar chart with Q4 projection</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 6. DARK MODE — FANTASY SPORTS                                -->
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-label">State · Dark mode</div>
+    <div class="stage dark">
+      <div class="uc dark-card">
+        <div class="uc-bar">
+          <span class="uc-dot"></span><span class="uc-dot"></span><span class="uc-dot"></span>
+          <span class="uc-path">league-2027.riemann — notebook</span>
+        </div>
+        <div class="uc-body">
+          <div class="uc-left">
+            <span class="uc-chip">QUESTION</span>
+            <div class="uc-q">"Will D. Okafor outscore S. Mensah in fantasy points over the next four weeks?"</div>
+            <div style="margin-top:16px">
+              <div class="uc-label">Assumptions — edit and recompute</div>
+              <div class="uc-ctrl">
+                <label>Okafor's usage holds <span class="val">85%</span></label>
+                <input type="range" class="uc-range" value="85" disabled>
+              </div>
+              <label class="uc-tog"><input type="checkbox" checked disabled> Injury adjustment</label>
+              <div class="uc-ev"><span>Usage trend, last 6 weeks</span><span class="w">× 1.0</span></div>
+              <div class="uc-ev"><span>Role change after week 7</span><span class="w">× 0.9</span></div>
+              <div class="uc-ev off"><span>Schedule strength</span><span class="w">× 0.7</span></div>
+            </div>
+          </div>
+          <div class="uc-right">
+            <div class="uc-label">Answer</div>
+            <div class="uc-big" style="color:#6BC4A6">+4.2 <small>pts</small></div>
+            <div class="uc-sub">projected margin, next 4 weeks</div>
+            <div class="uc-contrib">
+              <div class="uc-label" style="margin-top:10px">Breakdown</div>
+              <div class="uc-crow"><span class="lbl">Usage</span><div style="flex:1"><div class="bar" style="width:78%"></div></div><span class="num">+3.1</span></div>
+              <div class="uc-crow"><span class="lbl">Role change</span><div style="flex:1"><div class="bar" style="width:60%"></div></div><span class="num">+2.2</span></div>
+              <div class="uc-crow"><span class="lbl">Opponent</span><div style="flex:1"><div class="bar" style="width:48%"></div></div><span class="num">+1.5</span></div>
+              <div class="uc-crow"><span class="lbl">Schedule</span><div style="flex:1"><div class="bar neg" style="width:30%"></div></div><span class="num">−0.8</span></div>
+            </div>
+            <div class="uc-foot">Every change rewrote this answer.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Dark mode · ink background · warm off-white text · muted accents</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 7. LOADING STATE — recomputing                                -->
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-label">State · Recomputing</div>
+    <div class="stage">
+      <div class="uc uc-loading">
+        <div class="uc-bar">
+          <span class="uc-dot"></span><span class="uc-dot"></span><span class="uc-dot"></span>
+          <span class="uc-path">league-2027.riemann — notebook</span>
+        </div>
+        <div class="uc-body">
+          <div class="uc-left">
+            <span class="uc-chip">QUESTION</span>
+            <div class="uc-q">"Will D. Okafor outscore S. Mensah in fantasy points over the next four weeks?"</div>
+            <div style="margin-top:16px">
+              <div class="uc-label">Assumptions</div>
+              <div class="uc-ctrl">
+                <label>Usage rate <span class="val">72%</span></label>
+                <input type="range" class="uc-range" value="72" disabled>
+              </div>
+              <div class="uc-ev"><span>Usage trend</span><span class="w">× 1.0</span></div>
+              <div class="uc-ev"><span>Role change</span><span class="w">× 0.9</span></div>
+            </div>
+          </div>
+          <div class="uc-right">
+            <div class="uc-label">Answer</div>
+            <div class="spinner"></div>
+            <div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:10px">recomputing…</div>
+            <div class="uc-foot" style="margin-top:auto">Assumption changed — answer updating.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Loading state · spinner overlay · shown while answer recomputes after an assumption change</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 8. INSIDE NOTEBOOK SHELL — with sidebar                       -->
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-label">Context · Inside the notebook</div>
+    <div class="stage">
+      <div class="shell">
+        <div class="shell-top">
+          <div class="logo">
+            <svg width="18" height="18" viewBox="0 0 48 48" fill="#1A4D3E"><rect x="3" y="30" width="6" height="12" rx="1.5"/><rect x="12" y="18" width="6" height="24" rx="1.5"/><rect x="21" y="4" width="6" height="38" rx="1.5"/><rect x="30" y="18" width="6" height="24" rx="1.5"/><rect x="39" y="30" width="6" height="12" rx="1.5"/></svg>
+            Riemann Research
+          </div>
+          <nav>
+            <span>Notebooks</span>
+            <span>Domains</span>
+            <span>Settings</span>
+          </nav>
+        </div>
+        <div class="shell-body">
+          <div class="shell-side">
+            <div class="head">Notebooks</div>
+            <div class="item on">league-2027</div>
+            <div class="item">multi-asset-q4</div>
+            <div class="item">q3-review</div>
+            <div class="head">Domains</div>
+            <div class="item">Fantasy Sports</div>
+            <div class="item">Trading</div>
+            <div class="item">Business</div>
+          </div>
+          <div class="shell-main" style="padding:16px;overflow:hidden">
+            <div class="uc" style="box-shadow:none">
+              <div class="uc-bar">
+                <span class="uc-dot"></span><span class="uc-dot"></span><span class="uc-dot"></span>
+                <span class="uc-path">league-2027.riemann — notebook</span>
+              </div>
+              <div class="uc-body">
+                <div class="uc-left">
+                  <span class="uc-chip">QUESTION</span>
+                  <div class="uc-q" style="font-size:17px">"Will Okafor outscore Mensah next 4 weeks?"</div>
+                  <div style="margin-top:14px">
+                    <div class="uc-ctrl">
+                      <label>Usage <span class="val">85%</span></label>
+                      <input type="range" class="uc-range" value="85" disabled>
+                    </div>
+                    <div class="uc-ev"><span>Usage trend</span><span class="w">× 1.0</span></div>
+                    <div class="uc-ev"><span>Role change</span><span class="w">× 0.9</span></div>
+                  </div>
+                </div>
+                <div class="uc-right">
+                  <div class="uc-label">Answer</div>
+                  <div class="uc-big" style="font-size:36px;color:var(--accent)">+4.2 <small>pts</small></div>
+                  <div class="uc-contrib">
+                    <div class="uc-crow"><span class="lbl">Usage</span><div style="flex:1"><div class="bar" style="width:78%"></div></div><span class="num">+3.1</span></div>
+                    <div class="uc-crow"><span class="lbl">Role</span><div style="flex:1"><div class="bar" style="width:60%"></div></div><span class="num">+2.2</span></div>
+                  </div>
+                  <div class="uc-foot">Every change rewrote this answer.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Inside the notebook · sidebar with file tree and domains · card lives in the main panel</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 9. TRADING — mobile                                           -->
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-label">Domain · Trading · Mobile</div>
+    <div class="stage">
+      <div class="mock-mobile">
+        <div class="uc">
+          <div class="uc-bar">
+            <span class="uc-dot"></span><span class="uc-dot"></span><span class="uc-dot"></span>
+            <span class="uc-path">multi-asset-q4</span>
+          </div>
+          <div style="padding:18px 18px 16px">
+            <span class="uc-chip" style="background:var(--blue-soft);color:var(--blue)">QUESTION</span>
+            <div class="uc-q" style="font-size:16px">"Which strategy works across FDXT, FT, MO, and FONDEAD?"</div>
+            <div style="margin-top:14px">
+              <div class="uc-ctrl">
+                <label>Lookback <span class="val" style="color:var(--blue)">14d</span></label>
+                <input type="range" class="uc-range" style="accent-color:var(--blue)" value="60" disabled>
+              </div>
+              <label class="uc-tog"><input type="checkbox" checked disabled> Tx costs</label>
+              <div class="uc-ev"><span>FDXT — 3yr tick</span><span class="w">× 1.0</span></div>
+              <div class="uc-ev"><span>FT — 3yr daily</span><span class="w">× 0.9</span></div>
+            </div>
+          </div>
+          <div style="border-top:1px solid var(--border);background:var(--bg);padding:18px">
+            <div class="uc-label">Answer</div>
+            <div class="uc-big" style="font-size:32px;color:var(--blue)">+18.4% <small>ann.</small></div>
+            <div class="uc-sub">Sharpe 1.42 · Max DD −8.3%</div>
+            <div class="uc-chart" style="height:60px">
+              <svg viewBox="0 0 400 80" preserveAspectRatio="none">
+                <path d="M0,70 Q50,66 100,60 T200,46 T300,30 L400,20 L400,80 L0,80Z" fill="url(#cg)"/>
+                <path d="M0,70 Q50,66 100,60 T200,46 T300,30 L400,20" fill="none" stroke="#2D5F8A" stroke-width="2"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Trading on mobile · compact layout · chart still visible</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 10. BUSINESS — tablet                                         -->
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-label">Domain · Business · Tablet</div>
+    <div class="stage">
+      <div class="mock-tablet">
+        <div class="uc">
+          <div class="uc-bar">
+            <span class="uc-dot"></span><span class="uc-dot"></span><span class="uc-dot"></span>
+            <span class="uc-path">q3-review.riemann</span>
+          </div>
+          <div class="uc-body">
+            <div class="uc-left">
+              <span class="uc-chip" style="background:var(--purple-soft);color:var(--purple)">QUESTION</span>
+              <div class="uc-q" style="font-size:17px">"What drove the Q3 revenue increase?"</div>
+              <div style="margin-top:14px">
+                <div class="uc-ctrl">
+                  <label>Expansion revenue <span class="val" style="color:var(--purple)">Yes</span></label>
+                  <div class="uc-seg">
+                    <button class="on" style="background:var(--purple)">Yes</button>
+                    <button>No</button>
+                  </div>
+                </div>
+                <label class="uc-tog"><input type="checkbox" checked disabled> Seasonal adj.</label>
+                <div class="uc-ev"><span>Stripe — recurring</span><span class="w">× 1.0</span></div>
+                <div class="uc-ev"><span>HubSpot — new logos</span><span class="w">× 0.9</span></div>
+              </div>
+            </div>
+            <div class="uc-right">
+              <div class="uc-label">Answer</div>
+              <div class="uc-big" style="font-size:36px;color:var(--purple)">$2.4M <small>Q3</small></div>
+              <div class="uc-sub">+22% QoQ</div>
+              <div style="display:flex;align-items:flex-end;gap:5px;height:50px;margin:12px 0 6px">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="background:var(--border-strong);width:100%;height:28px;border-radius:3px 3px 0 0"></div><span style="font-family:var(--mono);font-size:8px;color:var(--muted)">Q1</span></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="background:var(--border-strong);width:100%;height:34px;border-radius:3px 3px 0 0"></div><span style="font-family:var(--mono);font-size:8px;color:var(--muted)">Q2</span></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="background:var(--purple);width:100%;height:46px;border-radius:3px 3px 0 0"></div><span style="font-family:var(--mono);font-size:8px;color:var(--muted)">Q3</span></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="background:var(--purple-soft);border:1.5px dashed var(--purple);width:100%;height:42px;border-radius:3px 3px 0 0"></div><span style="font-family:var(--mono);font-size:8px;color:var(--purple)">Q4?</span></div>
+              </div>
+              <div class="uc-contrib">
+                <div class="uc-crow"><span class="lbl">New logos</span><div style="flex:1"><div class="bar" style="background:var(--purple);width:68%"></div></div><span class="num">+$340K</span></div>
+                <div class="uc-crow"><span class="lbl">Expansion</span><div style="flex:1"><div class="bar" style="background:var(--purple);width:55%"></div></div><span class="num">+$280K</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Business on tablet · bar chart visible · tighter layout</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 11. FANTASY — evidence toggled off, answer moved             -->
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-label">State · Evidence removed</div>
+    <div class="stage">
+      <div class="uc">
+        <div class="uc-bar">
+          <span class="uc-dot"></span><span class="uc-dot"></span><span class="uc-dot"></span>
+          <span class="uc-path">league-2027.riemann — notebook</span>
+        </div>
+        <div class="uc-body">
+          <div class="uc-left">
+            <span class="uc-chip">QUESTION</span>
+            <div class="uc-q">"Will D. Okafor outscore S. Mensah in fantasy points over the next four weeks?"</div>
+            <div style="margin-top:16px">
+              <div class="uc-label">Assumptions — edit and recompute</div>
+              <div class="uc-ctrl">
+                <label>Okafor's usage holds <span class="val">85%</span></label>
+                <input type="range" class="uc-range" value="85" disabled>
+              </div>
+              <div>
+                <div class="uc-label">Evidence — click to include / remove</div>
+                <div class="uc-ev off"><span>Usage trend, last 6 weeks</span><span class="w">× 1.0</span></div>
+                <div class="uc-ev off"><span>Role change after week 7</span><span class="w">× 0.9</span></div>
+                <div class="uc-ev off"><span>Opponent edge rusher ruled out</span><span class="w">× 0.8</span></div>
+                <div class="uc-ev"><span>Schedule strength, next 4 games</span><span class="w">× 0.7</span></div>
+                <div class="uc-ev off"><span>One outdoor game, wind risk</span><span class="w">× 0.5</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="uc-right">
+            <div class="uc-label">Answer — recomputed</div>
+            <span class="uc-badge">recomputed ✓</span>
+            <div class="uc-big" style="color:var(--amber)">−0.8 <small>pts</small></div>
+            <div class="uc-sub">margin flipped — without usage data, the case collapses</div>
+            <div class="uc-contrib">
+              <div class="uc-label" style="margin-top:10px">What the margin is made of</div>
+              <div class="uc-crow"><span class="lbl">Schedule strength</span><div style="flex:1"><div class="bar neg" style="width:65%"></div></div><span class="num">−0.8</span></div>
+              <div class="uc-crow"><span class="lbl">Usage trend</span><div style="flex:1"><div class="bar" style="width:0%"></div></div><span class="num">removed</span></div>
+              <div class="uc-crow"><span class="lbl">Role change</span><div style="flex:1"><div class="bar" style="width:0%"></div></div><span class="num">removed</span></div>
+              <div class="uc-crow"><span class="lbl">Opponent DE</span><div style="flex:1"><div class="bar" style="width:0%"></div></div><span class="num">removed</span></div>
+            </div>
+            <div class="uc-foot">Three evidence items removed — the answer flipped from +4.2 to −0.8.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Evidence removed · answer flipped · shows how the composition responds to missing data</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 12. TRADING — dark mode                                       -->
+  <!-- ============================================================ -->
+  <section>
+    <div class="section-label">Domain · Trading · Dark mode</div>
+    <div class="stage dark">
+      <div class="uc dark-card">
+        <div class="uc-bar">
+          <span class="uc-dot"></span><span class="uc-dot"></span><span class="uc-dot"></span>
+          <span class="uc-path">multi-asset-q4.riemann — notebook</span>
+        </div>
+        <div class="uc-body">
+          <div class="uc-left">
+            <span class="uc-chip" style="background:rgba(45,95,138,.2);color:#6BAED6">QUESTION</span>
+            <div class="uc-q">"Which mean-reversion strategy works across FDXT, FT, MO, and FONDEAD in Q4?"</div>
+            <div style="margin-top:16px">
+              <div class="uc-label">Assumptions</div>
+              <div class="uc-ctrl">
+                <label>Lookback window <span class="val" style="color:#6BAED6">14 days</span></label>
+                <input type="range" class="uc-range" style="accent-color:#6BAED6" value="60" disabled>
+              </div>
+              <label class="uc-tog"><input type="checkbox" checked disabled> Transaction costs</label>
+              <div class="uc-ev"><span>FDXT — 3yr tick data</span><span class="w">× 1.0</span></div>
+              <div class="uc-ev"><span>FT — 3yr daily OHLCV</span><span class="w">× 0.9</span></div>
+            </div>
+          </div>
+          <div class="uc-right">
+            <div class="uc-label">Answer</div>
+            <div class="uc-big" style="color:#6BAED6">+18.4% <small>ann.</small></div>
+            <div class="uc-sub">Sharpe 1.42 · Max DD −8.3%</div>
+            <div class="uc-chart">
+              <svg viewBox="0 0 400 100" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="cg2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#6BAED6" stop-opacity=".2"/>
+                    <stop offset="100%" stop-color="#6BAED6" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path d="M0,85 Q30,82 60,78 T120,70 T180,58 T240,52 T300,40 T360,28 L400,22 L400,100 L0,100Z" fill="url(#cg2)"/>
+                <path d="M0,85 Q30,82 60,78 T120,70 T180,58 T240,52 T300,40 T360,28 L400,22" fill="none" stroke="#6BAED6" stroke-width="2"/>
+                <path d="M0,88 Q30,87 60,86 T120,84 T180,82 T240,80 T300,78 T360,76 L400,74" fill="none" stroke="#2A2926" stroke-width="1.2" stroke-dasharray="4,3"/>
+              </svg>
+            </div>
+            <div class="uc-contrib">
+              <div class="uc-crow"><span class="lbl">FDXT signal</span><div style="flex:1"><div class="bar" style="background:#6BAED6;width:72%"></div></div><span class="num">+8.2%</span></div>
+              <div class="uc-crow"><span class="lbl">FT carry</span><div style="flex:1"><div class="bar" style="background:#6BAED6;width:55%"></div></div><span class="num">+5.1%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Trading in dark mode · blue accents on ink background</div>
+  </section>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riemann Research — Interactive Notebooks</title>
+<style>
+  :root{
+    --paper:#F5F3EC; --card:#FFFFFF; --ink:#17160F; --ink2:#45443C;
+    --mut:#7C7B72; --mut2:#A3A298; --hair:#E4E2D6; --hair2:#D4D2C6;
+    --good:#1E6B4F; --warn:#A8671C; --bad:#B14E2C;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    --serif:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
+
+  /* ---------- top bar ---------- */
+  .topbar{position:sticky;top:0;z-index:50;background:var(--paper);border-bottom:1px solid var(--hair2);padding:10px 24px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand svg{display:block}
+  .brand .bt{font-family:var(--serif);font-size:16px;letter-spacing:-.01em}
+  .brand .bs{font-family:var(--mono);font-size:9.5px;color:var(--mut);letter-spacing:.14em;text-transform:uppercase;display:block;margin-top:1px}
+  #logo rect{transition:y .18s ease,height .18s ease}
+  #logo.computing rect{animation:bars .5s ease infinite alternate}
+  @keyframes bars{from{transform:scaleY(.72)}to{transform:scaleY(1.05)}}
+  #logo rect{transform-origin:center bottom}
+  .tabs{display:flex;gap:2px;margin-left:8px}
+  .tabs button{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;background:none;border:none;border-bottom:2px solid transparent;padding:8px 12px;color:var(--mut);cursor:pointer}
+  .tabs button.on{color:var(--ink);border-bottom-color:var(--ink)}
+  .tabs button:hover{color:var(--ink)}
+  .topright{margin-left:auto;display:flex;align-items:center;gap:16px}
+  .status{font-family:var(--mono);font-size:10px;color:var(--mut);display:flex;align-items:center;gap:6px}
+  .status i{width:7px;height:7px;border-radius:50%;background:var(--good);display:inline-block}
+  .status.busy i{background:var(--warn);animation:blink .5s infinite alternate}
+  @keyframes blink{to{opacity:.3}}
+  .lenswrap{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);cursor:pointer;user-select:none}
+  .switch{position:relative;width:34px;height:18px;background:var(--hair2);border-radius:10px;transition:.2s}
+  .switch::after{content:'';position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:.2s}
+  input:checked + .switch{background:var(--ink)}
+  input:checked + .switch::after{left:18px}
+  .lenswrap input{display:none}
+
+  /* ---------- tag lens ---------- */
+  .tg{position:relative}
+  .lens-on .tg{border-bottom:2px solid var(--tc,#8A887E);cursor:help;padding-bottom:1px}
+  .tg[data-tag="VARIABLE"]{--tc:#23539E}
+  .tg[data-tag="FUNCTION"]{--tc:#A8671C}
+  .tg[data-tag="RELATION"]{--tc:#6D469E}
+  .tg[data-tag="SET"]{--tc:#1E6B4F}
+  .tg.p{--tc:#A3A298}
+  .lens-on .tg.p{border-bottom-style:dotted}
+  .lens-on .tg:hover::after{content:attr(data-tag);position:absolute;left:0;top:-1.6em;background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;padding:2px 6px;border-radius:3px;white-space:nowrap;z-index:60}
+
+  /* ---------- frame ---------- */
+  .frame{display:grid;grid-template-columns:236px minmax(0,1fr);gap:30px;max-width:1240px;margin:0 auto;padding:26px 24px 130px}
+  @media(max-width:920px){.frame{grid-template-columns:1fr}}
+
+  /* ---------- sidebar ---------- */
+  .side .sh{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut2);margin:22px 0 8px}
+  .side .sh:first-child{margin-top:0}
+  .nitem{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:none;font-family:var(--mono);font-size:12px;color:var(--mut);padding:6px 10px;border-radius:6px;cursor:pointer}
+  .nitem:hover{background:#ECEAE0;color:var(--ink)}
+  .nitem.on{background:var(--ink);color:var(--paper)}
+  .ndot{width:8px;height:8px;border-radius:2px;background:var(--c,#999);flex-shrink:0}
+  .side details{border-top:1px solid var(--hair)}
+  .side details:last-child{border-bottom:1px solid var(--hair)}
+  .side summary,.acc summary{list-style:none;cursor:pointer;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);padding:9px 4px;display:flex;justify-content:space-between;align-items:center;user-select:none}
+  summary::-webkit-details-marker{display:none}
+  .side summary::after,.acc summary::after{content:'+';font-size:13px;color:var(--mut2)}
+  details[open] > summary::after{content:'–'}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;padding:8px 2px 12px}
+  .chip{font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;background:var(--card);border:1px solid var(--hair2);border-radius:4px;padding:3px 7px;color:var(--ink2)}
+  .chip:hover{border-color:var(--ink)}
+  .rules{font-size:12px;color:var(--ink2);padding:8px 2px 12px;line-height:1.6}
+  .rules li{margin-left:16px;margin-bottom:4px}
+  .testbtn{width:100%;text-align:left;background:var(--card);border:1px solid var(--hair2);border-radius:8px;padding:10px 12px;font-size:12.5px;color:var(--ink);cursor:pointer;font-family:var(--serif)}
+  .testbtn:hover{border-color:var(--ink)}
+  .testbtn span{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-top:3px}
+
+  /* ---------- ask bar ---------- */
+  .askbar{display:flex;gap:10px;margin-bottom:10px}
+  .askbar input{flex:1;background:var(--card);border:1px solid var(--hair2);border-radius:9px;padding:12px 16px;font-family:var(--serif);font-size:15.5px;color:var(--ink);outline:none}
+  .askbar input:focus{border-color:var(--ink)}
+  .askbar button{background:var(--ink);color:var(--paper);border:none;border-radius:9px;padding:0 22px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+  .askbar button:hover{background:#000}
+  .sugg{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px}
+  .sugg button{font-family:var(--mono);font-size:10.5px;background:none;border:1px solid var(--hair2);border-radius:20px;padding:5px 12px;color:var(--ink2);cursor:pointer}
+  .sugg button:hover{border-color:var(--ink);color:var(--ink)}
+  .boundary{border-left:3px solid var(--bad);background:#F7ECE5;border-radius:0 9px 9px 0;padding:14px 18px;margin:12px 0 0;font-size:13.5px;color:var(--ink2)}
+  .boundary b{color:var(--ink);font-family:var(--serif)}
+  .boundary .bt2{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--bad);margin-bottom:5px;display:block}
+  .boundary button{background:none;border:underline;border:none;color:var(--bad);font-family:var(--mono);font-size:10.5px;cursor:pointer;text-decoration:underline;padding:0;margin-top:6px}
+
+  /* ---------- cards ---------- */
+  .stage{margin-top:22px}
+  .card{background:var(--card);border:1px solid var(--hair);border-radius:13px;overflow:hidden;box-shadow:0 3px 24px -10px rgba(23,22,15,.14)}
+  .chead{display:flex;align-items:center;gap:7px;padding:11px 16px;border-bottom:1px solid var(--hair);background:#FAF9F4}
+  .chead .dots i{width:8px;height:8px;border-radius:50%;background:var(--hair2);display:inline-block;margin-right:5px}
+  .chead .path{margin-left:6px;font-family:var(--mono);font-size:11px;color:var(--mut)}
+  .badge{margin-left:auto;font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;background:var(--soft,#EEE);color:var(--acc);border-radius:12px;padding:3px 10px;white-space:nowrap}
+  .badge.wait{background:var(--soft);color:var(--warn);animation:blink .5s infinite alternate}
+  .cbody{display:grid;grid-template-columns:1.12fr .88fr}
+  @media(max-width:920px){.cbody{grid-template-columns:1fr}}
+  .colA{padding:24px 26px 22px}
+  .colB{border-left:1px solid var(--hair);background:#FBFAF5;padding:24px 26px 22px;display:flex;flex-direction:column}
+  @media(max-width:920px){.colB{border-left:none;border-top:1px solid var(--hair)}}
+  .stag{display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;background:var(--soft);color:var(--acc);border-radius:4px;padding:2px 8px;margin-bottom:8px;cursor:help}
+  .stag.sm{font-size:8.5px;padding:2px 6px;margin:0 0 0 0;flex-shrink:0}
+  .q{font-family:var(--serif);font-size:19px;line-height:1.4;margin-bottom:20px}
+  .glabel{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:18px 0 10px}
+  .ctrl{margin-bottom:14px}
+  .ctrl label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;color:var(--ink2)}
+  .ctrl .val{font-family:var(--mono);font-size:12px;color:var(--acc)}
+  .ctrl input[type=range]{width:100%;accent-color:var(--acc);height:4px;cursor:pointer}
+  .seg{display:flex;border:1px solid var(--hair2);border-radius:7px;overflow:hidden}
+  .seg button{flex:1;padding:7px 0;background:var(--card);border:none;border-right:1px solid var(--hair2);font-size:12px;color:var(--mut);cursor:pointer}
+  .seg button:last-child{border-right:none}
+  .seg button.on{background:var(--acc);color:#fff;font-weight:600}
+  .tog{display:flex;align-items:flex-start;gap:9px;font-size:13px;cursor:pointer;user-select:none;color:var(--ink2);margin:4px 0 12px}
+  .tog input{accent-color:var(--acc);width:14px;height:14px;margin-top:2px;cursor:pointer}
+  .tog small{display:block;font-family:var(--mono);font-size:9px;color:var(--mut2);letter-spacing:.04em}
+  .evs .ev{display:flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid var(--hair);border-radius:7px;margin-bottom:5px;font-size:12.5px;background:var(--card);cursor:pointer;transition:.15s}
+  .evs .ev:hover{border-color:var(--hair2)}
+  .evs .ev .tick{font-family:var(--mono);font-size:10px;color:var(--acc);width:12px}
+  .evs .ev .w{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--mut)}
+  .evs .ev.off{opacity:.38}
+  .evs .ev.off .t{text-decoration:line-through}
+  .btnrow{display:flex;gap:8px;margin-top:16px}
+  .btn{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;padding:7px 13px;border:1px solid var(--hair2);background:var(--card);border-radius:7px;cursor:pointer;color:var(--ink2)}
+  .btn:hover{border-color:var(--ink);color:var(--ink)}
+
+  /* answer column */
+  .model{font-family:var(--mono);font-size:9.5px;color:var(--mut2);letter-spacing:.04em;margin-bottom:14px}
+  .big{font-family:var(--serif);font-size:46px;font-weight:700;line-height:1;letter-spacing:-.01em}
+  .big small{font-size:17px;color:var(--mut);font-weight:400}
+  .sub{font-size:12.5px;color:var(--mut);margin-top:7px}
+  .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+  .chart{width:100%;height:auto;margin:16px 0 4px;display:block}
+  .chart text{font-family:var(--mono);font-size:9px;fill:var(--mut2)}
+  .crow{display:flex;align-items:center;gap:9px;margin-bottom:6px;font-size:11px}
+  .crow .lbl{width:118px;color:var(--mut);flex-shrink:0}
+  .crow .track{flex:1;height:7px;border-radius:4px;background:#EFEDE4;overflow:hidden}
+  .crow .bar{height:100%;border-radius:4px;background:var(--acc);transition:width .4s ease;min-width:2px}
+  .crow .bar.neg{background:var(--bad)}
+  .crow .num{font-family:var(--mono);font-size:10px;color:var(--mut);width:56px;text-align:right;flex-shrink:0}
+  .verdict{font-family:var(--serif);font-size:15.5px;line-height:1.5;font-style:italic;color:var(--ink);margin-bottom:6px}
+  .acc{border-top:1px solid var(--hair)}
+  .acc summary{padding:11px 2px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)}
+  .acc .abody{padding:4px 2px 14px}
+  .citem{display:flex;gap:10px;align-items:flex-start;margin-bottom:11px}
+  .citem .cbody2{font-size:13px;line-height:1.5;color:var(--ink2)}
+  .parse{font-family:var(--mono);font-size:11px;line-height:1.75;background:var(--ink);color:#E9E7DC;border-radius:9px;padding:14px 16px;overflow-x:auto;white-space:pre}
+  .foot{margin-top:auto;padding-top:16px;font-size:11px;color:var(--mut2);font-style:italic;font-family:var(--serif)}
+  .wchart{display:flex;align-items:flex-end;gap:8px;height:78px;margin:14px 0 4px}
+  .wchart .wb{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+  .wchart .bar{width:100%;border-radius:4px 4px 0 0;transition:height .35s ease}
+  .wchart .wl{font-family:var(--mono);font-size:9px;color:var(--mut)}
+  .wchart .wv{font-family:var(--mono);font-size:9px;color:var(--mut2)}
+  .cutnote{font-family:var(--mono);font-size:10px;color:var(--warn);margin:-6px 0 10px;display:none}
+
+  /* modal & toast */
+  .overlay{position:fixed;inset:0;background:rgba(23,22,15,.45);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .overlay.open{display:flex}
+  .modal{background:var(--card);border-radius:14px;max-width:560px;width:100%;max-height:80vh;overflow:auto;padding:30px 32px}
+  .modal h2{font-family:var(--serif);font-weight:500;font-size:23px;margin-bottom:12px}
+  .modal p{font-size:13.5px;color:var(--ink2);margin-bottom:10px}
+  .modal ul{margin:8px 0 14px 18px;font-size:12.5px;color:var(--mut);columns:2;column-gap:26px}
+  .modal li{margin-bottom:2px}
+  .modal .btn{margin-top:6px}
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:11.5px;padding:10px 18px;border-radius:8px;opacity:0;pointer-events:none;transition:.25s;z-index:120;max-width:80vw}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .hidden{display:none!important}
+  .intro{font-family:var(--serif);font-size:15px;color:var(--ink2);max-width:52em;margin-bottom:4px}
+  .intro b{color:var(--ink)}
+</style>
+</head>
+<body>
+
+<!-- ================= TOP BAR ================= -->
+<div class="topbar">
+  <div class="brand">
+    <svg id="logo" width="26" height="26" viewBox="0 0 48 48" fill="#17160F">
+      <rect x="3" y="32" width="6" height="12" rx="2"/><rect x="12" y="22" width="6" height="22" rx="2"/>
+      <rect x="21" y="8" width="6" height="36" rx="2"/><rect x="30" y="22" width="6" height="22" rx="2"/>
+      <rect x="39" y="32" width="6" height="12" rx="2"/>
+    </svg>
+    <div><span class="bt">Riemann Research</span><span class="bs">research environment</span></div>
+  </div>
+  <nav class="tabs">
+    <button data-tab="trading" class="on">Prop-Firm</button>
+    <button data-tab="business">Business</button>
+    <button data-tab="fantasy">Fantasy</button>
+  </nav>
+  <div class="topright">
+    <span class="status" id="status"><i></i><span>idle</span></span>
+    <label class="lenswrap" title="Reveal how every sentence is tagged">
+      <input type="checkbox" id="lens"><span class="switch"></span> Tag lens
+    </label>
+  </div>
+</div>
+
+<div class="frame">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="side">
+    <div class="sh">Notebooks</div>
+    <button class="nitem on" data-tab="trading"><i class="ndot" style="--c:#23539E"></i>prop-pass.riemann</button>
+    <button class="nitem" data-tab="business"><i class="ndot" style="--c:#6D469E"></i>going-concern.riemann</button>
+    <button class="nitem" data-tab="fantasy"><i class="ndot" style="--c:#1E6B4F"></i>league-2027.riemann</button>
+
+    <div class="sh">Schema</div>
+    <details>
+      <summary>Atomic tags · 4</summary>
+      <div class="chips">
+        <span class="chip" data-desctag="VARIABLE">VARIABLE</span><span class="chip" data-desctag="FUNCTION">FUNCTION</span>
+        <span class="chip" data-desctag="RELATION">RELATION</span><span class="chip" data-desctag="SET">SET</span>
+      </div>
+    </details>
+    <details>
+      <summary>Sentence tags · 26</summary>
+      <div class="chips" id="stags"></div>
+    </details>
+    <details>
+      <summary>Grammatical tags · 16</summary>
+      <div class="chips" id="gtags"></div>
+    </details>
+    <details>
+      <summary>Tagging rules</summary>
+      <ul class="rules">
+        <li>Meaningful spans get atomic tags.</li>
+        <li>Punctuation gets grammatical tags.</li>
+        <li>Exactly one sentence tag per sentence.</li>
+        <li>Never use a sentence tag as an atomic tag.</li>
+        <li>Preserve the sentence exactly.</li>
+        <li>Invent nothing.</li>
+      </ul>
+    </details>
+
+    <div class="sh">Scope</div>
+    <button class="testbtn" id="thetest">The Test<span>is this research?</span></button>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <main>
+    <p class="intro"><b>Three live notebooks.</b> Drag the levers, flip the evidence, ask a question — every answer on this page is recomputable. Turn on the <b>tag lens</b> to see how each sentence is parsed.</p>
+
+    <div class="askbar">
+      <input id="ask" placeholder="Ask: “write me a strategy to pass FTMO and Topstep” or “will our business fail” …" autocomplete="off">
+      <button id="askbtn">Ask</button>
+    </div>
+    <div class="sugg">
+      <button data-q="Write me a strategy to pass FTMO and Topstep in Q4." data-tab="trading">prop-firm pass plan</button>
+      <button data-q="Will our business fail within the next 12 months?" data-tab="business">will we fail?</button>
+      <button data-q="Will D. Okafor outscore S. Mensah in fantasy points over the next four weeks?" data-tab="fantasy">okafor vs mensah</button>
+      <button data-q="Email all my customers a 20% discount." data-tab="">boundary test</button>
+    </div>
+    <div class="boundary hidden" id="boundary"></div>
+
+    <!-- ============================================================
+         TRADING CARD
+    ============================================================ -->
+    <section class="stage" id="stage-trading">
+      <div class="card" style="--acc:#23539E;--soft:#E8EEF8">
+        <div class="chead">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="path">prop-pass.riemann — notebook</span>
+          <span class="badge" id="t-badge">composed ✓</span>
+        </div>
+        <div class="cbody">
+          <div class="colA">
+            <span class="stag" data-desctag="INSTRUCTION">INSTRUCTION</span>
+            <p class="q" id="t-q"></p>
+
+            <div class="glabel">Assumptions — drag to recompute</div>
+            <div class="ctrl"><label>Assumed win rate <span class="val" id="t-win-v"></span></label>
+              <input type="range" id="t-win" min="35" max="65" step="1" value="54"></div>
+            <div class="ctrl"><label>Risk per trade <span class="val" id="t-risk-v"></span></label>
+              <input type="range" id="t-risk" min="0.25" max="2" step="0.05" value="1"></div>
+            <div class="ctrl"><label>Reward : risk <span class="val" id="t-rr-v"></span></label>
+              <input type="range" id="t-rr" min="1" max="3" step="0.1" value="1.5"></div>
+            <div class="ctrl"><label>Trades per day <span class="val" id="t-tpd-v"></span></label>
+              <input type="range" id="t-tpd" min="1" max="6" step="1" value="2"></div>
+            <div class="ctrl"><label>Session filter</label>
+              <div class="seg" id="t-seg">
+                <button data-v="all" class="on">All sessions</button>
+                <button data-v="lnny">London + NY</button>
+                <button data-v="ny">NY only</button>
+              </div></div>
+            <label class="tog"><input type="checkbox" id="t-costs" checked>
+              <span>Model transaction costs<small>costs modeled as −0.15R on payoff</small></span></label>
+
+            <div class="glabel">Evidence — click to add / remove</div>
+            <div class="evs" id="t-evs">
+              <div class="ev" data-w="1.0" data-on="1"><span class="tick">●</span><span class="t">Tick backtest 2019–2025 · 2,412 trades</span><span class="w">× 1.0</span></div>
+              <div class="ev" data-w="0.9" data-on="1"><span class="tick">●</span><span class="t">Slippage &amp; commission modeled</span><span class="w">× 0.9</span></div>
+              <div class="ev" data-w="0.8" data-on="1"><span class="tick">●</span><span class="t">News-filter studies</span><span class="w">× 0.8</span></div>
+              <div class="ev" data-w="0.7" data-on="1"><span class="tick">●</span><span class="t">Discipline &amp; psychology research</span><span class="w">× 0.7</span></div>
+              <div class="ev" data-w="0.5" data-on="0"><span class="tick">●</span><span class="t">Overnight holding rules</span><span class="w">× 0.5</span></div>
+            </div>
+            <div class="btnrow">
+              <button class="btn" id="t-reset">Reset assumptions</button>
+              <button class="btn" id="t-copy">Copy tagged parse</button>
+            </div>
+          </div>
+
+          <div class="colB">
+            <div class="model">model: monte-carlo · 700 paths · horizon 300 trades</div>
+            <div class="glabel" style="margin-top:0">Answer — probability of passing Phase 1</div>
+            <div class="big" id="t-big">—</div>
+            <div class="sub" id="t-sub">—</div>
+            <svg class="chart" id="t-chart" viewBox="0 0 560 215" preserveAspectRatio="xMidYMid meet"></svg>
+            <div class="glabel">What moves the pass rate</div>
+            <div id="t-bars"></div>
+            <div class="glabel">Verdict</div>
+            <p class="verdict" id="t-verdict"></p>
+            <details class="acc">
+              <summary>How this answer was composed</summary>
+              <div class="abody">
+                <div id="t-comp"></div>
+                <div class="citem" id="t-inf"></div>
+                <div class="citem" id="t-con"></div>
+              </div>
+            </details>
+            <details class="acc">
+              <summary>Machine parse — tagging spec</summary>
+              <div class="abody"><pre class="parse" id="t-parse"></pre></div>
+            </details>
+            <div class="foot">Every drag above rewrote this answer.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         BUSINESS CARD
+    ============================================================ -->
+    <section class="stage hidden" id="stage-business">
+      <div class="card" style="--acc:#6D469E;--soft:#EFE9F7">
+        <div class="chead">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="path">going-concern.riemann — notebook</span>
+          <span class="badge" id="b-badge">composed ✓</span>
+        </div>
+        <div class="cbody">
+          <div class="colA">
+            <span class="stag" data-desctag="QUESTION">QUESTION</span>
+            <p class="q" id="b-q"></p>
+
+            <div class="glabel">Assumptions — drag to recompute</div>
+            <div class="ctrl"><label>Current MRR <span class="val" id="b-mrr-v"></span></label>
+              <input type="range" id="b-mrr" min="0.2" max="1.5" step="0.05" value="0.85"></div>
+            <div class="ctrl"><label>Net new MRR per month <span class="val" id="b-nn-v"></span></label>
+              <input type="range" id="b-nn" min="-0.05" max="0.4" step="0.01" value="0.18"></div>
+            <div class="ctrl"><label>Gross churn <span class="val" id="b-churn-v"></span></label>
+              <input type="range" id="b-churn" min="1.5" max="9" step="0.5" value="4.5"></div>
+            <div class="ctrl"><label>Cash reserve <span class="val" id="b-cash-v"></span></label>
+              <input type="range" id="b-cash" min="0.2" max="5" step="0.1" value="1.8"></div>
+            <div class="ctrl"><label>Cost posture</label>
+              <div class="seg" id="b-seg">
+                <button data-v="lean">Lean · $0.68M</button>
+                <button data-v="bal" class="on">Balanced · $0.95M</button>
+                <button data-v="scale">Scaling · $1.25M</button>
+              </div></div>
+            <label class="tog"><input type="checkbox" id="b-cuts">
+              <span>Allow discretionary cost cuts<small>engages −15% costs if runway &lt; 9 months</small></span></label>
+
+            <div class="glabel">Evidence — click to add / remove</div>
+            <div class="evs" id="b-evs">
+              <div class="ev" data-w="1.0" data-on="1"><span class="tick">●</span><span class="t">Stripe export — recurring revenue</span><span class="w">× 1.0</span></div>
+              <div class="ev" data-w="0.9" data-on="1"><span class="tick">●</span><span class="t">Churn cohort study, 8 quarters</span><span class="w">× 0.9</span></div>
+              <div class="ev" data-w="0.8" data-on="1"><span class="tick">●</span><span class="t">HubSpot pipeline — new logos</span><span class="w">× 0.8</span></div>
+              <div class="ev" data-w="0.7" data-on="1"><span class="tick">●</span><span class="t">Board deck CSV — enterprise deals</span><span class="w">× 0.7</span></div>
+              <div class="ev" data-w="0.5" data-on="0"><span class="tick">●</span><span class="t">Partner pipeline (unverified)</span><span class="w">× 0.5</span></div>
+            </div>
+            <div class="btnrow">
+              <button class="btn" id="b-reset">Reset assumptions</button>
+              <button class="btn" id="b-copy">Copy tagged parse</button>
+            </div>
+          </div>
+
+          <div class="colB">
+            <div class="model">model: 24-month cash simulation · +1.5pt churn stress</div>
+            <div class="glabel" style="margin-top:0">Answer — probability of failure ≤ 12 months</div>
+            <div class="big" id="b-big">—</div>
+            <div class="sub" id="b-sub">—</div>
+            <div class="cutnote" id="b-cutnote">⚠ cost cuts engaged — runway was under 9 months</div>
+            <svg class="chart" id="b-chart" viewBox="0 0 560 200" preserveAspectRatio="xMidYMid meet"></svg>
+            <div class="glabel">What moves cash at month 12</div>
+            <div id="b-bars"></div>
+            <div class="glabel">Verdict</div>
+            <p class="verdict" id="b-verdict"></p>
+            <details class="acc">
+              <summary>How this answer was composed</summary>
+              <div class="abody">
+                <div id="b-comp"></div>
+                <div class="citem" id="b-inf"></div>
+                <div class="citem" id="b-con"></div>
+              </div>
+            </details>
+            <details class="acc">
+              <summary>Machine parse — tagging spec</summary>
+              <div class="abody"><pre class="parse" id="b-parse"></pre></div>
+            </details>
+            <div class="foot">Every drag above rewrote this forecast.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         FANTASY CARD
+    ============================================================ -->
+    <section class="stage hidden" id="stage-fantasy">
+      <div class="card" style="--acc:#1E6B4F;--soft:#E6F0EA">
+        <div class="chead">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="path">league-2027.riemann — notebook</span>
+          <span class="badge" id="f-badge">composed ✓</span>
+        </div>
+        <div class="cbody">
+          <div class="colA">
+            <span class="stag" data-desctag="PREDICTION">PREDICTION</span>
+            <p class="q" id="f-q"></p>
+
+            <div class="glabel">Assumptions — drag to recompute</div>
+            <div class="ctrl"><label>Okafor's usage holds <span class="val" id="f-usage-v"></span></label>
+              <input type="range" id="f-usage" min="60" max="100" step="1" value="85"></div>
+            <div class="ctrl"><label>Opponent defensive strength</label>
+              <div class="seg" id="f-seg">
+                <button data-v="weak">Weak</button>
+                <button data-v="avg" class="on">Average</button>
+                <button data-v="strong">Strong</button>
+              </div></div>
+            <label class="tog"><input type="checkbox" id="f-inj" checked>
+              <span>Conservative injury adjustment<small>multiplies the margin × 0.92</small></span></label>
+
+            <div class="glabel">Evidence — click to add / remove</div>
+            <div class="evs" id="f-evs">
+              <div class="ev" data-w="1.0" data-on="1"><span class="tick">●</span><span class="t">Usage trend, last 6 weeks</span><span class="w">× 1.0</span></div>
+              <div class="ev" data-w="0.9" data-on="1"><span class="tick">●</span><span class="t">Role change after week 7</span><span class="w">× 0.9</span></div>
+              <div class="ev" data-w="0.8" data-on="1"><span class="tick">●</span><span class="t">Opponent edge rusher ruled out</span><span class="w">× 0.8</span></div>
+              <div class="ev" data-w="0.7" data-on="1"><span class="tick">●</span><span class="t">Schedule strength, next 4 games</span><span class="w">× 0.7</span></div>
+              <div class="ev" data-w="0.5" data-on="0"><span class="tick">●</span><span class="t">One outdoor game, wind risk</span><span class="w">× 0.5</span></div>
+            </div>
+            <div class="btnrow">
+              <button class="btn" id="f-reset">Reset assumptions</button>
+              <button class="btn" id="f-copy">Copy tagged parse</button>
+            </div>
+          </div>
+
+          <div class="colB">
+            <div class="model">model: weighted evidence composition</div>
+            <div class="glabel" style="margin-top:0">Answer — projected margin</div>
+            <div class="big" id="f-big">—</div>
+            <div class="sub" id="f-sub">—</div>
+            <div class="glabel">Projected margin by week</div>
+            <div class="wchart" id="f-chart"></div>
+            <div class="glabel">What the margin is made of</div>
+            <div id="f-bars"></div>
+            <div class="glabel">Verdict</div>
+            <p class="verdict" id="f-verdict"></p>
+            <details class="acc">
+              <summary>How this answer was composed</summary>
+              <div class="abody">
+                <div id="f-comp"></div>
+                <div class="citem" id="f-inf"></div>
+                <div class="citem" id="f-con"></div>
+              </div>
+            </details>
+            <details class="acc">
+              <summary>Machine parse — tagging spec</summary>
+              <div class="abody"><pre class="parse" id="f-parse"></pre></div>
+            </details>
+            <div class="foot">Every change above rewrote this prediction.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ================= MODAL / TOAST ================= -->
+<div class="overlay" id="modal">
+  <div class="modal">
+    <h2>The Test</h2>
+    <p>Any feature must answer one question: <b style="font-family:var(--serif)">is this research?</b></p>
+    <p>Research means a defined body of data, a question, evidence, assumptions, models — and an answer derived from them. Every card on this page passes: it has a dataset, levers you can move, and an answer that recomputes.</p>
+    <p style="margin-bottom:4px">Riemann Research is <b>not</b>:</p>
+    <ul>
+      <li>an operating system</li><li>a chatbot</li><li>a cloud platform</li><li>a payment system</li>
+      <li>a broker or bank</li><li>a dashboard</li><li>a search engine</li><li>an automation tool</li>
+    </ul>
+    <p>The moment it becomes any of these, it has failed its definition. Try the boundary in the ask bar — it will refuse.</p>
+    <button class="btn" id="modalclose">Close</button>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+/* ================================================================
+   HELPERS
+================================================================ */
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const sign1 = v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(1);
+const money = v => '$' + v.toFixed(2) + 'M';
+const clamp = (v,a,b) => Math.min(b, Math.max(a, v));
+const median = a => a.length ? a.sort((x,y)=>x-y)[Math.floor(a.length/2)] : 0;
+
+function renderSpans(el, spans){
+  el.innerHTML = spans.map(s =>
+    '<span class="tg' + (s.p ? ' p' : '') + '" data-tag="' + s.g + '">' + esc(s.t) + '</span>'
+  ).join('');
+}
+function spansPlain(spans){
+  return spans.map(s => s.t).join('').replace(/\s+/g,' ').trim();
+}
+function buildParse(spans, stag){
+  const lines = spans.map(s => s.t.trim() + ' → ' + s.g).join('\n');
+  return 'Sentence: ' + spansPlain(spans) + '\n\nAtomic / Grammatical Tags:\n\n' + lines + '\n\nSentence Tag: ' + stag;
+}
+function sentHTML(spans){ return spans.map(s =>
+  '<span class="tg' + (s.p ? ' p' : '') + '" data-tag="' + s.g + '">' + esc(s.t) + '</span>').join('');
+}
+function compItem(stag, spans){
+  return '<div class="citem"><span class="stag sm" data-desctag="' + stag + '">' + stag + '</span>' +
+         '<span class="cbody2">' + sentHTML(spans) + '</span></div>';
+}
+function barsHTML(rows, fmt){
+  const mx = Math.max(0.001, ...rows.map(r => Math.abs(r.d)));
+  return rows.map(r =>
+    '<div class="crow"><span class="lbl">' + r.l + '</span>' +
+    '<span class="track"><span class="bar' + (r.d < 0 ? ' neg' : '') + '" style="width:' +
+    Math.max(2, Math.abs(r.d)/mx*100) + '%"></span></span>' +
+    '<span class="num">' + fmt(r.d) + '</span></div>').join('');
+}
+let toastT;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+/* ================================================================
+   SENTENCE DATA — questions, compositions
+================================================================ */
+const Q = {
+  trading: { stag:'INSTRUCTION', spans:[
+    {t:'Write',g:'FUNCTION'},{t:' me',g:'VARIABLE'},{t:' a strategy',g:'VARIABLE'},
+    {t:' to',g:'RELATION'},{t:' pass',g:'FUNCTION'},{t:' FTMO and Topstep',g:'SET'},
+    {t:' in',g:'RELATION'},{t:' Q4',g:'VARIABLE'},{t:'.',g:'PERIOD',p:1}]},
+  fantasy: { stag:'PREDICTION', spans:[
+    {t:'Will',g:'RELATION'},{t:' D. Okafor',g:'VARIABLE'},{t:' outscore',g:'FUNCTION'},
+    {t:' S. Mensah',g:'VARIABLE'},{t:' in',g:'RELATION'},{t:' fantasy points',g:'VARIABLE'},
+    {t:' over',g:'RELATION'},{t:' the next four weeks',g:'SET'},{t:'?',g:'QUESTION_MARK',p:1}]},
+  business:{ stag:'QUESTION', spans:[
+    {t:'Will',g:'RELATION'},{t:' our business',g:'VARIABLE'},{t:' fail',g:'FUNCTION'},
+    {t:' within',g:'RELATION'},{t:' the next 12 months',g:'SET'},{t:'?',g:'QUESTION_MARK',p:1}]}
+};
+
+const COMP = {
+  trading: [
+    {stag:'FACT', spans:[
+      {t:'The FTMO Challenge',g:'VARIABLE'},{t:' requires',g:'FUNCTION'},{t:' a 10% profit target',g:'VARIABLE'},
+      {t:' with',g:'RELATION'},{t:' a 10% maximum loss',g:'VARIABLE'},{t:'.',g:'PERIOD',p:1}]},
+    {stag:'CONSTRAINT', spans:[
+      {t:'Daily loss',g:'VARIABLE'},{t:' may never exceed',g:'FUNCTION'},{t:' 5%',g:'VARIABLE'},
+      {t:' of',g:'RELATION'},{t:' the starting balance',g:'VARIABLE'},{t:'.',g:'PERIOD',p:1}]},
+    {stag:'EVIDENCE', spans:[
+      {t:'The tick backtest',g:'VARIABLE'},{t:' holds',g:'FUNCTION'},{t:' 2,412 trades',g:'VARIABLE'},
+      {t:' at',g:'RELATION'},{t:' a 54% win rate',g:'VARIABLE'},{t:'.',g:'PERIOD',p:1}]},
+    {stag:'ASSUMPTION', spans:[
+      {t:'Live execution',g:'VARIABLE'},{t:' decays',g:'FUNCTION'},{t:' the backtested edge',g:'VARIABLE'},
+      {t:' by',g:'RELATION'},{t:' about 10%',g:'VARIABLE'},{t:'.',g:'PERIOD',p:1}]}
+  ],
+  fantasy: [
+    {stag:'FACT', spans:[
+      {t:'Okafor',g:'VARIABLE'},{t:' has out-targeted',g:'FUNCTION'},{t:' Mensah',g:'VARIABLE'},
+      {t:' in',g:'RELATION'},{t:' five of the last six weeks',g:'SET'},{t:'.',g:'PERIOD',p:1}]},
+    {stag:'EVIDENCE', spans:[
+      {t:'The opponent edge rusher',g:'VARIABLE'},{t:' was ruled out',g:'FUNCTION'},
+      {t:' on',g:'RELATION'},{t:' Friday',g:'VARIABLE'},{t:'.',g:'PERIOD',p:1}]},
+    {stag:'ASSUMPTION', spans:[
+      {t:'The coordinator',g:'VARIABLE'},{t:' keeps',g:'FUNCTION'},{t:' the current rotation',g:'VARIABLE'},
+      {t:'.',g:'PERIOD',p:1}]}
+  ],
+  business: [
+    {stag:'FACT', spans:[
+      {t:'Gross margin',g:'VARIABLE'},{t:' held',g:'FUNCTION'},{t:' at',g:'RELATION'},{t:' 71%',g:'VARIABLE'},
+      {t:' for',g:'RELATION'},{t:' four consecutive quarters',g:'SET'},{t:'.',g:'PERIOD',p:1}]},
+    {stag:'EVIDENCE', spans:[
+      {t:'Stripe exports',g:'VARIABLE'},{t:' reconcile with',g:'FUNCTION'},{t:' the board deck',g:'VARIABLE'},
+      {t:' within',g:'RELATION'},{t:' 2%',g:'VARIABLE'},{t:'.',g:'PERIOD',p:1}]},
+    {stag:'CONSTRAINT', spans:[
+      {t:'The payroll reserve',g:'VARIABLE'},{t:' may not drop below',g:'FUNCTION'},
+      {t:' one month of costs',g:'VARIABLE'},{t:'.',g:'PERIOD',p:1}]},
+    {stag:'ASSUMPTION', spans:[
+      {t:'Net new MRR',g:'VARIABLE'},{t:' continues at',g:'FUNCTION'},{t:' the assumed monthly rate',g:'VARIABLE'},
+      {t:'.',g:'PERIOD',p:1}]}
+  ]
+};
+
+/* sentence-tag & atomic-tag descriptions for click-to-learn */
+const DESC = {
+  VARIABLE:'a thing that holds a value — a name, number, entity.',
+  FUNCTION:'an operation applied to variables.',
+  RELATION:'a link between variables.',
+  SET:'a collection treated as one thing.',
+  FACT:'established in the dataset; taken as given.',
+  OBSERVATION:'something seen in the data.', DEFINITION:'fixes the meaning of a term.',
+  CHOICE:'an option among alternatives.', STRATEGY:'a plan of action under constraints.',
+  GOAL:'a desired end state.', CLAIM:'an assertion that may need support.',
+  QUESTION:'an open query.', OBJECTION:'a counter-consideration.',
+  CONSEQUENCE:'a result that follows.', ASSUMPTION:'accepted without proof for this model.',
+  EVIDENCE:'data supporting or weighing on the answer.', INFERENCE:'derived from prior sentences.',
+  HYPOTHESIS:'a tentative explanation.', PREDICTION:'a forward-looking estimate.',
+  PREMISE:'a foundation for reasoning.', CONCLUSION:'the derived answer.',
+  CONDITION:'a gate on when something holds.', EVENT:'something that happens.',
+  CAUSE:'a producer of an effect.', EFFECT:'a result of a cause.',
+  ANSWER:'a resolved response.', INSTRUCTION:'a directive to act.',
+  CONSTRAINT:'a hard limit that binds the model.', REQUIREMENT:'a needed condition.',
+  PUNCTUATION:'a punctuation mark.', COMMA:'.', PERIOD:'.', QUESTION_MARK:'.', EXCLAMATION_MARK:'.',
+  COLON:'.', SEMICOLON:'.', PARENTHESIS:'.', BRACKET:'.', BRACE:'.', QUOTATION:'.', APOSTROPHE:'.',
+  DASH:'.', HYPHEN:'.', ELLIPSIS:'.', SLASH:'.'
+};
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-desctag]');
+  if(!el) return;
+  const tag = el.dataset.desctag;
+  toast(tag + ' — ' + (DESC[tag] || 'a tag in the schema.'));
+});
+
+/* fill sidebar schema chips */
+const SENT_TAGS = ['FACT','OBSERVATION','DEFINITION','CHOICE','STRATEGY','GOAL','CLAIM','QUESTION','OBJECTION','CONSEQUENCE','ASSUMPTION','EVIDENCE','INFERENCE','HYPOTHESIS','PREDICTION','PREMISE','CONCLUSION','CONDITION','EVENT','CAUSE','EFFECT','ANSWER','INSTRUCTION','INTENT','CONSTRAINT','REQUIREMENT'];
+const GRAM_TAGS = ['PUNCTUATION','COMMA','PERIOD','QUESTION_MARK','EXCLAMATION_MARK','COLON','SEMICOLON','PARENTHESIS','BRACKET','BRACE','QUOTATION','APOSTROPHE','DASH','HYPHEN','ELLIPSIS','SLASH'];
+ $('#stags').innerHTML = SENT_TAGS.map(t=>'<span class="chip" data-desctag="'+t+'">'+t+'</span>').join('');
+ $('#gtags').innerHTML = GRAM_TAGS.map(t=>'<span class="chip" data-desctag="'+t+'">'+t+'</span>').join('');
+
+/* ================================================================
+   RECOMPUTE PIPELINE (the runtime stays hidden; only the badge moves)
+================================================================ */
+const busy = {};
+function queue(domain, fn){
+  clearTimeout(busy[domain]);
+  const badge = $('#' + domain[0] + '-badge');
+  badge.textContent = 'recomputing…'; badge.classList.add('wait');
+  $('#logo').classList.add('computing');
+  $('#status').classList.add('busy'); $('#status span').lastChild.textContent = 'computing';
+  busy[domain] = setTimeout(() => { fn(); 
+    badge.textContent = 'recomputed ✓'; badge.classList.remove('wait');
+    $('#logo').classList.remove('computing');
+    $('#status').classList.remove('busy'); $('#status span').lastChild.textContent = 'idle';
+  }, 140);
+}
+
+/* ================================================================
+   TRADING — monte-carlo prop-firm pass model
+================================================================ */
+function mcSims(p, risk, rr, tpd, sims){
+  const CAP = 300, STEP = 5, NC = CAP/STEP + 1;
+  const eqAll = new Float32Array(sims * NC);
+  const samples = [], passTrades = [];
+  let pass = 0, bust = 0, daily = 0;
+  const gW = risk * rr, gL = -risk;
+  for(let s = 0; s < sims; s++){
+    let eq = 1, dayRet = 0, dayN = 0, endT = CAP;
+    const rec = s < 8 ? [1] : null;
+    eqAll[s*NC] = 1;
+    for(let t = 1; t <= CAP; t++){
+      eq *= (1 + (Math.random() < p ? gW : gL));
+      dayRet += (Math.random ? 0 : 0); /* noop */
+      dayRet += (eq > 0 && (t > 0) && ((t % 1) === 0)) ? 0 : 0; /* noop */
+      dayRet += (Math.random() < 2 ? 0 : 0); /* keep simple below */
+      if(rec) rec.push(eq);
+      if(t % STEP === 0) eqAll[s*NC + t/STEP] = eq;
+      if(eq >= 1.10){ pass = 1; endT = t; break; }
+      if(eq <= 0.90){ bust = 1; endT = t; break; }
+      dayRet += 0; /* daily bookkeeping replaced below */
+      if(++dayN >= tpd){
+        /* recompute day return from last tpd steps is costly; approximate with running sum */
+        if(daySum <= -0.05){ daily = 1; endT = t; break; }
+        dayN = 0;
+      }
+    }
+    if(!pass && !bust && !daily){ /* timeout = not passed */ }
+    if(pass) passTrades.push(endT);
+    if(rec){ samples.push(rec); }
+  }
+  return {};
+}
+</script>
+<script>
+/* The block above is replaced by the clean implementation below.
+   (Single source of truth — trading model, correctly.) */
+</script>
+
+<script>
+/* ================================================================
+   TRADING — clean implementation
+================================================================ */
+function mcSims2(p, risk, rr, tpd, sims){
+  const CAP = 300, STEP = 5, NC = CAP/STEP + 1;
+  const eqAll = new Float32Array(sims * NC);
+  const samples = [], passTrades = [];
+  let pass = 0, bust = 0, daily = 0;
+  for(let s = 0; s < sims; s++){
+    let eq = 1, endT = CAP, dailyBust = false;
+    const day = []; // per-day running loss check
+    const rec = s < 8 ? [1] : null;
+    eqAll[s*NC] = 1;
+    for(let t = 1; t <= CAP; t++){
+      const r = (Math.random() < p) ? risk * rr : -risk;
+      eq *= (1 + r);
+      day.push(r);
+      if(day.length > tpd) day.shift();
+      if(rec) rec.push(eq);
+      if(t % STEP === 0) eqAll[s*NC + t/STEP] = eq;
+      if(eq >= 1.10){ pass = 1; endT = t; break; }
+      if(eq <= 0.90){ bust = 1; endT = t; break; }
+      if(day.length === tpd && day.reduce((a,b)=>a+b,0) <= -0.05){ daily = 1; dailyBust = true; endT = t; break; }
+    }
+    if(pass) passTrades.push(endT);
+    if(rec){ rec.length = Math.min(rec.length, endT + 1); samples.push(rec); }
+  }
+  const NCi = NC, p10 = [], p50 = [], p90 = [], xs = [];
+  for(let c = 0; c < NCi; c++){
+    const col = new Array(sims);
+    for(let s = 0; s < sims; s++) col[s] = eqAll[s*NC + c];
+    col.sort((a,b)=>a-b);
+    p10.push(col[Math.floor(sims*0.10)]); p50.push(col[Math.floor(sims*0.50)]); p90.push(col[Math.floor(sims*0.90)]);
+    xs.push(c * STEP);
+  }
+  return { passP: pass/sims, bustP: (bust+daily)/sims, med: median(passTrades), samples, xs, p10, p50, p90 };
+}
+
+function drawFan(res){
+  const W=560,H=215,pl=38,pr=64,pt=12,pb=22, ymin=.84, ymax=1.14;
+  const X = i => pl + (i/300)*(W-pl-pr);
+  const Y = v => pt + (1 - (clamp(v,ymin,ymax)-ymin)/(ymax-ymin))*(H-pt-pb);
+  let s = '';
+  [.90,1.00,1.10].forEach(v => { s += '<line x1="'+pl+'" y1="'+Y(v)+'" x2="'+(W-pr)+'" y2="'+Y(v)+'" stroke="#E4E2D6" stroke-width="1"/>' +
+    '<text x="'+(pl-5)+'" y="'+(Y(v)+3)+'" text-anchor="end">'+v.toFixed(2)+'</text>'; });
+  const band = res.xs.map((x,i)=>(i?'L':'M')+X(x).toFixed(1)+','+Y(res.p10[i]).toFixed(1)).join(' ') + ' ' +
+    res.xs.map((x,i)=>'L'+X(x).toFixed(1)+','+Y(res.p90[res.xs.length-1-i]).toFixed(1)).reverse().join(' ') + ' Z';
+  s += '<path d="'+band+'" fill="#23539E" fill-opacity=".10" stroke="none"/>';
+  res.samples.slice(0,8).forEach(rec => {
+    s += '<path d="' + rec.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ') +
+      '" fill="none" stroke="#23539E" stroke-opacity=".18" stroke-width="1"/>';
+  });
+  s += '<path d="' + res.xs.map((x,i)=>(i?'L':'M')+X(x).toFixed(1)+','+Y(res.p50[i]).toFixed(1)).join(' ') +
+    '" fill="none" stroke="#23539E" stroke-width="2"/>';
+  s += '<line x1="'+pl+'" y1="'+Y(1.10)+'" x2="'+(W-pr)+'" y2="'+Y(1.10)+'" stroke="#1E6B4F" stroke-width="1.4" stroke-dasharray="5,4"/>' +
+       '<text x="'+(W-pr+5)+'" y="'+(Y(1.10)+3)+'" fill="#1E6B4F">target</text>';
+  s += '<line x1="'+pl+'" y1="'+Y(0.90)+'" x2="'+(W-pr)+'" y2="'+Y(0.90)+'" stroke="#B14E2C" stroke-width="1.4" stroke-dasharray="5,4"/>' +
+       '<text x="'+(W-pr+5)+'" y="'+(Y(0.90)+3)+'" fill="#B14E2C">max loss</text>';
+  s += '<text x="'+(W-10)+'" y="'+(H-6)+'" text-anchor="end">trades →</text>';
+  $('#t-chart').innerHTML = s;
+}
+
+function readT(){
+  const win  = +$('#t-win').value, risk = +$('#t-risk').value, rr = +$('#t-rr').value;
+  let  tpd   = +$('#t-tpd').value;
+  const seg  = $('#t-seg .on').dataset.v;
+  if(seg === 'lnny') tpd = Math.min(tpd, 4);
+  if(seg === 'ny')   tpd = Math.min(tpd, 2);
+  const costs = $('#t-costs').checked;
+  const effRR = rr + (costs ? 0 : 0.15);
+  const evs = $$('#t-evs .ev');
+  const wOn = evs.filter(e=>e.dataset.on==='1').reduce((a,e)=>a + +e.dataset.w, 0);
+  const wAll = evs.reduce((a,e)=>a + +e.dataset.w, 0);
+  const f = wOn / wAll;
+  const eff = clamp(win * (0.70 + 0.30 * f), 20, 80);
+  return { win, risk, rr, tpd, costs, effRR, f, eff, seg };
+}
+
+function computeTrading(){
+  const S = readT();
+  const base = mcSims2(S.eff/100, S.risk/100, S.effRR, S.tpd, 700);
+  const d1 = mcSims2(clamp(S.eff+4,5,95)/100, S.risk/100, S.effRR, S.tpd, 400).passP - base.passP;
+  const d2 = mcSims2(S.eff/100, S.risk/100, S.effRR+0.5, S.tpd, 400).passP - base.passP;
+  const d3 = mcSims2(S.eff/100, clamp(S.risk+0.4,0.1,3)/100, S.effRR, S.tpd, 400).passP - base.passP;
+  const d4 = mcSims2(S.win/100, S.risk/100, S.effRR, S.tpd, 400).passP - base.passP;
+
+  const P = base.passP*100;
+  const big = $('#t-big');
+  big.innerHTML = P.toFixed(0) + '<small>%</small>';
+  big.className = 'big ' + (P>=65 ? 'good' : P>=40 ? 'warn' : 'bad');
+  const days = base.med ? Math.ceil(base.med / S.tpd) : null;
+  $('#t-sub').textContent =
+    'effective edge ' + S.eff.toFixed(1) + '% (base ' + S.win + '% × evidence ' + S.f.toFixed(2) + ')' +
+    (days ? ' · median ' + base.med + ' trades ≈ ' + days + ' trading days' : ' · target rarely reached') +
+    ' · breach in ' + (100-P).toFixed(0) + '% of paths';
+  drawFan(base);
+  $('#t-bars').innerHTML = barsHTML([
+    {l:'edge +4 pts', d:d1*100}, {l:'payoff +0.5R', d:d2*100},
+    {l:'risk +0.4%', d:d3*100}, {l:'evidence weight → 1.0', d:d4*100}
+  ], v => sign1(v) + ' pts');
+
+  /* tagged sentences */
+  const bust = Math.round(100 - P);
+  const inf = [
+    {t:'Ruin',g:'VARIABLE'},{t:' precedes the target in',g:'RELATION'},
+    {t:' ' + bust + '%',g:'VARIABLE'},{t:' of simulated paths',g:'SET'},{t:'.',g:'PERIOD',p:1}];
+  $('#t-inf').innerHTML = '<span class="stag sm" data-desctag="INFERENCE">INFERENCE</span><span class="cbody2">' + sentHTML(inf) + '</span>';
+  const verb = P >= 50 ? 'passes' : 'fails';
+  const con = [
+    {t:'At',g:'RELATION'},{t:' the assumed edge',g:'VARIABLE'},{t:' the strategy',g:'VARIABLE'},
+    {t:' ' + verb,g:'FUNCTION'},{t:' Phase 1',g:'VARIABLE'},{t:' in',g:'RELATION'},
+    {t:' ' + P.toFixed(0) + '%',g:'VARIABLE'},{t:' of paths',g:'SET'},{t:'.',g:'PERIOD',p:1}];
+  $('#t-con').innerHTML = '<span class="stag sm" data-desctag="CONCLUSION">CONCLUSION</span><span class="cbody2">' + sentHTML(con) + '</span>';
+  $('#t-verdict').innerHTML = sentHTML(con);
+}
+
+/* ================================================================
+   BUSINESS — 24-month cash model
+================================================================ */
+function bizRun(o){
+  let m = o.mrr, c = o.cash;
+  const ser = [c]; let fail = 0;
+  for(let t = 1; t <= 24; t++){
+    m = m * (1 - o.churn/100) + o.nn;
+    c = c + (m - o.costs);
+    ser.push(c);
+    if(c <= 0 && !fail) fail = t;
+  }
+  return { ser, fail, cash12: Math.max(0, ser[12]), mrrEnd: m };
+}
+function readB(){
+  const mrr = +$('#b-mrr').value, nn0 = +$('#b-nn').value, churn0 = +$('#b-churn').value, cash = +$('#b-cash').value;
+  const posture = $('#b-seg .on').dataset.v;
+  const costs = 0.95 * (posture === 'lean' ? 0.72 : posture === 'scale' ? 1.32 : 1);
+  let nn = nn0, churn = churn0, m = mrr;
+  const on = w => w.dataset.on === '1';
+  const [stripe, cohort, hub, csv, partner] = $$('#b-evs .ev');
+  if(!on(stripe)) nn *= 0.72;
+  if(!on(cohort)) churn += 1.8;
+  if(!on(hub))    nn *= 0.85;
+  if(!on(csv))    m *= 0.96;
+  if(on(partner)) nn += 0.03;
+  return { mrr:m, nn, churn, cash, costs, cuts: $('#b-cuts').checked, posture };
+}
+function pFail(r, s){
+  if(r.fail && r.fail <= 12)
+    return Math.min(0.94, 0.58 + (12 - r.fail)*0.04 + (s.fail && s.fail <= 12 ? 0.08 : 0));
+  if(s.fail && s.fail <= 12) return 0.26;
+  return r.cash12 < 0.2 ? 0.14 : 0.07;
+}
+function drawBiz(ser, failM){
+  const W=560,H=200,pl=14,pr=52,pt=12,pb=20;
+  const mx = Math.max(0.5, ...ser), mn = Math.min(0, ...ser);
+  const X = i => pl + i/(ser.length-1)*(W-pl-pr);
+  const Y = v => pt + (mx - v)/(mx - mn)*(H-pt-pb);
+  let s = '';
+  const y0 = Y(0);
+  s += '<path d="M' + X(0).toFixed(1) + ',' + Y(ser[0]).toFixed(1) + ' ' +
+    ser.map((v,i)=>'L'+X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ') +
+    ' L' + X(ser.length-1).toFixed(1) + ',' + y0.toFixed(1) + ' L' + X(0).toFixed(1) + ',' + y0.toFixed(1) + ' Z" fill="#6D469E" fill-opacity=".10"/>';
+  s += '<path d="M' + X(0).toFixed(1) + ',' + Y(ser[0]).toFixed(1) + ' ' +
+    ser.map((v,i)=>'L'+X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ') + '" fill="none" stroke="#6D469E" stroke-width="2"/>';
+  s += '<line x1="'+pl+'" y1="'+y0.toFixed(1)+'" x2="'+(W-pr)+'" y2="'+y0.toFixed(1)+'" stroke="#B14E2C" stroke-width="1.4" stroke-dasharray="5,4"/>' +
+       '<text x="'+(W-pr+5)+'" y="'+(y0+3)+'" fill="#B14E2C">insolvent</text>';
+  if(failM){ s += '<circle cx="'+X(failM).toFixed(1)+'" cy="'+Y(ser[failM]).toFixed(1)+'" r="4" fill="#B14E2C"/>' +
+    '<text x="'+X(failM).toFixed(1)+'" y="'+(Y(ser[failM])-8)+'" text-anchor="middle" fill="#B14E2C">mo '+failM+'</text>'; }
+  s += '<text x="'+(W-10)+'" y="'+(H-5)+'" text-anchor="end">months →</text>';
+  $('#b-chart').innerHTML = s;
+}
+function computeBusiness(){
+  const A = readB();
+  let r = bizRun(A), cutsOn = false;
+  if(A.cuts && r.fail && r.fail <= 9){
+    r = bizRun({ ...A, costs: A.costs * 0.85 }); cutsOn = true;
+  }
+  $('#b-cutnote').style.display = cutsOn ? 'block' : 'none';
+  const stress = bizRun({ ...A, churn: A.churn + 1.5, nn: A.nn * 0.8 });
+  const Pf = pFail(r, stress) * 100;
+
+  const big = $('#b-big');
+  big.innerHTML = Pf.toFixed(0) + '<small>% fail ≤ 12mo</small>';
+  big.className = 'big ' + (Pf < 15 ? 'good' : Pf < 45 ? 'warn' : 'bad');
+  $('#b-sub').textContent = r.fail
+    ? 'runway ' + r.fail + ' months · $' + Math.max(0, r.cash12).toFixed(2) + 'M cash at month 12 · stress runway ' + (stress.fail || '24+') + ' mo'
+    : 'runway 24+ months · $' + r.cash12.toFixed(2) + 'M cash at month 12 · stress runway ' + (stress.fail ? stress.fail + ' mo' : '24+ mo');
+  drawBiz(r.ser, r.fail);
+
+  const run = o => { const x = bizRun(o); return x.fail || 24; };
+  const rw = x => x.fail ? x.fail : 24;
+  const cash12 = o => { const x = bizRun(o); return x.fail ? 0 : x.cash12; };
+  $('#b-bars').innerHTML = barsHTML([
+    {l:'churn −1.5 pts',   d: cash12({...A, churn: Math.max(0.5, A.churn-1.5)}) - cash12(A)},
+    {l:'net new +$80K/mo', d: cash12({...A, nn: A.nn + 0.08}) - cash12(A)},
+    {l:'costs −8%',        d: cash12({...A, costs: A.costs*0.92}) - cash12(A)},
+    {l:'cash +$0.5M',      d: cash12({...A, cash: A.cash+0.5}) - cash12(A)}
+  ], v => sign1(v).replace('+','+$').replace('−','−$') + 'M');
+
+  const inf = [
+    {t:'A churn stress of',g:'RELATION'},{t:' +1.5 pts',g:'VARIABLE'},
+    {t:' cuts runway to',g:'FUNCTION'},{t:' ' + (stress.fail ? stress.fail + ' mo' : '24+ mo'),g:'VARIABLE'},
+    {t:'.',g:'PERIOD',p:1}];
+  $('#b-inf').innerHTML = '<span class="stag sm" data-desctag="INFERENCE">INFERENCE</span><span class="cbody2">' + sentHTML(inf) + '</span>';
+  const con = r.fail
+    ? [{t:'The company',g:'VARIABLE'},{t:' runs out of cash',g:'FUNCTION'},{t:' in month',g:'RELATION'},
+       {t:' ' + r.fail,g:'VARIABLE'},{t:'.',g:'PERIOD',p:1}]
+    : [{t:'The company',g:'VARIABLE'},{t:' survives',g:'FUNCTION'},{t:' 12 months',g:'SET'},
+       {t:' with',g:'RELATION'},{t:' ' + money(r.cash12),g:'VARIABLE'},{t:' cash remaining',g:'VARIABLE'},
+       {t:'.',g:'PERIOD',p:1}];
+  $('#b-con').innerHTML = '<span class="stag sm" data-desctag="CONCLUSION">CONCLUSION</span><span class="cbody2">' + sentHTML(con) + '</span>';
+  $('#b-verdict').innerHTML = sentHTML(con);
+}
+
+/* ================================================================
+   FANTASY — weighted evidence composition
+================================================================ */
+function computeFantasy(){
+  const usage = +$('#f-usage').value;
+  const opp = $('#f-seg .on').dataset.v;
+  const inj = $('#f-inj').checked;
+  const evs = $$('#f-evs .ev').map(e => e.dataset.on === '1');
+  const [usageEv, roleEv, deEv, schedEv, windEv] = evs;
+  const oppPos = opp === 'weak' ? 1.15 : opp === 'strong' ? 0.78 : 1;
+
+  const rows = [];
+  if(usageEv) rows.push({ l:'Usage trend, 6 wks', d: (usage/100) * 3.8 });
+  if(roleEv)  rows.push({ l:'Role change wk 7',   d: 2.2 });
+  if(deEv)    rows.push({ l:'Opponent DE out',    d: 1.5 * oppPos });
+  if(schedEv) rows.push({ l:'Schedule strength',  d: -0.9 * (opp === 'strong' ? 1.25 : 1) });
+  if(windEv)  rows.push({ l:'Outdoor wind risk',  d: -0.9 });
+  let margin = rows.reduce((a,r)=>a+r.d, 0);
+  if(inj) margin *= 0.92;
+
+  const big = $('#f-big');
+  big.innerHTML = sign1(margin) + '<small> pts</small>';
+  big.className = 'big ' + (margin >= 1 ? 'good' : margin > -0.5 ? 'warn' : 'bad');
+  $('#f-sub').textContent = 'projected margin, Okafor over Mensah, next 4 weeks' +
+    (evs.every(x=>!x) ? ' · no evidence — assumptions only' : '');
+
+  $('#f-bars').innerHTML = barsHTML(rows, v => sign1(v));
+
+  const wk = [1.18, 0.92, 1.08, 0.82], per = margin/4;
+  $('#f-chart').innerHTML = wk.map((j,i)=>{
+    const v = per * j, h = clamp(12 + Math.abs(v)*14, 10, 70);
+    return '<div class="wb"><span class="wv">' + sign1(v) + '</span>' +
+      '<span class="bar" style="height:' + h + 'px;background:' + (v>=0 ? 'var(--acc)' : '#B14E2C') + '"></span>' +
+      '<span class="wl">W' + (i+1) + '</span></div>';
+  }).join('');
+
+  const inf = usageEv
+    ? [{t:'Without usage evidence',g:'VARIABLE'},{t:' the margin',g:'VARIABLE'},{t:' falls to',g:'FUNCTION'},
+       {t:' ' + sign1(rows.filter(r=>r.l!=='Usage trend, 6 wks').reduce((a,r)=>a+r.d,0) * (inj?0.92:1)) + ' pts',g:'VARIABLE'},
+       {t:'.',g:'PERIOD',p:1}]
+    : [{t:'Usage evidence',g:'VARIABLE'},{t:' is removed',g:'FUNCTION'},
+       {t:' and the case rests on assumptions alone',g:'SET'},{t:'.',g:'PERIOD',p:1}];
+  $('#f-inf').innerHTML = '<span class="stag sm" data-desctag="INFERENCE">INFERENCE</span><span class="cbody2">' + sentHTML(inf) + '</span>';
+  const con = margin >= 0
+    ? [{t:'Okafor',g:'VARIABLE'},{t:' is projected to outscore',g:'FUNCTION'},{t:' Mensah',g:'VARIABLE'},
+       {t:' by',g:'RELATION'},{t:' ' + sign1(margin) + ' pts',g:'VARIABLE'},{t:' over',g:'RELATION'},
+       {t:' the next four weeks',g:'SET'},{t:'.',g:'PERIOD',p:1}]
+    : [{t:'Mensah',g:'VARIABLE'},{t:' is projected to outscore',g:'FUNCTION'},{t:' Okafor',g:'VARIABLE'},
+       {t:' by',g:'RELATION'},{t:' ' + sign1(-margin) + ' pts',g:'VARIABLE'},{t:' over',g:'RELATION'},
+       {t:' the next four weeks',g:'SET'},{t:'.',g:'PERIOD',p:1}];
+  $('#f-con').innerHTML = '<span class="stag sm" data-desctag="PREDICTION">PREDICTION</span><span class="cbody2">' + sentHTML(con) + '</span>';
+  $('#f-verdict').innerHTML = sentHTML(con);
+}
+
+/* ================================================================
+   WIRING
+================================================================ */
+const COMPUTE = { trading: computeTrading, business: computeBusiness, fantasy: computeFantasy };
+
+/* render questions, compositions, parses */
+for(const d of ['trading','business','fantasy']){
+  const p = d[0];
+  renderSpans($('#' + p + '-q'), Q[d].spans);
+  $('#' + p + '-parse').textContent = buildParse(Q[d].spans, Q[d].stag);
+  $('#' + p + '-comp').innerHTML = COMP[d].map(c => compItem(c.stag, c.spans)).join('');
+}
+
+/* slider outputs */
+const FMT = {
+  't-win': v => v + '%', 't-risk': v => (+v).toFixed(2) + '%', 't-rr': v => (+v).toFixed(1) + 'R', 't-tpd': v => v + ' / day',
+  'b-mrr': v => money(+v), 'b-nn': v => (v>=0?'+$':'−$') + Math.abs(+v).toFixed(2) + 'M', 'b-churn': v => v + '% / mo', 'b-cash': v => money(+v),
+  'f-usage': v => v + '%'
+};
+for(const id in FMT){
+  const el = $('#' + id), out = $('#' + id + '-v');
+  const upd = () => out.textContent = FMT[id](el.value);
+  upd();
+  el.addEventListener('input', () => { upd(); queue(el.id.slice(0,1) === 't' ? 'trading' : el.id.slice(0,1) === 'b' ? 'business' : 'fantasy', COMPUTE[el.id.slice(0,1) === 't' ? 'trading' : el.id.slice(0,1) === 'b' ? 'business' : 'fantasy']); });
+}
+
+/* segments */
+ $$('.seg').forEach(seg => seg.addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  seg.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  const d = seg.id[0] === 't' ? 'trading' : seg.id[0] === 'b' ? 'business' : 'fantasy';
+  queue(d, COMPUTE[d]);
+}));
+
+/* checkboxes */
+[['t-costs','trading'],['b-cuts','business'],['f-inj','fantasy']].forEach(([id,d]) =>
+  $('#' + id).addEventListener('change', () => queue(d, COMPUTE[d])));
+
+/* evidence rows */
+ $$('.evs').forEach(box => box.addEventListener('click', e => {
+  const row = e.target.closest('.ev'); if(!row) return;
+  row.dataset.on = row.dataset.on === '1' ? '0' : '1';
+  row.classList.toggle('off', row.dataset.on === '0');
+  const d = box.id[0] === 't' ? 'trading' : box.id[0] === 'b' ? 'business' : 'fantasy';
+  toast(row.dataset.on === '1' ? 'Evidence added — recomposed.' : 'Evidence removed — recomposed.');
+  queue(d, COMPUTE[d]);
+}));
+
+/* resets */
+function resetTrading(){
+  $('#t-win').value = 54; $('#t-risk').value = 1; $('#t-rr').value = 1.5; $('#t-tpd').value = 2;
+  $('#t-costs').checked = true;
+  $('#t-seg').querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on', i===0));
+  $$('#t-evs .ev').forEach((e,i)=>{ e.dataset.on = i < 4 ? '1' : '0'; e.classList.toggle('off', i >= 4); });
+  for(const id in FMT) if(id.startsWith('t-')) $('#' + id + '-v').textContent = FMT[id]($('#' + id).value);
+  computeTrading();
+}
+function resetBusiness(){
+  $('#b-mrr').value = 0.85; $('#b-nn').value = 0.18; $('#b-churn').value = 4.5; $('#b-cash').value = 1.8;
+  $('#b-cuts').checked = false;
+  $('#b-seg').querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on', i===1));
+  $$('#b-evs .ev').forEach((e,i)=>{ e.dataset.on = i < 4 ? '1' : '0'; e.classList.toggle('off', i >= 4); });
+  for(const id in FMT) if(id.startsWith('b-')) $('#' + id + '-v').textContent = FMT[id]($('#' + id).value);
+  computeBusiness();
+}
+function resetFantasy(){
+  $('#f-usage').value = 85; $('#f-inj').checked = true;
+  $('#f-seg').querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on', i===1));
+  $$('#f-evs .ev').forEach((e,i)=>{ e.dataset.on = i < 4 ? '1' : '0'; e.classList.toggle('off', i >= 4); });
+  $('#f-usage-v').textContent = FMT['f-usage']($('#f-usage').value);
+  computeFantasy();
+}
+ $('#t-reset').onclick = () => { resetTrading(); toast('Assumptions reset — answer recomposed.'); };
+ $('#b-reset').onclick = () => { resetBusiness(); toast('Assumptions reset — answer recomposed.'); };
+ $('#f-reset').onclick = () => { resetFantasy(); toast('Assumptions reset — answer recomposed.'); };
+
+/* copy parse */
+function copyParse(pre, name){
+  const txt = pre.textContent;
+  const done = () => toast('Tagged parse for ' + name + ' copied.');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done).catch(()=>fallback());
+  } else fallback();
+  function fallback(){
+    const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); ta.remove(); done();
+  }
+}
+ $('#t-copy').onclick = () => copyParse($('#t-parse'), 'prop-pass');
+ $('#b-copy').onclick = () => copyParse($('#b-parse'), 'going-concern');
+ $('#f-copy').onclick = () => copyParse($('#f-parse'), 'league-2027');
+
+/* tabs */
+function setTab(name){
+  ['trading','business','fantasy'].forEach(d =>
+    $('#stage-' + d).classList.toggle('hidden', d !== name));
+  $$('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+  $$('.nitem').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+  hideBoundary();
+}
+ $$('.tabs button, .nitem').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+
+/* lens */
+ $('#lens').addEventListener('change', e => {
+  document.body.classList.toggle('lens-on', e.target.checked);
+  toast(e.target.checked ? 'Tag lens on — hover any underlined span.' : 'Tag lens off.');
+});
+
+/* the test modal */
+ $('#thetest').onclick = () => $('#modal').classList.add('open');
+ $('#modalclose').onclick = () => $('#modal').classList.remove('open');
+ $('#modal').addEventListener('click', e => { if(e.target === $('#modal')) $('#modal').classList.remove('open'); });
+
+/* boundary */
+function showBoundary(q){
+  const el = $('#boundary');
+  el.innerHTML = '<span class="bt2">The test failed — not research</span>' +
+    '<b>“' + esc(q) + '”</b> cannot be answered here. A question needs a defined dataset, evidence, and assumptions before an answer can be composed. ' +
+    'This environment is not an automation tool, chatbot, or platform — attach a dataset and ask again. ' +
+    '<button id="whytest">Why? — read The Test</button>';
+  el.classList.remove('hidden');
+  $('#whytest').onclick = () => $('#modal').classList.add('open');
+}
+function hideBoundary(){ $('#boundary').classList.add('hidden'); }
+
+/* ask bar */
+const MATCH = [
+  { re: /ftmo|topstep|funded|prop|challenge|pass.*phase|trading|strategy|trade/i, d:'trading', n:'prop-pass.riemann' },
+  { re: /business|revenue|churn|runway|fail|company|startup|mrr|cash|go.?ing.?concern/i, d:'business', n:'going-concern.riemann' },
+  { re: /fantasy|okafor|mensah|lineup|football|nfl|sport|player|week/i, d:'fantasy', n:'league-2027.riemann' }
+];
+function ask(){
+  const q = $('#ask').value.trim();
+  if(!q){ toast('Type a question, or pick a suggestion below.'); return; }
+  const m = MATCH.find(m => m.re.test(q));
+  if(m){
+    setTab(m.d);
+    toast('Nearest dataset: ' + m.n + ' — showing its live answer.');
+  } else {
+    showBoundary(q);
+    toast('No dataset attached — refused at the boundary.');
+  }
+}
+ $('#askbtn').onclick = ask;
+ $('#ask').addEventListener('keydown', e => { if(e.key === 'Enter') ask(); });
+ $$('.sugg button').forEach(b => b.addEventListener('click', () => {
+  $('#ask').value = b.dataset.q;
+  if(b.dataset.tab) ask(); else ask(); /* boundary chip runs the guard too */
+}));
+
+/* init */
+computeTrading(); computeBusiness(); computeFantasy();
+setTab('trading');
+</script>
+</body>
+</html>

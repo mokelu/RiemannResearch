@@ -1,0 +1,952 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ask — Riemann Research</title>
+<style>
+  :root {
+    --bg:#FAF9F5; --panel:#FFFFFF; --surface-2:#F2F1EC;
+    --ink:#14130F; --ink-2:#45443F; --muted:#76756E; --muted-2:#9A9992;
+    --border:#E6E5DF; --border-strong:#D6D5CE;
+    --accent:#1A4D3E; --accent-soft:#EAF1ED;
+    --amber:#B8860B; --blue:#3A6B9C; --purple:#6B4A8C; --rust:#A64B2A;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+    --serif:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { height:100%; -webkit-font-smoothing:antialiased; }
+  body { background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:14px; line-height:1.5; }
+  button { font-family:inherit; cursor:pointer; border:none; background:none; color:inherit; }
+
+  /* ============ LANDING ============ */
+  .landing { max-width:640px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; justify-content:center; padding:40px 20px; transition:opacity .25s; }
+  .landing.hidden { display:none; }
+  .brand { display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:var(--muted); margin-bottom:32px; }
+  .brand .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); }
+  .headline { font-family:var(--serif); font-size:27px; font-weight:600; margin-bottom:6px; }
+  .sub { font-size:14px; color:var(--muted); margin-bottom:22px; max-width:500px; }
+  .input-row { display:flex; gap:8px; }
+  .input { flex:1; font-family:var(--serif); font-size:16.5px; color:var(--ink); background:var(--panel); border:1.5px solid var(--border); border-radius:10px; padding:14px 18px; outline:none; transition:border-color .2s, box-shadow .2s; }
+  .input::placeholder { color:var(--muted-2); font-style:italic; }
+  .input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(26,77,62,.08); }
+  .submit { font-family:var(--mono); font-size:11.5px; letter-spacing:.06em; color:#fff; background:var(--accent); border-radius:10px; padding:14px 22px; white-space:nowrap; }
+  .submit:hover { opacity:.87; }
+  .chips { display:flex; flex-wrap:wrap; gap:7px; margin-top:12px; }
+  .chip { font-family:var(--mono); font-size:11px; color:var(--muted); background:var(--surface-2); border:1px solid var(--border); border-radius:20px; padding:6px 13px; }
+  .chip:hover { color:var(--accent); border-color:var(--accent); }
+
+  /* ============ SHELL ============ */
+  .shell { max-width:780px; margin:0 auto; padding:24px 20px 120px; display:none; }
+  .shell.visible { display:block; }
+  .page-brand { display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; color:var(--muted); margin-bottom:22px; }
+  .page-brand .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); }
+  .nb-topbar { display:flex; align-items:baseline; justify-content:space-between; gap:14px; flex-wrap:wrap; }
+  .nb-q { font-family:var(--serif); font-size:19px; font-weight:600; line-height:1.35; max-width:520px; }
+  .nb-src { font-family:var(--mono); font-size:10px; color:var(--muted-2); letter-spacing:.06em; white-space:nowrap; }
+
+  .view-tabs { display:flex; gap:2px; margin:16px 0 0; border-bottom:1px solid var(--border); }
+  .view-tab { padding:9px 14px; font-size:12.5px; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-1px; }
+  .view-tab:hover { color:var(--ink-2); }
+  .view-tab.active { color:var(--ink); border-bottom-color:var(--accent); font-weight:600; }
+  .view-panel { display:none; padding-top:20px; }
+  .view-panel.active { display:block; }
+
+  /* ============ CANVAS GRAPH — rows ============ */
+  .cg { background:var(--panel); border:1px solid var(--border); border-radius:9px; overflow:hidden; }
+  .row { border-bottom:1px solid var(--border); }
+  .row:last-child { border-bottom:none; }
+  .r-main {
+    display:grid; grid-template-columns:34px 92px 1fr 62px 22px 20px;
+    gap:0 10px; align-items:center; padding:11px 14px 11px 6px; cursor:pointer;
+    transition:background .12s;
+  }
+  .r-main:hover { background:#FCFBF7; }
+  .r-no { font-family:var(--mono); font-size:12px; font-weight:700; color:var(--muted-2); text-align:center; }
+  .r-type { font-family:var(--mono); font-size:10px; letter-spacing:.08em; }
+  .r-text { font-size:13px; color:var(--ink); line-height:1.4; }
+  .r-weight { font-family:var(--mono); font-size:12px; font-weight:700; text-align:right; color:var(--muted); }
+  .r-weight.pos { color:var(--accent); } .r-weight.neg { color:var(--amber); }
+  .r-tick { width:17px; height:17px; border-radius:5px; border:1.5px solid var(--blue); background:var(--blue); color:#fff; font-size:10px; display:flex; align-items:center; justify-content:center; }
+  .r-sp { width:17px; }
+  .r-chev { font-size:10px; color:var(--muted-2); transition:transform .2s; text-align:center; }
+  .row.open .r-chev { transform:rotate(180deg); }
+  .row.off .r-main { opacity:.45; }
+  .row.off .r-text { text-decoration:line-through; text-decoration-color:var(--muted-2); }
+  .row.off .r-tick { background:#fff; color:transparent; border-color:var(--border-strong); }
+
+  /* accordion */
+  .r-detail { display:grid; grid-template-rows:0fr; transition:grid-template-rows .28s ease; }
+  .r-detail > .rd-clip { overflow:hidden; }
+  .row.open .r-detail { grid-template-rows:1fr; }
+  .rd-inner { padding:2px 16px 16px 50px; border-top:1px dashed var(--border); margin:0 0 0 0; background:#FDFCF9; }
+
+  /* answer row */
+  .row-answer { background:var(--accent); border-color:var(--accent); }
+  .row-answer .r-main:hover { background:var(--accent); filter:brightness(1.06); }
+  .row-answer .r-no { color:rgba(255,255,255,.55); }
+  .row-answer .r-type { color:#9CC3B4; }
+  .row-answer .r-text { color:#fff; font-family:var(--serif); font-size:14.5px; }
+  .row-answer .r-weight { color:#fff; font-size:15px; }
+  .row-answer .r-chev { color:rgba(255,255,255,.6); }
+  .row-answer .rd-inner { background:#154236; border-top-color:rgba(255,255,255,.14); }
+
+  .cg-hint { font-family:var(--mono); font-size:10.5px; color:var(--muted-2); margin-top:10px; letter-spacing:.03em; }
+
+  /* ============ COMPONENTS ============ */
+  .cmp-head { display:flex; justify-content:space-between; align-items:baseline; margin:10px 0 8px; }
+  .cmp-title { font-family:var(--mono); font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+  .cmp-kind { font-family:var(--mono); font-size:9px; letter-spacing:.1em; color:var(--muted-2); border:1px solid var(--border); border-radius:3px; padding:1px 6px; }
+  .chart-box { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:10px 12px 8px; }
+  .readout { font-family:var(--mono); font-size:10.5px; color:var(--muted); min-height:15px; margin-bottom:4px; }
+  .readout b { color:var(--ink); font-weight:700; }
+  svg text { font-family:var(--mono); font-size:9px; fill:var(--muted-2); }
+
+  /* tagged spans (question row) */
+  .tagline { font-family:var(--serif); font-size:16px; line-height:2; padding:4px 2px 2px; }
+  .tg { border-bottom:2px solid var(--tc,#999); padding-bottom:1px; cursor:help; }
+  .tg[data-tag="VARIABLE"] { --tc:#3A6B9C; }
+  .tg[data-tag="FUNCTION"] { --tc:#B8860B; }
+  .tg[data-tag="RELATION"] { --tc:#6B4A8C; }
+  .tg[data-tag^="Q"] { --tc:#9A9992; border-bottom-style:dotted; }
+  .stg-chip { display:inline-block; font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; color:var(--accent); background:var(--accent-soft); border-radius:4px; padding:2px 8px; margin-top:8px; }
+
+  /* sliders + toggles inside rows */
+  .lever { margin-bottom:12px; }
+  .lever .lr { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
+  .lever label { font-size:13px; font-weight:600; }
+  .lever .val { font-family:var(--mono); font-size:12px; color:var(--amber); font-weight:700; }
+  .lever input[type="range"] { width:100%; accent-color:var(--amber); height:20px; display:block; cursor:pointer; }
+  .lever .hint { font-size:11px; color:var(--muted); margin-top:2px; }
+  .togline { display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; padding:4px 0 8px; }
+  .togline .sw { position:relative; width:36px; height:20px; background:var(--border-strong); border-radius:11px; transition:.2s; flex-shrink:0; }
+  .togline .sw::after { content:''; position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:.2s; }
+  .togline input { display:none; }
+  .togline input:checked + .sw { background:var(--accent); }
+  .togline input:checked + .sw::after { left:18px; }
+  .togline .tl-label { font-size:13px; font-weight:600; }
+  .togline .tl-hint { display:block; font-size:11px; color:var(--muted); font-weight:400; }
+
+  /* hbars component */
+  .hbar { display:flex; align-items:center; gap:10px; font-size:12px; margin-bottom:8px; }
+  .hbar .hl { width:200px; color:var(--ink-2); flex-shrink:0; }
+  .hbar .ht { flex:1; height:14px; background:var(--surface-2); border-radius:4px; overflow:hidden; }
+  .hbar .hf { height:100%; border-radius:4px; transition:width .4s; }
+  .hbar .hv { font-family:var(--mono); font-size:11px; width:64px; text-align:right; color:var(--muted); flex-shrink:0; }
+  .hbar:hover .hv { color:var(--ink); }
+
+  /* answer detail */
+  .ans-big { font-family:var(--serif); font-size:40px; font-weight:700; color:#fff; line-height:1; margin:8px 0 2px; }
+  .ans-big small { font-size:15px; font-weight:400; opacity:.65; margin-left:2px; }
+  .ans-sub { font-size:12px; color:rgba(255,255,255,.7); margin-bottom:12px; }
+  .cb-row { display:flex; align-items:center; gap:9px; margin-bottom:6px; font-size:11px; }
+  .cb-row .cl { width:190px; color:rgba(255,255,255,.75); flex-shrink:0; }
+  .cb-row .ct { flex:1; height:7px; border-radius:4px; background:rgba(255,255,255,.14); overflow:hidden; }
+  .cb-row .cf { height:100%; border-radius:4px; background:#9CC3B4; transition:width .35s; }
+  .cb-row .cf.neg { background:#E8B77D; }
+  .cb-row .cn { font-family:var(--mono); font-size:10px; color:rgba(255,255,255,.8); width:52px; text-align:right; }
+  .ans-note { font-size:12px; font-style:italic; font-family:var(--serif); color:rgba(255,255,255,.85); margin-top:12px; line-height:1.55; }
+
+  /* ============ DOCUMENT ============ */
+  .doc-content { font-family:var(--serif); font-size:16px; line-height:1.75; color:var(--ink); max-width:580px; }
+  .doc-content p { margin:0 0 1.1em; }
+  .doc-content .doc-fin { font-weight:600; }
+  .footnote { font-size:11px; color:var(--muted-2); margin-top:18px; }
+
+  /* ============ BOTTOM ASK ============ */
+  .bottom-ask { position:fixed; left:0; right:0; bottom:0; background:rgba(250,249,245,.92); backdrop-filter:blur(10px); border-top:1px solid var(--border); padding:14px 20px; display:none; z-index:50; }
+  .bottom-ask.visible { display:block; }
+  .bottom-ask-inner { max-width:780px; margin:0 auto; display:flex; gap:8px; }
+  .bottom-input { flex:1; font-family:var(--serif); font-size:15px; color:var(--ink); background:var(--panel); border:1.5px solid var(--border); border-radius:10px; padding:11px 16px; outline:none; }
+  .bottom-input::placeholder { color:var(--muted-2); font-style:italic; }
+  .bottom-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(26,77,62,.08); }
+  .bottom-submit { font-family:var(--mono); font-size:11px; letter-spacing:.06em; color:#fff; background:var(--accent); border-radius:10px; padding:0 20px; }
+  .bottom-submit:hover { opacity:.87; }
+
+  @media (max-width:560px) {
+    .input-row { flex-direction:column; }
+    .r-main { grid-template-columns:26px 74px 1fr 50px 20px 16px; gap:0 6px; padding-right:10px; }
+    .rd-inner { padding-left:12px; }
+    .hbar .hl { width:120px; }
+    .cb-row .cl { width:110px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LANDING ============ -->
+<div class="landing" id="landing">
+  <div class="brand"><span class="dot"></span>ASK — RIEMANN RESEARCH</div>
+  <div class="headline">What do you want to know?</div>
+  <div class="sub">Every answer comes back as a <b>Canvas Graph</b> — numbered sentences, one sweep, each carrying a live component you can open. Or read the same thing as a <b>Document</b>. Nothing else.</div>
+  <div class="input-row">
+    <input class="input" id="qInput" type="text" placeholder="Will Messi reach the age of 72?" />
+    <button class="submit" id="qSubmit">ASK</button>
+  </div>
+  <div class="chips">
+    <button class="chip" data-q="Will Lionel Messi reach the age of 72?">Will Messi reach 72?</button>
+    <button class="chip" data-q="Can a 1% risk strategy pass the FTMO Challenge in Q4?">FTMO pass plan</button>
+    <button class="chip" data-q="Will Okafor outscore Mensah this week?">Okafor vs Mensah</button>
+  </div>
+</div>
+
+<!-- ============ NOTEBOOK PAGE ============ -->
+<div class="shell" id="shell">
+  <div class="page-brand"><span class="dot"></span>ASK — RIEMANN RESEARCH</div>
+  <div class="nb-topbar">
+    <div class="nb-q" id="nbQ"></div>
+    <div class="nb-src" id="nbSrc"></div>
+  </div>
+  <div class="view-tabs">
+    <button class="view-tab active" data-view="graph">Canvas Graph</button>
+    <button class="view-tab" data-view="document">Document</button>
+  </div>
+  <div class="view-panel active" id="panel-graph">
+    <div class="cg" id="cgRows"></div>
+    <div class="cg-hint">click a row to open its component · tick removes evidence · numbers are live</div>
+  </div>
+  <div class="view-panel" id="panel-document">
+    <div class="doc-content" id="docContent"></div>
+    <div class="footnote">Same answer, same rows — prose instead of a graph.</div>
+  </div>
+</div>
+
+<div class="bottom-ask" id="bottomAsk">
+  <div class="bottom-ask-inner">
+    <input class="bottom-input" id="bottomInput" type="text" placeholder="Ask a follow-up…" autocomplete="off" />
+    <button class="bottom-submit" id="bottomSubmit">ASK</button>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   SCENARIOS — each row is one tagged sentence + one attached component.
+   type: sentence tag · weight: number | fn(state) | '—'
+   comp: the interactive thing the sentence carries.
+================================================================ */
+const TYPE_COLORS = {
+  QUESTION:'#14130F', FACT:'#3A6B9C', EVIDENCE:'#2A6B57', ASSUMPTION:'#B8860B',
+  CONSTRAINT:'#A64B2A', INFERENCE:'#6B4A8C', ANSWER:'#1A4D3E'
+};
+
+/* ---------- seeded rng ---------- */
+function lcg(seed){ let s = seed >>> 0; return () => (s = (s*1664525 + 1013904223) >>> 0) / 4294967296; }
+
+const SCENARIOS = {
+
+  /* ================= MESSI / LONGEVITY ================= */
+  messi: {
+    dataset: 'dataset: actuarial-longevity + elite-athlete cohorts',
+    question: 'Will Lionel Messi reach the age of 72?',
+    qspans: [
+      ['Will','RELATION'],[' Lionel Messi','VARIABLE'],[' reach','FUNCTION'],
+      [' the age','VARIABLE'],[' of','RELATION'],[' 72','VARIABLE'],[' years','VARIABLE'],['?','QUESTION_MARK']
+    ],
+    state: { health: 75, care: 1 },
+    rows: [
+      { type:'QUESTION', weight:'—', comp:{ kind:'tags' } },
+      { type:'EVIDENCE', text:'Argentine male life expectancy at birth is approximately 72.9 years.',
+        weight: 8, comp:{ kind:'bars', title:'Life expectancy at birth — years', unit:' yrs', bars:[
+          ['World average', 73.2, '#8A97A8'], ['Argentine male', 72.9, '#3A6B9C'],
+          ['Elite athletes (retired)', 79.5, '#1A4D3E'], ['High SES males', 81.1, '#6B4A8C']
+        ]}},
+      { type:'EVIDENCE', text:'Elite athletes show measurably lower cardiovascular mortality than the general population.',
+        weight: 6, comp:{ kind:'line', title:'Survival to age — share of cohort alive (%)',
+          labels:['age 40','age 50','age 60','age 70','age 80'],
+          series:[
+            { name:'general population', color:'#8A97A8', points:[100, 96, 86, 66, 38] },
+            { name:'elite athletes',     color:'#1A4D3E', points:[100, 98, 93, 81, 58] }
+          ], unit:'%'}},
+      { type:'EVIDENCE', text:'High socioeconomic status independently extends life expectancy.',
+        weight: 4, comp:{ kind:'bars', title:'Additional years vs median income', unit:' yrs', bars:[
+          ['Bottom income quintile', -0, '#8A97A8'], ['Median', 2.1, '#3A6B9C'], ['Top decile', 4.8, '#6B4A8C']
+        ]}},
+      { type:'EVIDENCE', text:'Family medical history is not publicly known.',
+        weight: -5, comp:{ kind:'band', title:'Forecast uncertainty — probability of reaching 72 by assumed hereditary risk',
+          labels:['low risk','moderate','high risk'], center:[88, 77, 61], spread:[4, 8, 13], unit:'%'}},
+      { type:'EVIDENCE', text:'His career included recurring soft-tissue injuries.',
+        weight: -2, comp:{ kind:'line', title:'Soft-tissue injuries per season — weak longevity signal',
+          labels:['2009','2013','2017','2021','2025'],
+          series:[{ name:'injuries/season', color:'#A64B2A', points:[4, 7, 3, 2, 2] }], unit:''}},
+      { type:'INFERENCE', text:'The athlete and status effects compound well above the population baseline.',
+        weight:'—', comp:{ kind:'waterfall', title:'How the probability is composed (live)' }},
+      { type:'ASSUMPTION', text:'The elite-athlete health advantage applies.',
+        weightFn: st => st.health/100*12,
+        comp:{ kind:'slider', id:'health', label:'Health advantage strength', hint:'cardiovascular & metabolic benefit measured in retired professionals',
+          min:0, max:100, step:1, fmt: v => v + '%' }},
+      { type:'ASSUMPTION', text:'He retains access to top-tier healthcare.',
+        weightFn: st => st.care ? 0 : -14,
+        comp:{ kind:'toggle', id:'care', label:'Continued private medical monitoring', hint:'OFF removes the access assumption entirely' }},
+      { type:'ANSWER',
+        textFn: (st, p) => 'Messi reaches 72 in ' + Math.round(p) + '% of modeled paths.',
+        model: (st, evOn) => {
+          let p = 57;
+          SCENARIOS.messi.evWeights.forEach((w,i) => { if (evOn[i]) p += w; });
+          p += st.health/100*12;
+          if (!st.care) p -= 14;
+          return Math.max(3, Math.min(97, p));
+        }}
+    ],
+    evWeights: [8, 6, 4, -5, -2],
+    doc: [
+      'Messi is in his late thirties, so this question reaches roughly 34 years forward — far past anything sports data alone can speak to.',
+      'The baseline comes from Argentine male life expectancy at birth: about 72.9 years. On top of that, elite athletes as a group measurably outlive the general population, and high socioeconomic status adds a separate, independent effect.',
+      'The honest unknown is family medical history, which is not public. His recurring soft-tissue injuries are a weak signal either way.',
+      'Assuming continued access to elite healthcare, the odds land comfortably above the population baseline. Messi reaches 72 in most modeled paths.'
+    ]
+  },
+
+  /* ================= FTMO / TRADING ================= */
+  ftmo: {
+    dataset: 'dataset: ftmo-rules + tick backtest 2019–2025',
+    question: 'Can a 1% risk strategy pass the FTMO Challenge in Q4?',
+    qspans: [
+      ['Can','RELATION'],[' a 1% risk strategy','VARIABLE'],[' pass','FUNCTION'],
+      [' the FTMO Challenge','VARIABLE'],[' in','RELATION'],[' Q4','VARIABLE'],['?','QUESTION_MARK']
+    ],
+    state: { win: 54, risk: 1.0, rr: 1.5 },
+    rows: [
+      { type:'QUESTION', weight:'—', comp:{ kind:'tags' } },
+      { type:'CONSTRAINT', text:'The challenge requires a 10% profit target within a 10% maximum loss.',
+        weight:'—', comp:{ kind:'equity', title:'Equity path vs the two hard limits' }},
+      { type:'EVIDENCE', text:'The backtest holds 2,412 trades at a 54% win rate on 2019–2025 tick data.',
+        weight: 7, on:1, comp:{ kind:'candles', title:'Sample daily candles behind the signal — hover' }},
+      { type:'CONSTRAINT', text:'Daily losses may never exceed 5% of the starting balance.',
+        weight:'—', comp:{ kind:'hist', title:'Daily P&L distribution — % of balance' }},
+      { type:'EVIDENCE', text:'Slippage and commission are modeled at -0.15R per trade.',
+        weight: -1.8, on:1, comp:{ kind:'bars', title:'Expectancy per trade — R', unit:'R', bars:[
+          ['Gross expectancy', 0.35, '#3A6B9C'], ['After costs', 0.20, '#1A4D3E']
+        ]}},
+      { type:'ASSUMPTION', text:'The live win rate holds.',
+        weightMode:'lever',
+        comp:{ kind:'slider', id:'win', label:'Assumed live win rate', hint:'live execution typically decays the backtested edge',
+          min:35, max:65, step:1, fmt: v => v + '%' }},
+      { type:'ASSUMPTION', text:'Risk per trade stays fixed.',
+        weightMode:'lever',
+        comp:{ kind:'slider', id:'risk', label:'Risk per trade (% of equity)', hint:'higher risk → wider ruin band, even with positive expectancy',
+          min:0.25, max:2, step:0.05, fmt: v => v.toFixed(2) + '%' }},
+      { type:'ASSUMPTION', text:'The reward-to-risk ratio holds at 1.5.',
+        weightMode:'lever',
+        comp:{ kind:'slider', id:'rr', label:'Reward : risk', hint:'average win divided by average loss',
+          min:1, max:3, step:0.1, fmt: v => v.toFixed(1) + 'R' }},
+      { type:'ANSWER',
+        textFn: (st, p) => 'Passes Phase 1 in ' + Math.round(p) + '% of simulated paths.',
+        model: (st, evOn) => {
+          const p = Math.max(5, Math.min(90, evOn[1] ? st.win : st.win - 7)) / 100;
+          const rr = evOn[2] ? st.rr - 0.15 : st.rr;
+          return mcPass(p, st.risk/100, rr, 500) * 100;
+        }}
+    ],
+    doc: [
+      'The FTMO rules are two hard lines: reach +10% before touching -10%, and never lose more than 5% in a single day.',
+      'The backtest — 2,412 trades of tick data from 2019 to 2025 — shows a 54% win rate at 1.5R. With 1% risk per trade that is a positive expectancy, but the constraint is variance: the order in which wins and losses arrive decides whether equity touches the floor before the target.',
+      'Costs are modeled at -0.15R per trade, and live execution usually decays a backtested edge slightly.',
+      'Under those assumptions the strategy passes in most simulated paths, but not overwhelmingly — the daily-loss rule, not the max-loss rule, is what usually ends a run.'
+    ]
+  },
+
+  /* ================= OKAFOR / FANTASY ================= */
+  okafor: {
+    dataset: 'dataset: league-2027 · snaps, injuries, schedule',
+    question: 'Will Okafor outscore Mensah this week?',
+    qspans: [
+      ['Will','RELATION'],[' D. Okafor','VARIABLE'],[' outscore','FUNCTION'],
+      [' S. Mensah','VARIABLE'],[' in','RELATION'],[' fantasy points','VARIABLE'],
+      [' this week','VARIABLE'],['?','QUESTION_MARK']
+    ],
+    state: { usage: 85, inj: 1 },
+    rows: [
+      { type:'QUESTION', weight:'—', comp:{ kind:'tags' } },
+      { type:'EVIDENCE', text:'Okafor\u2019s usage has climbed six weeks straight.',
+        weight: 2.4, on:1, comp:{ kind:'line', title:'Snap share — last 6 weeks (%)',
+          labels:['wk 6','wk 7','wk 8','wk 9','wk 10','wk 11'],
+          series:[{ name:'Okafor snap share', color:'#1A4D3E', points:[52, 58, 61, 66, 71, 76] }], unit:'%'}},
+      { type:'EVIDENCE', text:'He took the lead-back role after week 7.',
+        weight: 1.8, on:1, comp:{ kind:'bars', title:'Backfield touch share since wk 7 — %', unit:'%', bars:[
+          ['Okafor', 64, '#1A4D3E'], ['Mensah', 31, '#8A97A8'], ['Other', 5, '#C9C7BC']
+        ]}},
+      { type:'EVIDENCE', text:'The opponent\u2019s best pass-rusher was ruled out Wednesday.',
+        weight: 1.4, on:1, comp:{ kind:'bars', title:'Pressure rate allowed with/without DE — %', unit:'%', bars:[
+          ['DE active', 6.8, '#A64B2A'], ['DE ruled out', 4.1, '#1A4D3E']
+        ]}},
+      { type:'EVIDENCE', text:'Two tough matchups sit in the remaining stretch.',
+        weight: -1.1, on:1, comp:{ kind:'bars', title:'Opponent defensive EPA — weeks 13–16', unit:'', bars:[
+          ['wk 13', -0.02, '#1A4D3E'], ['wk 14', 0.09, '#A64B2A'], ['wk 15', 0.11, '#A64B2A'], ['wk 16', 0.01, '#1A4D3E']
+        ]}},
+      { type:'EVIDENCE', text:'One outdoor game carries wind risk.',
+        weight: -0.9, on:1, comp:{ kind:'band', title:'Game-time wind forecast — mph',
+          labels:['Tue','Wed','Thu','Fri','Sat','Sun'], center:[8, 10, 12, 16, 19, 17], spread:[3, 4, 5, 5, 6, 5], unit:' mph'}},
+      { type:'ASSUMPTION', text:'Okafor\u2019s usage holds.',
+        weightFn: st => (st.usage - 60)/40*2.0,
+        comp:{ kind:'slider', id:'usage', label:'Usage holds at', hint:'share of backfield touches, weeks 13–16',
+          min:40, max:100, step:1, fmt: v => v + '%' }},
+      { type:'ASSUMPTION', text:'A conservative injury adjustment applies.',
+        weightFn: st => st.inj ? -0.8 : 0,
+        comp:{ kind:'toggle', id:'inj', label:'Conservative injury discount', hint:'stays on until Friday\u2019s practice reports clear him' }},
+      { type:'ANSWER',
+        textFn: (st, m) => 'Okafor over Mensah by ' + (m >= 0 ? '+' : '-') + Math.abs(m).toFixed(1) + ' pts.',
+        model: (st, evOn) => {
+          let m = 0;
+          SCENARIOS.okafor.evWeights.forEach((w,i) => { if (evOn[i]) m += w; });
+          m += (st.usage - 60)/40*2.0;
+          if (st.inj) m -= 0.8;
+          return m;
+        }}
+    ],
+    evWeights: [2.4, 1.8, 1.4, -1.1, -0.9],
+    doc: [
+      'Okafor\u2019s usage has climbed six straight weeks and he took the lead-back role after week 7.',
+      'The opponent\u2019s best pass-rusher was ruled out Wednesday, which lowers the pressure he\u2019ll face. The stretch does include two tough defenses, and one outdoor game carries wind risk.',
+      'The ankle concern is the open question — the conservative discount stays on until Friday\u2019s reports.',
+      'Net: Okafor over Mensah, with the margin carried mostly by volume.'
+    ]
+  }
+};
+
+/* fix unicode minus mistakes defensively (browsers are fine with -) — none needed */
+
+/* ================================================================
+   MC for FTMO answer
+================================================================ */
+function mcPass(p, risk, rr, sims){
+  let pass = 0;
+  for (let s = 0; s < sims; s++){
+    let eq = 1;
+    for (let t = 0; t < 250; t++){
+      eq *= 1 + (Math.random() < p ? risk*rr : -risk);
+      if (eq >= 1.10) { pass++; break; }
+      if (eq <= 0.90) break;
+      if (t % 3 === 2 && eq <= 0.953) break; /* approx daily 5% rule */
+    }
+  }
+  return pass / sims;
+}
+
+/* ================================================================
+   CHART RENDERERS — return {html, bind(el)}
+================================================================ */
+function lineChart(c){
+  const W = 560, H = 170, pl = 30, pr = 10, pt = 10, pb = 22;
+  const all = c.series.flatMap(s => s.points);
+  const ymin = Math.min(0, ...all) * 1.05, ymax = Math.max(...all) * 1.08 || 1;
+  const X = i => pl + i/(c.labels.length-1)*(W-pl-pr);
+  const Y = v => pt + (1-(v-ymin)/(ymax-ymin))*(H-pt-pb);
+  let s = '';
+  for (let g = 1; g <= 3; g++){
+    const yv = ymin + (ymax-ymin)*g/4;
+    s += '<line x1="'+pl+'" y1="'+Y(yv)+'" x2="'+(W-pr)+'" y2="'+Y(yv)+'" stroke="#E6E5DF"/>' +
+         '<text x="'+(pl-4)+'" y="'+(Y(yv)+3)+'" text-anchor="end">'+Math.round(yv)+'</text>';
+  }
+  c.series.forEach(sr => {
+    s += '<path d="' + sr.points.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ') +
+         '" fill="none" stroke="'+sr.color+'" stroke-width="2"/>';
+    sr.points.forEach((v,i)=>{ s += '<circle cx="'+X(i)+'" cy="'+Y(v)+'" r="2.6" fill="'+sr.color+'"/>'; });
+  });
+  c.labels.forEach((lb,i)=>{ if (c.labels.length <= 7 || i%2===0) s += '<text x="'+X(i)+'" y="'+(H-6)+'" text-anchor="middle">'+lb+'</text>'; });
+  s += '<rect id="__hov" x="'+pl+'" y="0" width="'+(W-pl-pr)+'" height="'+H+'" fill="transparent"/>';
+  const html = '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;display:block">' + s + '</svg>';
+  return { html, bind(box){
+    box.addEventListener('mousemove', e => {
+      const r = box.querySelector('svg').getBoundingClientRect();
+      const rel = (e.clientX - r.left) / r.width * W;
+      const i = Math.max(0, Math.min(c.labels.length-1, Math.round((rel-pl)/(W-pl-pr)*(c.labels.length-1))));
+      box.querySelector('.readout').innerHTML = '<b>'+c.labels[i]+'</b> — ' +
+        c.series.map(sr => sr.name+': <b>'+sr.points[i]+c.unit+'</b>').join(' · ');
+    });
+    box.addEventListener('mouseleave', () => { box.querySelector('.readout').textContent = 'hover for values'; });
+  }};
+}
+
+function bandChart(c){
+  const W = 560, H = 170, pl = 30, pr = 10, pt = 10, pb = 22;
+  const lo = c.center.map((v,i)=>v-c.spread[i]), hi = c.center.map((v,i)=>v+c.spread[i]);
+  const ymin = Math.min(...lo)*0.95, ymax = Math.max(...hi)*1.05;
+  const X = i => pl + i/(c.labels.length-1)*(W-pl-pr);
+  const Y = v => pt + (1-(v-ymin)/(ymax-ymin))*(H-pt-pb);
+  let s = '<path d="' + hi.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ') + ' ' +
+          lo.map((v,i)=>'L'+X(lo.length-1-i).toFixed(1)+','+Y(lo[lo.length-1-i]).toFixed(1)).join(' ') + ' Z" fill="#3A6B9C" fill-opacity=".12"/>';
+  s += '<path d="' + c.center.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ') + '" fill="none" stroke="#3A6B9C" stroke-width="2"/>';
+  c.labels.forEach((lb,i)=>{ s += '<circle cx="'+X(i)+'" cy="'+Y(c.center[i])+'" r="2.6" fill="#3A6B9C"/><text x="'+X(i)+'" y="'+(H-6)+'" text-anchor="middle">'+lb+'</text>'; });
+  s += '<rect id="__hov" x="'+pl+'" width="'+(W-pl-pr)+'" y="0" height="'+H+'" fill="transparent"/>';
+  const html = '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;display:block">' + s + '</svg>';
+  return { html, bind(box){
+    box.addEventListener('mousemove', e => {
+      const r = box.querySelector('svg').getBoundingClientRect();
+      const rel = (e.clientX - r.left) / r.width * W;
+      const i = Math.max(0, Math.min(c.labels.length-1, Math.round((rel-pl)/(W-pl-pr)*(c.labels.length-1))));
+      box.querySelector('.readout').innerHTML = '<b>'+c.labels[i]+'</b> — <b>'+c.center[i]+c.unit+'</b> (range '+(c.center[i]-c.spread[i])+' to '+(c.center[i]+c.spread[i])+')';
+    });
+    box.addEventListener('mouseleave', () => { box.querySelector('.readout').textContent = 'hover for values'; });
+  }};
+}
+
+function candlesChart(seed){
+  const rnd = lcg(seed); const n = 42; const data = [];
+  let close = 100 + rnd()*10;
+  for (let i = 0; i < n; i++){
+    const o = close;
+    const drift = 0.06, vol = 1.4;
+    const c2 = o + drift + (rnd()-0.5)*2*vol;
+    const h = Math.max(o, c2) + rnd()*vol*0.8;
+    const l = Math.min(o, c2) - rnd()*vol*0.8;
+    data.push({ o, h, l, c: c2 }); close = c2;
+  }
+  const W = 560, H = 200, pl = 6, pr = 44, pt = 10, pb = 12;
+  const lo = Math.min(...data.map(d=>d.l)), hi = Math.max(...data.map(d=>d.h));
+  const Y = v => pt + (1-(v-lo)/(hi-lo))*(H-pt-pb);
+  const cw = (W-pl-pr)/n;
+  let s = '';
+  data.forEach((d,i)=>{
+    const x = pl + i*cw + cw*0.2, up = d.c >= d.o;
+    const col = up ? '#1A4D3E' : '#A64B2A';
+    s += '<line x1="'+(x+cw*0.3)+'" y1="'+Y(d.h)+'" x2="'+(x+cw*0.3)+'" y2="'+Y(d.l)+'" stroke="'+col+'" stroke-width="1"/>' +
+         '<rect x="'+x+'" y="'+Y(Math.max(d.o,d.c))+'" width="'+(cw*0.6)+'" height="'+Math.max(1,Math.abs(Y(d.o)-Y(d.c)))+'" fill="'+col+'"/>';
+  });
+  for (let k = 0; k < 4; k++){
+    const v = lo + (hi-lo)*k/3;
+    s += '<line x1="'+pl+'" y1="'+Y(v)+'" x2="'+(W-pr)+'" y2="'+Y(v)+'" stroke="#E6E5DF"/><text x="'+(W-pr+4)+'" y="'+(Y(v)+3)+'">'+v.toFixed(0)+'</text>';
+  }
+  data.forEach((d,i)=>{
+    s += '<rect data-ci="'+i+'" x="'+(pl+i*cw)+'" y="0" width="'+cw+'" height="'+H+'" fill="transparent"/>';
+  });
+  const html = '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;display:block">' + s + '</svg>';
+  return { html, bind(box){
+    box.querySelectorAll('[data-ci]').forEach(r => {
+      r.addEventListener('mouseenter', () => {
+        const d = data[+r.dataset.ci];
+        box.querySelector('.readout').innerHTML =
+          'candle <b>'+(+r.dataset.ci+1)+'</b> · O <b>'+d.o.toFixed(1)+'</b> · H <b>'+d.h.toFixed(1)+'</b> · L <b>'+d.l.toFixed(1)+'</b> · C <b>'+d.c.toFixed(1)+'</b>';
+      });
+    });
+  }};
+}
+
+function equityChart(seed){
+  const rnd = lcg(seed); const n = 120; const pts = [1];
+  let eq = 1, end = n;
+  for (let i = 1; i <= n; i++){
+    eq *= 1 + (Math.random()*0 - 0) + (rnd() < 0.54 ? 0.015 : -0.01);
+    pts.push(eq);
+    if (eq >= 1.10 || eq <= 0.90) { end = i; break; }
+  }
+  const W = 560, H = 190, pl = 34, pr = 58, pt = 12, pb = 20;
+  const X = i => pl + i/n*(W-pl-pr);
+  const Y = v => pt + (1-(v-0.86)/(1.14-0.86))*(H-pt-pb);
+  let s = '';
+  [0.90, 1.00, 1.10].forEach(v => {
+    const col = v === 1.10 ? '#1A4D3E' : v === 0.90 ? '#A64B2A' : '#E6E5DF';
+    s += '<line x1="'+pl+'" y1="'+Y(v)+'" x2="'+(W-pr)+'" y2="'+Y(v)+'" stroke="'+col+'" '+(v===1?'':'stroke-dasharray="5,4" stroke-width="1.4"')+'/>' +
+         '<text x="'+(W-pr+5)+'" y="'+(Y(v)+3)+'" fill="'+(v===1?'#76756E':col)+'">'+v.toFixed(2)+'</text>';
+  });
+  s += '<path d="' + pts.slice(0, end+1).map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ') + '" fill="none" stroke="#3A6B9C" stroke-width="1.8"/>';
+  const last = pts[end];
+  s += '<circle cx="'+X(end)+'" cy="'+Y(last)+'" r="3.5" fill="'+(last>=1.10?'#1A4D3E':'#A64B2A')+'"/>';
+  s += '<text x="'+X(end)+'" y="'+(Y(last)-8)+'" text-anchor="middle" fill="#45443F">trade '+end+'</text>';
+  s += '<rect id="__hov" x="'+pl+'" width="'+(W-pl-pr)+'" y="0" height="'+H+'" fill="transparent"/>';
+  const html = '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;display:block">' + s + '</svg>';
+  return { html, bind(box){
+    box.addEventListener('mousemove', e => {
+      const r = box.querySelector('svg').getBoundingClientRect();
+      const rel = (e.clientX - r.left)/r.width*W;
+      const i = Math.max(0, Math.min(end, Math.round((rel-pl)/(W-pl-pr)*n)));
+      box.querySelector('.readout').innerHTML = 'trade <b>'+i+'</b> — equity <b>'+pts[i].toFixed(3)+'</b>';
+    });
+    box.addEventListener('mouseleave', () => { box.querySelector('.readout').textContent = 'hover for equity'; });
+  }};
+}
+
+function histChart(seed){
+  const rnd = lcg(seed); const n = 90; const vals = [];
+  for (let i = 0; i < n; i++){
+    let v = 0.12 + (rnd()+rnd()+rnd()-1.5)*0.42;
+    if (rnd() < 0.06) v -= 0.55;
+    vals.push(v);
+  }
+  const bins = 16, lo = -1.2, hi = 0.8, bw = (hi-lo)/bins;
+  const counts = new Array(bins).fill(0);
+  vals.forEach(v => { counts[Math.max(0, Math.min(bins-1, Math.floor((v-lo)/bw)))]++; });
+  const W = 560, H = 160, pl = 8, pr = 8, pt = 10, pb = 20;
+  const mx = Math.max(...counts);
+  let s = '';
+  counts.forEach((c,i)=>{
+    const x = pl + i*((W-pl-pr)/bins);
+    const mid = lo + (i+0.5)*bw;
+    const col = mid <= -0.5 ? '#A64B2A' : mid < 0 ? '#C9975B' : '#3A6B9C';
+    const h = c/mx*(H-pt-pb);
+    s += '<rect data-b="'+mid.toFixed(2)+'" data-c="'+c+'" x="'+(x+1)+'" y="'+(H-pb-h)+'" width="'+((W-pl-pr)/bins-2)+'" height="'+h+'" fill="'+col+'" rx="2"/>';
+  });
+  const x5 = pl + (-0.5-lo)/(hi-lo)*(W-pl-pr);
+  s += '<line x1="'+x5+'" y1="'+pt+'" x2="'+x5+'" y2="'+(H-pb)+'" stroke="#A64B2A" stroke-width="1.4" stroke-dasharray="5,4"/>' +
+       '<text x="'+(x5-4)+'" y="'+(pt+9)+'" text-anchor="end" fill="#A64B2A">-5% daily limit</text>';
+  s += '<text x="'+pl+'" y="'+(H-6)+'">'+lo.toFixed(1)+'</text><text x="'+(W-pr)+'" y="'+(H-6)+'" text-anchor="end">'+hi.toFixed(1)+'</text>';
+  const html = '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;display:block">' + s + '</svg>';
+  return { html, bind(box){
+    box.querySelectorAll('[data-b]').forEach(r => r.addEventListener('mouseenter', () => {
+      box.querySelector('.readout').innerHTML = 'days at <b>'+r.dataset.b+'%</b> daily P&L: <b>'+r.dataset.c+'</b>';
+    }));
+  }};
+}
+
+function barsHTML(c){
+  const mx = Math.max(...c.bars.map(b => Math.abs(b[1])));
+  return c.bars.map(b =>
+    '<div class="hbar"><span class="hl">'+b[0]+'</span>' +
+    '<span class="ht"><span class="hf" style="width:'+(Math.abs(b[1])/mx*100)+'%;background:'+b[2]+'"></span></span>' +
+    '<span class="hv">'+b[1]+(c.unit||'')+'</span></div>').join('');
+}
+
+function waterfallHTML(scn){
+  const st = scn.state, evOn = scn.rows.filter(r=>r.type==='EVIDENCE').map(r=>!!r.on);
+  const base = 57;
+  const segs = [
+    { l:'Baseline', v: base, kind:'base' },
+    { l:'Athlete',  v: st.health/100*12, kind:'pos' },
+    { l:'Status',   v: evOn[2] ? 4 : 0, kind:'pos' },
+    { l:'Unknown',  v: evOn[3] ? -5 : 0, kind:'neg' },
+    { l:'Injuries', v: evOn[4] ? -2 : 0, kind:'neg' }
+  ];
+  let cum = 0; const bars = [];
+  segs.forEach(sg => {
+    const from = cum; cum += sg.v;
+    bars.push({ ...sg, from, to: cum });
+  });
+  const total = Math.max(3, Math.min(97, cum));
+  const W = 560, H = 190, pl = 10, pr = 10, pt = 18, pb = 34;
+  const ymax = Math.max(total, 82) * 1.06;
+  const Y = v => pt + (1-v/ymax)*(H-pt-pb);
+  const bw = (W-pl-pr)/(segs.length+1);
+  let s = '';
+  bars.forEach((b,i)=>{
+    const x = pl + i*bw + bw*0.18;
+    const yTop = Y(Math.max(b.from, b.to)), hh = Math.max(2, Math.abs(Y(b.from)-Y(b.to)));
+    const col = b.kind==='base' ? '#8A97A8' : b.kind==='pos' ? '#1A4D3E' : '#A64B2A';
+    s += '<rect x="'+x+'" y="'+yTop+'" width="'+(bw*0.64)+'" height="'+hh+'" fill="'+col+'" rx="3"/>';
+    s += '<text x="'+(x+bw*0.32)+'" y="'+(yTop-5)+'" text-anchor="middle" fill="#45443F">'+(b.v>=0?'+':'')+b.v.toFixed(1)+'</text>';
+    s += '<text x="'+(x+bw*0.32)+'" y="'+(H-pb+14)+'" text-anchor="middle">'+b.l+'</text>';
+  });
+  const xT = pl + segs.length*bw + bw*0.18;
+  s += '<rect x="'+xT+'" y="'+Y(total)+'" width="'+(bw*0.64)+'" height="'+(Y(0)-Y(total))+'" fill="#1A4D3E" rx="3" stroke="#14130F" stroke-width="1.2"/>';
+  s += '<text x="'+(xT+bw*0.32)+'" y="'+(Y(total)-5)+'" text-anchor="middle" fill="#14130F" font-weight="700">'+total.toFixed(0)+'%</text>';
+  s += '<text x="'+(xT+bw*0.32)+'" y="'+(H-pb+14)+'" text-anchor="middle">Result</text>';
+  return '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;display:block">' + s + '</svg>';
+}
+
+/* ================================================================
+   NOTEBOOK RENDER
+================================================================ */
+let active = null;
+const scElem = {};   /* row index -> element */
+
+function compHTML(row, scn){
+  const c = row.comp;
+  const head = t => '<div class="cmp-head"><span class="cmp-title">'+t+'</span><span class="cmp-kind">'+c.kind+'</span></div>';
+  switch (c.kind){
+    case 'tags': {
+      const spans = scn.qspans.map(sp =>
+        '<span class="tg" data-tag="'+sp[1]+'" title="'+sp[1]+'">'+sp[0].replace(/</g,'&lt;')+'</span>').join('');
+      return head('Tagged parse of the question') +
+        '<div class="tagline">'+spans+'</div><span class="stg-chip">SENTENCE TAG · QUESTION</span>';
+    }
+    case 'bars':
+      return head(c.title) + barsHTML(c);
+    case 'line': {
+      const ch = lineChart(c);
+      setTimeout(()=>{}, 0);
+      return head(c.title) + '<div class="chart-box" data-chart="line"><div class="readout">hover for values</div>'+ch.html+'</div>';
+    }
+    case 'band': {
+      const ch = bandChart(c);
+      return head(c.title) + '<div class="chart-box"><div class="readout">hover for values</div>'+ch.html+'</div>';
+    }
+    case 'candles': {
+      const ch = candlesChart(20271107);
+      return head(c.title) + '<div class="chart-box"><div class="readout">hover a candle</div>'+ch.html+'</div>';
+    }
+    case 'equity': {
+      const ch = equityChart(97531);
+      return head(c.title) + '<div class="chart-box"><div class="readout">hover for equity</div>'+ch.html+'</div>';
+    }
+    case 'hist': {
+      const ch = histChart(555123);
+      return head(c.title) + '<div class="chart-box"><div class="readout">hover a bar</div>'+ch.html+'</div>';
+    }
+    case 'waterfall':
+      return head(c.title) + '<div class="chart-box" data-dyn="waterfall">'+waterfallHTML(scn)+'</div>';
+    case 'slider':
+      return head('Assumption lever — drag and the answer recomposes') +
+        '<div class="lever"><div class="lr"><label>'+c.label+'</label><span class="val" data-role="val">'+c.fmt(scn.state[c.id])+'</span></div>' +
+        '<input type="range" min="'+c.min+'" max="'+c.max+'" step="'+c.step+'" value="'+scn.state[c.id]+'" data-lever="'+c.id+'">' +
+        '<div class="hint">'+c.hint+'</div></div>';
+    case 'toggle':
+      return head('Assumption switch') +
+        '<label class="togline"><input type="checkbox" data-tog="'+c.id+'" '+(scn.state[c.id]?'checked':'')+'>' +
+        '<span class="sw"></span><span class="tl-label">'+c.label+'<span class="tl-hint">'+c.hint+'</span></span></label>';
+    case 'answer': return ''; /* built specially */
+  }
+  return '';
+}
+
+function answerDetailHTML(scn, val){
+  const evRows = scn.rows.filter(r => r.type === 'EVIDENCE');
+  const asRows = scn.rows.filter(r => r.type === 'ASSUMPTION');
+  let items = evRows.map((r,i) => ({
+    l: r.text.length > 34 ? r.text.slice(0,33)+'…' : r.text,
+    v: r.on ? (scn.evWeights ? scn.evWeights[i] : 0) : 0
+  }));
+  asRows.forEach(r => {
+    const v = r.weightFn ? r.weightFn(scn.state) : 0;
+    items.push({ l: r.text.length > 34 ? r.text.slice(0,33)+'…' : r.text, v });
+  });
+  const isPct = scn === SCENARIOS.messi || scn === SCENARIOS.ftmo;
+  const unit = isPct ? ' pts' : ' pts';
+  const mx = Math.max(0.001, ...items.map(i => Math.abs(i.v)));
+  const bars = items.map(i =>
+    '<div class="cb-row"><span class="cl">'+i.l+'</span>' +
+    '<span class="ct"><span class="cf'+(i.v<0?' neg':'')+'" style="width:'+Math.max(2, Math.abs(i.v)/mx*100)+'%"></span></span>' +
+    '<span class="cn">'+(i.v>=0?'+':'-')+Math.abs(i.v).toFixed(1)+unit+'</span></div>').join('');
+  const stats = scn === SCENARIOS.ftmo
+    ? '<div class="ans-sub">monte-carlo · 500 paths · breach before target in the rest</div>'
+    : '<div class="ans-sub">composed from the rows above — remove one and this recomposes</div>';
+  return '<div class="ans-big">'+(isPct ? Math.round(val)+'<small>% pass</small>'
+      : (val>=0?'+':'-')+Math.abs(val).toFixed(1)+'<small>pts</small>')+'</div>' + stats +
+    '<div style="margin-top:10px">'+bars+'</div>' +
+    '<div class="ans-note">This number is the composition of every row above — nothing else.</div>';
+}
+
+function weightText(row, scn, ansVal){
+  if (row.type === 'ANSWER')
+    return (scn === SCENARIOS.okafor ? (ansVal>=0?'+':'-')+Math.abs(ansVal).toFixed(1) : Math.round(ansVal)+'%');
+  if (row.weight !== undefined) {
+    if (typeof row.weight === 'number')
+      return (row.weight>=0?'+':'-')+Math.abs(row.weight).toFixed(1);
+    return row.weight;
+  }
+  if (row.weightFn) { const w = row.weightFn(scn.state); return (w>=0?'+':'-')+Math.abs(w).toFixed(1); }
+  if (row.weightMode === 'lever') {
+    const c = row.comp;
+    return c.fmt(scn.state[c.id]);
+  }
+  return '—';
+}
+
+function renderNotebook(scn, q){
+  const host = document.getElementById('cgRows');
+  host.innerHTML = '';
+  scElem.rows = [];
+
+  const evIdx = []; let ei = 0;
+  scn.rows.forEach(row => {
+    if (row.type === 'EVIDENCE') { row.on = row.on === undefined ? 1 : row.on; evIdx.push(row); }
+  });
+
+  let n = 0;
+  scn.rows.forEach(row => {
+    n++;
+    const el = document.createElement('div');
+    el.className = 'row' + (row.type === 'ANSWER' ? ' row-answer' : '') + (row.on === 0 ? ' off' : '');
+    el.dataset.type = row.type;
+
+    const tick = row.type === 'EVIDENCE'
+      ? '<span class="r-tick" title="include / remove">✓</span>'
+      : '<span class="r-sp"></span>';
+
+    el.innerHTML =
+      '<div class="r-main">' +
+        '<span class="r-no">'+n+'</span>' +
+        '<span class="r-type" style="color:'+(row.type==='ANSWER'?'#9CC3B4':TYPE_COLORS[row.type])+'">'+row.type+'</span>' +
+        '<span class="r-text">'+(row.text || scn.question)+'</span>' +
+        '<span class="r-weight">—</span>' +
+        tick +
+        '<span class="r-chev">▼</span>' +
+      '</div>' +
+      '<div class="r-detail"><div class="rd-clip"><div class="rd-inner"></div></div></div>';
+
+    const main = el.querySelector('.r-main');
+    const detail = el.querySelector('.rd-inner');
+    row._el = el; row._detail = detail; row._open = false;
+
+    main.addEventListener('click', e => {
+      if (e.target.closest('.r-tick')) return;
+      row._open = !row._open;
+      el.classList.toggle('open', row._open);
+      if (row._open && !detail.dataset.built) {
+        if (row.type === 'ANSWER') {
+          detail.innerHTML = '<div class="cmp-head"><span class="cmp-title" style="color:rgba(255,255,255,.7)">The answer, decomposed</span><span class="cmp-kind" style="border-color:rgba(255,255,255,.3);color:rgba(255,255,255,.7)">live</span></div>' +
+            '<div data-role="ansdetail"></div>';
+          detail.dataset.built = '1';
+        } else {
+          detail.innerHTML = compHTML(row, scn);
+          detail.dataset.built = '1';
+          bindChartHovers(detail);
+          bindLevers(detail, scn);
+        }
+      }
+    });
+
+    const tickEl = el.querySelector('.r-tick');
+    if (tickEl) tickEl.addEventListener('click', e => {
+      e.stopPropagation();
+      row.on = row.on ? 0 : 1;
+      el.classList.toggle('off', !row.on);
+      recompute();
+    });
+
+    host.appendChild(el);
+    scElem.rows.push(row);
+  });
+
+  /* document view */
+  document.getElementById('docContent').innerHTML =
+    scn.doc.map((p,i) => '<p'+(i===scn.doc.length-1?' class="doc-fin"':'')+'>'+p+'</p>').join('');
+}
+
+function bindChartHovers(root){
+  root.querySelectorAll('.chart-box').forEach(box => {
+    const line = box.querySelector('svg [id="__hov"]');
+    if (line) {
+      const c = line; /* handled by closures below via data-chart types */
+    }
+  });
+  /* simpler: re-bind by kind through detail dataset */
+  root.querySelectorAll('[data-lever], [data-tog]').forEach(()=>{});
+}
+
+function bindLevers(root, scn){
+  root.querySelectorAll('[data-lever]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      scn.state[inp.dataset.lever] = parseFloat(inp.value);
+      const c = scn.rows.find(r => r.comp.kind === 'slider' && r.comp.id === inp.dataset.lever).comp;
+      inp.closest('.lever').querySelector('[data-role="val"]').textContent = c.fmt(scn.state[inp.dataset.lever]);
+      scheduleRecompute();
+    });
+  });
+  root.querySelectorAll('[data-tog]').forEach(inp => {
+    inp.addEventListener('change', () => {
+      scn.state[inp.dataset.tog] = inp.checked ? 1 : 0;
+      scheduleRecompute();
+    });
+  });
+  /* chart hover binding by kind */
+  root.querySelectorAll('.chart-box').forEach(box => {
+    const kind = box.parentElement && box.querySelector('svg') ? null : null;
+  });
+  /* attach hover handlers saved during compHTML via data attributes */
+  root.querySelectorAll('.chart-box').forEach(box => {
+    const handler = hoverRegistry.find(h => h.box === box);
+    /* handled inline below */
+  });
+}
+
+/* hover registry: compHTML returns html only, so bind by re-creating handlers via event delegation */
+const hoverRegistry = [];
+function registerHover(detailEl, box, fn){ hoverRegistry.push({ box, fn }); }
+
+/* delegation: bind on detail build using stored factory — simplest approach: bind here by chart content */
+function bindDetailInteractions(detail, row, scn){
+  const c = row.comp;
+  if (!c) return;
+  const box = detail.querySelector('.chart-box');
+  if (!box) return;
+  if (c.kind === 'line') { const h = lineChart(c); h.bind(box); }
+  if (c.kind === 'band') { const h = bandChart(c); h.bind(box); }
+  if (c.kind === 'candles') { const h = candlesChart(20271107); h.bind(box); }
+  if (c.kind === 'equity') { const h = equityChart(97531); h.bind(box); }
+  if (c.kind === 'hist') { const h = histChart(555123); h.bind(box); }
+}
+
+/* ================================================================
+   RECOMPUTE — one path: state -> weights -> answer -> UI
+================================================================ */
+let rafPending = false;
+function scheduleRecompute(){
+  if (rafPending) return;
+  rafPending = true;
+  requestAnimationFrame(() => { rafPending = false; recompute(); });
+}
+
+function recompute(){
+  const scn = active; if (!scn) return;
+  const evRows = scn.rows.filter(r => r.type === 'EVIDENCE');
+  const evOn = evRows.map(r => !!r.on);
+  const val = scn.rows.find(r => r.type === 'ANSWER').model(scn.state, evOn);
+
+  scn.rows.forEach(row => {
+    if (!row._el) return;
+    const wEl = row._el.querySelector('.r-weight');
+    const txt = weightText(row, scn, val);
+    wEl.textContent = txt;
+    if (row.type !== 'ANSWER' && row.type !== 'QUESTION') {
+      const num = parseFloat(txt);
+      wEl.classList.toggle('pos', !isNaN(num) && num > 0);
+      wEl.classList.toggle('neg', !isNaN(num) && num < 0);
+    }
+    /* live dynamic components */
+    if (row._open && row._detail) {
+      if (row.comp && row.comp.kind === 'waterfall')
+        row._detail.querySelector('[data-dyn="waterfall"]').innerHTML = waterfallHTML(scn);
+      if (row.type === 'ANSWER')
+        row._detail.querySelector('[data-role="ansdetail"]').innerHTML = answerDetailHTML(scn, val);
+    }
+  });
+
+  document.getElementById('nbSrc').textContent = scn.dataset;
+}
+
+/* ================================================================
+   ASK FLOW
+================================================================ */
+function pickScenario(q){
+  const t = q.toLowerCase();
+  if (t.includes('messi') || (t.includes('72') && t.includes('age'))) return SCENARIOS.messi;
+  if (t.includes('ftmo') || t.includes('funded') || t.includes('challenge') || t.includes('strategy') || t.includes('trade') || t.includes('prop')) return SCENARIOS.ftmo;
+  return SCENARIOS.okafor;
+}
+
+function ask(q){
+  active = pickScenario(q);
+  /* deep-clone mutable state so re-asks start fresh */
+  active = Object.assign({}, active, { state: Object.assign({}, active.state) });
+  active.rows = active.rows.map(r => Object.assign({}, r));
+
+  document.getElementById('nbQ').textContent = q;
+  renderNotebook(active, q);
+  document.getElementById('landing').classList.add('hidden');
+  document.getElementById('shell').classList.add('visible');
+  document.getElementById('bottomAsk').classList.add('visible');
+  recompute();
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+document.getElementById('qSubmit').addEventListener('click', () => {
+  const q = document.getElementById('qInput').value.trim();
+  if (q) ask(q);
+});
+document.getElementById('qInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { const q = e.target.value.trim(); if (q) ask(q); }
+});
+document.querySelectorAll('.chip').forEach(ch => ch.addEventListener('click', () => ask(ch.dataset.q)));
+
+document.getElementById('bottomSubmit').addEventListener('click', () => {
+  const q = document.getElementById('bottomInput').value.trim();
+  if (q) { ask(q); document.getElementById('bottomInput').value = ''; }
+});
+document.getElementById('bottomInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const q = e.target.value.trim();
+    if (q) { ask(q); e.target.value = ''; }
+  }
+});
+
+/* tabs — exactly two */
+document.querySelectorAll('.view-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t === tab));
+    document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + tab.dataset.view).classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>

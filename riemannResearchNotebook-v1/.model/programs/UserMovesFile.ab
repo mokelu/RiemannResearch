@@ -1,0 +1,45 @@
+# =====================================================================
+#  UserMovesFile.ab
+# =====================================================================
+#  sentence   User Move File
+#  v4         moveNode(sourceId, targetId)  — IMPLEMENTED
+#             leftpanel_v4.html line 615; drop wired at lines 459-469
+#             and 854-856.
+#  triggers   drag a file row onto a folder row · drag onto the
+#             empty area of the tree (falls back to root, line 854)
+#             THERE IS NO "Move" MENU ITEM in v4 — lines 778-786
+#             offer Open / Rename / Duplicate / Delete / Copy Path
+#             and nothing else.  move is a drag, or it is nothing.
+#
+#  four of the five results are GUARDS, not failures.  v4 returns
+#  silently on each (lines 616-623):
+#       sourceId === targetId        -> ignored   (dropped on itself)
+#       target is not a folder       -> invalid   (dropped on a file)
+#       target inside source         -> cycle     (folder into itself)
+#       already the parent           -> ignored   (no-op)
+#  a refused drop is the tree protecting itself.  it goes to Redraw,
+#  which repaints and changes nothing — exactly what v4 does, by
+#  returning before any splice.  only `failed` — an actual write the
+#  machine could not perform — reaches ReportFailure.
+#
+#  on SUCCESS the target folder is expanded so the moved row is
+#  visible: v4 line 627 (`state.expanded.add(targetId)`), and the
+#  old machine does the same.  the React app does NOT expand the
+#  target yet — a dropped file can vanish into a collapsed folder,
+#  which fails "see the result".  GAP-CODE, README §10; the model
+#  keeps the consequence.
+
+program UserMovesFile
+
+sentence  User Move File
+enter     file.move.requested
+
+step system move file onto folder
+  catch file.move.ok      goto system expand folder
+  catch file.move.invalid goto Redraw
+  catch file.move.cycle   goto Redraw
+  catch file.move.ignored goto Redraw
+  catch file.move.failed  goto ReportFailure
+
+step system expand folder
+  catch folder.expand.ok goto Redraw

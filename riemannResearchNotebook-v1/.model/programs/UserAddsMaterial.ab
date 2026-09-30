@@ -1,0 +1,24 @@
+# =====================================================================
+#  UserAddsMaterial.ab
+# =====================================================================
+#  sentence   User Add Material
+#  app        (none yet) — the paste box that takes raw research
+#             material and splits it into sentences
+#  triggers   paste into the material box · press "Add material"
+#             (planned; no widget exists today)
+#  status     NOT BUILT — this is the milestone verb itself:
+#             "put research material INTO it".  it is specified
+#             here so the gap has a name and a queue position.
+
+program UserAddsMaterial
+
+sentence  User Add Material
+enter     material.add.requested
+
+step system add material
+  catch material.add.ok      goto system save workspace
+  catch material.add.invalid goto ReportFailure
+
+step system save workspace
+  catch workspace.save.ok     goto Redraw
+  catch workspace.save.failed goto ReportFailure

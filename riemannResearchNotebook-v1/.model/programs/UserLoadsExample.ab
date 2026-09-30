@@ -1,0 +1,26 @@
+# =====================================================================
+#  UserLoadsExample.ab
+# =====================================================================
+#  sentence   User Load Example
+#  app        src/App.jsx — header button "Load example" (line 146),
+#             loadExample() -> adopt(structuredClone(SEEDS.Reasoning))
+#  triggers   the header button.  one widget, one sentence.
+#  status     IMPLEMENTED
+#
+#  this REPLACES the open file's structure — which is why it saves
+#  afterwards, same as every other mutation.  Load declares
+#  `failed` (alphabet THE LINE: Load reads), but the seed lives in
+#  memory today, so only `ok` fires; the catch stays for R3.
+
+program UserLoadsExample
+
+sentence  User Load Example
+enter     example.load.requested
+
+step system load example
+  catch example.load.ok      goto system save workspace
+  catch example.load.failed  goto ReportFailure
+
+step system save workspace
+  catch workspace.save.ok     goto Redraw
+  catch workspace.save.failed goto ReportFailure

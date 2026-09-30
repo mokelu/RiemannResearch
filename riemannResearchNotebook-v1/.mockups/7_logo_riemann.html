@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riemann Research — Logo</title>
+<style>
+  :root {
+    --bg: #FBFAF7;
+    --panel: #FFFFFF;
+    --surface-2: #F4F3EE;
+    --ink: #14130F;
+    --ink-2: #45443F;
+    --muted: #76756E;
+    --muted-2: #9A9992;
+    --border: #E6E5DF;
+    --border-strong: #D6D5CE;
+    --accent: #1A4D3E;
+    --accent-2: #2A6B57;
+    --accent-soft: #EAF1ED;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+    --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.55;
+    padding: 56px 32px 120px;
+  }
+
+  .wrap { max-width: 920px; margin: 0 auto; }
+
+  /* ---------- Page header ---------- */
+  .page-head {
+    margin-bottom: 56px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .page-head h1 {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: 32px;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  .page-head p {
+    font-size: 14px;
+    color: var(--muted);
+    max-width: 44em;
+  }
+
+  /* ---------- Sections ---------- */
+  section { margin-bottom: 56px; }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+
+  .stage {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 56px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stage.dark {
+    background: #14130F;
+    border-color: #14130F;
+  }
+  .stage.grid {
+    background:
+      radial-gradient(circle at 1px 1px, rgba(20,19,15,0.06) 1px, transparent 0) 0 0 / 22px 22px,
+      var(--panel);
+  }
+
+  .caption {
+    margin-top: 14px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted-2);
+    letter-spacing: 0.04em;
+  }
+
+  /* ---------- Grid of stages ---------- */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  /* ---------- The mark ---------- */
+  .mark {
+    display: block;
+    color: var(--accent);
+  }
+  .mark svg { display: block; width: 100%; height: 100%; }
+
+  .stage.dark .mark { color: #E8F0EB; }
+
+  /* Sizes for mark demo */
+  .mark-size-demo {
+    display: flex;
+    align-items: flex-end;
+    gap: 32px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .mark-size-demo .item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .mark-size-demo .item .label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted-2);
+    letter-spacing: 0.06em;
+  }
+
+  /* ---------- Lockups ---------- */
+  .lockup-h {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .lockup-h .mark { width: 48px; height: 48px; flex-shrink: 0; }
+
+  .lockup-h .wordmark { display: flex; flex-direction: column; }
+
+  .lockup-h .wordmark .wm-top {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: 27px;
+    letter-spacing: -0.015em;
+    line-height: 1;
+    color: var(--ink);
+  }
+
+  .lockup-h .wordmark .wm-bottom {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.38em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-top: 6px;
+    margin-left: 2px;
+  }
+
+  .stage.dark .lockup-h .wordmark .wm-top { color: #FBFAF7; }
+  .stage.dark .lockup-h .wordmark .wm-bottom { color: #9CC3B4; }
+
+  /* Stacked lockup */
+  .lockup-v {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  .lockup-v .mark { width: 64px; height: 64px; }
+  .lockup-v .wordmark {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .lockup-v .wm-top {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: 30px;
+    letter-spacing: -0.015em;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .lockup-v .wm-bottom {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.44em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-top: 8px;
+    margin-left: 4px;
+  }
+
+  .stage.dark .lockup-v .wm-top { color: #FBFAF7; }
+  .stage.dark .lockup-v .wm-bottom { color: #9CC3B4; }
+
+  /* Wordmark only */
+  .wordmark-only {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .wordmark-only .wm-top {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: 44px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .wordmark-only .wm-bottom {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.48em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-top: 10px;
+    margin-left: 6px;
+  }
+
+  .stage.dark .wordmark-only .wm-top { color: #FBFAF7; }
+  .stage.dark .wordmark-only .wm-bottom { color: #9CC3B4; }
+
+  /* ---------- App icon ---------- */
+  .app-icon {
+    width: 120px;
+    height: 120px;
+    border-radius: 26px;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px -8px rgba(26,77,62,0.5);
+  }
+  .app-icon svg { width: 68px; height: 68px; color: #E8F0EB; display: block; }
+
+  .app-icon.inverse {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 24px -8px rgba(20,19,15,0.15);
+  }
+  .app-icon.inverse svg { color: var(--accent); }
+
+  /* Favicon */
+  .favicon-row {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .favicon-row .fav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .favicon-row .fav .box {
+    background: var(--accent);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .favicon-row .fav .box svg { color: #E8F0EB; display: block; }
+  .favicon-row .fav .label {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--muted-2);
+    letter-spacing: 0.06em;
+  }
+
+  /* ---------- Color specs ---------- */
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .swatch {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .swatch .chip { height: 84px; }
+  .swatch .meta {
+    padding: 12px 14px;
+    background: var(--panel);
+  }
+  .swatch .meta .name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+  .swatch .meta .hex {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  /* ---------- Clear space ---------- */
+  .clearspace-demo {
+    position: relative;
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+  }
+  .clearspace-box {
+    position: relative;
+    border: 1px dashed var(--border-strong);
+    padding: 24px;
+    display: inline-block;
+  }
+  .clearspace-box::before,
+  .clearspace-box::after {
+    content: '';
+    position: absolute;
+    background: var(--accent);
+    opacity: 0.35;
+  }
+  /* top/bottom markers */
+  .clearspace-box::before {
+    left: 24px; right: 24px; top: -12px; height: 12px;
+    background: linear-gradient(90deg, transparent 0, var(--accent) 0 4px, transparent 4px 100%);
+    background-size: 8px 2px;
+    background-repeat: repeat-x;
+    background-position: 0 center;
+  }
+  .clearspace-box::after {
+    left: 24px; right: 24px; bottom: -12px; height: 12px;
+    background: linear-gradient(90deg, transparent 0, var(--accent) 0 4px, transparent 4px 100%);
+    background-size: 8px 2px;
+    background-repeat: repeat-x;
+    background-position: 0 center;
+  }
+  .clearspace-box .inner {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .clearspace-box .inner .mark { width: 40px; height: 40px; }
+  .clearspace-box .inner .wm {
+    font-family: var(--font-serif);
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+  }
+
+  /* ---------- Usage notes ---------- */
+  .notes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .note {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 22px;
+  }
+  .note h4 {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--ink);
+  }
+  .note p {
+    font-size: 13.5px;
+    color: var(--ink-2);
+    line-height: 1.55;
+  }
+  .note.do { border-left: 3px solid var(--accent); }
+  .note.dont { border-left: 3px solid #B8860B; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 720px) {
+    .grid-2, .grid-3, .notes { grid-template-columns: 1fr; }
+    .swatches { grid-template-columns: 1fr; }
+    .stage { padding: 40px 24px; }
+    .lockup-h .wordmark .wm-top { font-size: 22px; }
+    .lockup-v .wm-top { font-size: 24px; }
+    .wordmark-only .wm-top { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ============ PAGE HEADER ============ -->
+  <div class="page-head">
+    <h1>Riemann Research — Identity</h1>
+    <p>A serious research environment. The mark is a Riemann sum — discrete bars composing a continuous curve. Structure from parts. The wordmark is set in serif with a mono sub-line, the classic institutional lockup.</p>
+  </div>
+
+  <!-- ============ PRIMARY LOCKUP ============ -->
+  <section>
+    <div class="section-label">Primary lockup</div>
+    <div class="stage grid">
+      <div class="lockup-h">
+        <div class="mark" style="width:48px;height:48px;">
+          <svg viewBox="0 0 48 48" fill="currentColor" aria-hidden="true">
+            <rect x="3" y="30" width="6" height="12" rx="1.5"/>
+            <rect x="12" y="18" width="6" height="24" rx="1.5"/>
+            <rect x="21" y="4" width="6" height="38" rx="1.5"/>
+            <rect x="30" y="18" width="6" height="24" rx="1.5"/>
+            <rect x="39" y="30" width="6" height="12" rx="1.5"/>
+          </svg>
+        </div>
+        <div class="wordmark">
+          <div class="wm-top">Riemann</div>
+          <div class="wm-bottom">Research</div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Horizontal lockup · mark 48px · serif wordmark + mono sub-line</div>
+  </section>
+
+  <!-- ============ STACKED LOCKUP ============ -->
+  <section>
+    <div class="section-label">Stacked lockup</div>
+    <div class="stage grid">
+      <div class="lockup-v">
+        <div class="mark" style="width:64px;height:64px;">
+          <svg viewBox="0 0 48 48" fill="currentColor" aria-hidden="true">
+            <rect x="3" y="30" width="6" height="12" rx="1.5"/>
+            <rect x="12" y="18" width="6" height="24" rx="1.5"/>
+            <rect x="21" y="4" width="6" height="38" rx="1.5"/>
+            <rect x="30" y="18" width="6" height="24" rx="1.5"/>
+            <rect x="39" y="30" width="6" height="12" rx="1.5"/>
+          </svg>
+        </div>
+        <div class="wordmark">
+          <div class="wm-top">Riemann</div>
+          <div class="wm-bottom">Research</div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Stacked lockup · for square formats, title slides, app store</div>
+  </section>
+
+  <!-- ============ MARK ONLY ============ -->
+  <section>
+    <div class="section-label">Mark</div>
+    <div class="stage grid">
+      <div class="mark-size-demo">
+        <div class="item">
+          <div class="mark" style="width:80px;height:80px;">
+            <svg viewBox="0 0 48 48" fill="currentColor" aria-hidden="true">
+              <rect x="3" y="30" width="6" height="12" rx="1.5"/>
+              <rect x="12" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="21" y="4" width="6" height="38" rx="1.5"/>
+              <rect x="30" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="39" y="30" width="6" height="12" rx="1.5"/>
+            </svg>
+          </div>
+          <span class="label">80 px</span>
+        </div>
+        <div class="item">
+          <div class="mark" style="width:48px;height:48px;">
+            <svg viewBox="0 0 48 48" fill="currentColor" aria-hidden="true">
+              <rect x="3" y="30" width="6" height="12" rx="1.5"/>
+              <rect x="12" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="21" y="4" width="6" height="38" rx="1.5"/>
+              <rect x="30" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="39" y="30" width="6" height="12" rx="1.5"/>
+            </svg>
+          </div>
+          <span class="label">48 px</span>
+        </div>
+        <div class="item">
+          <div class="mark" style="width:32px;height:32px;">
+            <svg viewBox="0 0 48 48" fill="currentColor" aria-hidden="true">
+              <rect x="3" y="30" width="6" height="12" rx="1.5"/>
+              <rect x="12" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="21" y="4" width="6" height="38" rx="1.5"/>
+              <rect x="30" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="39" y="30" width="6" height="12" rx="1.5"/>
+            </svg>
+          </div>
+          <span class="label">32 px</span>
+        </div>
+        <div class="item">
+          <div class="mark" style="width:20px;height:20px;">
+            <svg viewBox="0 0 48 48" fill="currentColor" aria-hidden="true">
+              <rect x="3" y="30" width="6" height="12" rx="1.5"/>
+              <rect x="12" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="21" y="4" width="6" height="38" rx="1.5"/>
+              <rect x="30" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="39" y="30" width="6" height="12" rx="1.5"/>
+            </svg>
+          </div>
+          <span class="label">20 px</span>
+        </div>
+        <div class="item">
+          <div class="mark" style="width:14px;height:14px;">
+            <svg viewBox="0 0 48 48" fill="currentColor" aria-hidden="true">
+              <rect x="3" y="30" width="6" height="12" rx="1.5"/>
+              <rect x="12" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="21" y="4" width="6" height="38" rx="1.5"/>
+              <rect x="30" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="39" y="30" width="6" height="12" rx="1.5"/>
+            </svg>
+          </div>
+          <span class="label">14 px</span>
+        </div>
+      </div>
+    </div>
+    <div class="caption">The mark scales down to 14 px — still legible as a rising curve</div>
+  </section>
+
+  <!-- ============ WORDMARK ONLY ============ -->
+  <section>
+    <div class="section-label">Wordmark</div>
+    <div class="stage grid">
+      <div class="wordmark-only">
+        <div class="wm-top">Riemann</div>
+        <div class="wm-bottom">Research</div>
+      </div>
+    </div>
+    <div class="caption">Wordmark only · for narrow formats, footers, co-branding</div>
+  </section>
+
+  <!-- ============ DARK BACKGROUND ============ -->
+  <section>
+    <div class="section-label">Dark background</div>
+    <div class="stage dark">
+      <div class="lockup-h">
+        <div class="mark" style="width:48px;height:48px;">
+          <svg viewBox="0 0 48 48" fill="currentColor" aria-hidden="true">
+            <rect x="3" y="30" width="6" height="12" rx="1.5"/>
+            <rect x="12" y="18" width="6" height="24" rx="1.5"/>
+            <rect x="21" y="4" width="6" height="38" rx="1.5"/>
+            <rect x="30" y="18" width="6" height="24" rx="1.5"/>
+            <rect x="39" y="30" width="6" height="12" rx="1.5"/>
+          </svg>
+        </div>
+        <div class="wordmark">
+          <div class="wm-top">Riemann</div>
+          <div class="wm-bottom">Research</div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Inverse lockup · mark and wordmark in warm off-white, sub-line in pale green</div>
+  </section>
+
+  <!-- ============ APP ICON ============ -->
+  <section>
+    <div class="section-label">App icon</div>
+    <div class="stage grid">
+      <div class="grid-2" style="width:100%;">
+        <div style="display:flex;align-items:center;justify-content:center;padding:24px;">
+          <div class="app-icon">
+            <svg viewBox="0 0 48 48" fill="currentColor" aria-hidden="true">
+              <rect x="3" y="30" width="6" height="12" rx="1.5"/>
+              <rect x="12" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="21" y="4" width="6" height="38" rx="1.5"/>
+              <rect x="30" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="39" y="30" width="6" height="12" rx="1.5"/>
+            </svg>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;padding:24px;">
+          <div class="app-icon inverse">
+            <svg viewBox="0 0 48 48" fill="currentColor" aria-hidden="true">
+              <rect x="3" y="30" width="6" height="12" rx="1.5"/>
+              <rect x="12" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="21" y="4" width="6" height="38" rx="1.5"/>
+              <rect x="30" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="39" y="30" width="6" height="12" rx="1.5"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Primary app icon (left) and inverse (right)</div>
+  </section>
+
+  <!-- ============ FAVICON ============ -->
+  <section>
+    <div class="section-label">Favicon</div>
+    <div class="stage grid">
+      <div class="favicon-row">
+        <div class="fav">
+          <div class="box" style="width:64px;height:64px;">
+            <svg viewBox="0 0 48 48" fill="currentColor" width="36" height="36" aria-hidden="true">
+              <rect x="3" y="30" width="6" height="12" rx="1.5"/>
+              <rect x="12" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="21" y="4" width="6" height="38" rx="1.5"/>
+              <rect x="30" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="39" y="30" width="6" height="12" rx="1.5"/>
+            </svg>
+          </div>
+          <span class="label">64 px</span>
+        </div>
+        <div class="fav">
+          <div class="box" style="width:32px;height:32px;border-radius:4px;">
+            <svg viewBox="0 0 48 48" fill="currentColor" width="20" height="20" aria-hidden="true">
+              <rect x="3" y="30" width="6" height="12" rx="1.5"/>
+              <rect x="12" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="21" y="4" width="6" height="38" rx="1.5"/>
+              <rect x="30" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="39" y="30" width="6" height="12" rx="1.5"/>
+            </svg>
+          </div>
+          <span class="label">32 px</span>
+        </div>
+        <div class="fav">
+          <div class="box" style="width:20px;height:20px;border-radius:3px;">
+            <svg viewBox="0 0 48 48" fill="currentColor" width="13" height="13" aria-hidden="true">
+              <rect x="3" y="30" width="6" height="12" rx="1.5"/>
+              <rect x="12" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="21" y="4" width="6" height="38" rx="1.5"/>
+              <rect x="30" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="39" y="30" width="6" height="12" rx="1.5"/>
+            </svg>
+          </div>
+          <span class="label">20 px</span>
+        </div>
+        <div class="fav">
+          <div class="box" style="width:16px;height:16px;border-radius:3px;">
+            <svg viewBox="0 0 48 48" fill="currentColor" width="10" height="10" aria-hidden="true">
+              <rect x="3" y="30" width="6" height="12" rx="1.5"/>
+              <rect x="12" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="21" y="4" width="6" height="38" rx="1.5"/>
+              <rect x="30" y="18" width="6" height="24" rx="1.5"/>
+              <rect x="39" y="30" width="6" height="12" rx="1.5"/>
+            </svg>
+          </div>
+          <span class="label">16 px</span>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Favicon sizes · the mark reads clearly down to 16 px</div>
+  </section>
+
+  <!-- ============ COLOR ============ -->
+  <section>
+    <div class="section-label">Color</div>
+    <div class="swatches">
+      <div class="swatch">
+        <div class="chip" style="background:#1A4D3E;"></div>
+        <div class="meta">
+          <div class="name">Riemann Green</div>
+          <div class="hex">#1A4D3E</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background:#14130F;"></div>
+        <div class="meta">
+          <div class="name">Ink</div>
+          <div class="hex">#14130F</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background:#FBFAF7;border-bottom:1px solid #E6E5DF;"></div>
+        <div class="meta">
+          <div class="name">Paper</div>
+          <div class="hex">#FBFAF7</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CLEAR SPACE ============ -->
+  <section>
+    <div class="section-label">Clear space</div>
+    <div class="stage grid">
+      <div class="clearspace-demo">
+        <div class="clearspace-box">
+          <div class="inner">
+            <div class="mark" style="width:40px;height:40px;">
+              <svg viewBox="0 0 48 48" fill="currentColor" aria-hidden="true">
+                <rect x="3" y="30" width="6" height="12" rx="1.5"/>
+                <rect x="12" y="18" width="6" height="24" rx="1.5"/>
+                <rect x="21" y="4" width="6" height="38" rx="1.5"/>
+                <rect x="30" y="18" width="6" height="24" rx="1.5"/>
+                <rect x="39" y="30" width="6" height="12" rx="1.5"/>
+              </svg>
+            </div>
+            <div class="wm">Riemann Research</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">Minimum clear space = the height of the tallest bar on all sides</div>
+  </section>
+
+  <!-- ============ USAGE NOTES ============ -->
+  <section>
+    <div class="section-label">Usage</div>
+    <div class="notes">
+      <div class="note do">
+        <h4>Do</h4>
+        <p>Use the mark in Riemann Green on Paper or Ink. Keep clear space. Use the horizontal lockup whenever width allows. Scale down to 14 px without loss of legibility. Pair the wordmark with the mark, not with a tagline.</p>
+      </div>
+      <div class="note dont">
+        <h4>Don't</h4>
+        <p>Don't rotate, skew, or outline the mark. Don't recolor it outside the palette. Don't add gradients, shadows, or glows. Don't place it on busy photographic backgrounds. Don't stretch or condense the wordmark. Don't set the wordmark in a different typeface.</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+</body>
+</html>

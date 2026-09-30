@@ -1,0 +1,28 @@
+# =====================================================================
+#  UserDeletesSentence.ab
+# =====================================================================
+#  sentence   User Delete Sentence
+#  app        src/CellsView.jsx — the "remove this sentence" ✕
+#             button (line 112), straight to ops.removeCell: no
+#             confirmation dialog, unlike file deletion (which
+#             suspends on Dialog — grammar.ab (b)).
+#  triggers   press ✕ on a sentence row
+#  status     IMPLEMENTED
+#
+#  `delete.failed` is declared (the same Delete action the file
+#  tree uses) but cannot fire: the removal is an in-memory splice.
+#  caught here because R3 demands every declared result, not only
+#  the ones that fire today.
+
+program UserDeletesSentence
+
+sentence  User Delete Sentence
+enter     sentence.delete.requested
+
+step system delete sentence
+  catch sentence.delete.ok     goto system save workspace
+  catch sentence.delete.failed goto ReportFailure
+
+step system save workspace
+  catch workspace.save.ok     goto Redraw
+  catch workspace.save.failed goto ReportFailure

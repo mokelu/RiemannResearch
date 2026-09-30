@@ -1,0 +1,23 @@
+# =====================================================================
+#  UserConnectsSentence.ab
+# =====================================================================
+#  sentence   User Connect Sentence
+#  app        src/CellsView.jsx — CellRow connect control
+#             (relation + target + button, lines 135-151).
+#             the boundary re-validates the target id; a refusal
+#             lands in the banner.
+#  triggers   pick a relation, type a target id, press "connect"
+#  status     IMPLEMENTED
+
+program UserConnectsSentence
+
+sentence  User Connect Sentence
+enter     sentence.connect.requested
+
+step system connect sentence
+  catch sentence.connect.ok      goto system save workspace
+  catch sentence.connect.invalid goto ReportFailure
+
+step system save workspace
+  catch workspace.save.ok     goto Redraw
+  catch workspace.save.failed goto ReportFailure

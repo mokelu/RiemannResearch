@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ask — Fantasy Research</title>
+<style>
+  :root {
+    --bg: #FAF9F5;
+    --panel: #FFFFFF;
+    --surface-2: #F2F1EC;
+    --ink: #14130F;
+    --ink-2: #45443F;
+    --muted: #76756E;
+    --muted-2: #9A9992;
+    --border: #E6E5DF;
+    --border-strong: #D6D5CE;
+    --accent: #1A4D3E;
+    --accent-soft: #EAF1ED;
+    --amber: #B8860B;
+    --amber-soft: #f6ecd9;
+    --blue: #3A6B9C;
+    --blue-soft: #e8edf5;
+    --purple: #6B4A8C;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+    --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; -webkit-font-smoothing: antialiased; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--font-sans); font-size: 14px; line-height: 1.5; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+
+  /* ============ LANDING STATE (before first question) ============ */
+  .landing {
+    max-width: 640px; margin: 0 auto;
+    min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+    padding: 40px 20px; transition: opacity .25s ease;
+  }
+  .landing.hidden { display: none; }
+
+  .brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 32px; }
+  .brand .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  .headline { font-family: var(--font-serif); font-size: 27px; font-weight: 600; margin-bottom: 6px; }
+  .sub { font-size: 14px; color: var(--muted); margin-bottom: 22px; max-width: 480px; }
+
+  .input-row { display: flex; gap: 8px; }
+  .input {
+    flex: 1; font-family: var(--font-serif); font-size: 16.5px; color: var(--ink);
+    background: var(--panel); border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 14px 18px; outline: none; transition: border-color .2s, box-shadow .2s;
+  }
+  .input::placeholder { color: var(--muted-2); font-style: italic; }
+  .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,77,62,.08); }
+  .submit {
+    font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .06em; color: #fff;
+    background: var(--accent); border-radius: 10px; padding: 14px 22px; white-space: nowrap;
+  }
+  .submit:hover { opacity: .87; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+  .chip { font-family: var(--font-mono); font-size: 11px; color: var(--muted); background: var(--surface-2); border: 1px solid var(--border); border-radius: 20px; padding: 6px 13px; }
+  .chip:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ============ PAGE STATE (after asking — notebook is the whole page) ============ */
+  .shell { max-width: 760px; margin: 0 auto; padding: 24px 20px 110px; display: none; }
+  .shell.visible { display: block; }
+
+  .page-brand { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 22px; }
+  .page-brand .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  /* ============ NOTEBOOK ============ */
+  .notebook { display: block; }
+
+  /* ============ FIXED BOTTOM ASK BAR (after first question) ============ */
+  .bottom-ask {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: rgba(250,249,245,0.92); backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border);
+    padding: 14px 20px; display: none; z-index: 50;
+  }
+  .bottom-ask.visible { display: block; }
+  .bottom-ask-inner { max-width: 760px; margin: 0 auto; display: flex; gap: 8px; }
+  .bottom-input {
+    flex: 1; font-family: var(--font-serif); font-size: 15px; color: var(--ink);
+    background: var(--panel); border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 11px 16px; outline: none; transition: border-color .2s, box-shadow .2s;
+  }
+  .bottom-input::placeholder { color: var(--muted-2); font-style: italic; }
+  .bottom-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,77,62,.08); }
+  .bottom-submit {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; color: #fff;
+    background: var(--accent); border-radius: 10px; padding: 0 20px; white-space: nowrap;
+  }
+  .bottom-submit:hover { opacity: .87; }
+
+  .nb-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .nb-q { font-family: var(--font-serif); font-size: 19px; font-weight: 600; color: var(--ink); line-height: 1.35; max-width: 520px; }
+
+  /* View tabs */
+  .view-tabs {
+    display: flex; gap: 2px; margin: 16px 0 0; border-bottom: 1px solid var(--border);
+  }
+  .view-tab {
+    padding: 9px 13px; font-size: 12.5px; color: var(--muted); border-bottom: 2px solid transparent;
+    margin-bottom: -1px; transition: all .12s; display: flex; align-items: center; gap: 6px;
+  }
+  .view-tab:hover { color: var(--ink-2); }
+  .view-tab.active { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+
+  .view-panel { display: none; padding-top: 22px; }
+  .view-panel.active { display: block; }
+
+  /* ============ CELLS VIEW ============ */
+  .answer-card {
+    background: var(--accent); border-radius: 12px; padding: 24px 26px;
+    display: flex; align-items: center; gap: 20px; margin-bottom: 20px;
+  }
+  .answer-score { font-family: var(--font-mono); font-size: 38px; font-weight: 700; color: #fff; line-height: 1; white-space: nowrap; }
+  .answer-score.flash { animation: pulse .5s ease; }
+  @keyframes pulse { 0% { opacity: .4; } 100% { opacity: 1; } }
+  .answer-unit { font-size: 14px; font-weight: 400; opacity: .65; margin-left: 2px; }
+  .answer-body { flex: 1; }
+  .answer-verdict { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .answer-detail { font-size: 12px; color: rgba(255,255,255,.72); line-height: 1.5; }
+
+  .section-title { font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 18px 0 9px; }
+
+  .lever { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 13px 16px; margin-bottom: 8px; }
+  .lever .lr { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .lever label { font-size: 13px; font-weight: 600; }
+  .lever .val { font-family: var(--font-mono); font-size: 12px; color: var(--amber); font-weight: 700; }
+  .lever input[type="range"] { width: 100%; accent-color: var(--amber); height: 20px; display: block; }
+  .lever .hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .ev {
+    display: flex; align-items: center; gap: 11px; padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: 9px; margin-bottom: 7px; background: var(--panel); cursor: pointer; transition: opacity .15s, border-color .15s;
+  }
+  .ev:hover { border-color: var(--border-strong); }
+  .ev .tick {
+    width: 17px; height: 17px; border-radius: 5px; border: 1.5px solid var(--blue); display: flex;
+    align-items: center; justify-content: center; font-size: 10px; color: #fff; flex-shrink: 0; background: var(--blue);
+  }
+  .ev.off .tick { background: #fff; color: transparent; border-color: var(--border-strong); }
+  .ev .lbl { font-size: 12.5px; font-weight: 600; }
+  .ev .src { font-family: var(--font-mono); font-size: 10px; color: var(--muted); display: block; margin-top: 1px; }
+  .ev .contrib { margin-left: auto; font-family: var(--font-mono); font-size: 12px; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+  .ev .contrib.neg { color: var(--amber); }
+  .ev.off { opacity: .42; }
+  .ev.off .lbl { text-decoration: line-through; text-decoration-color: var(--muted-2); }
+
+  /* ============ DOCUMENT VIEW ============ */
+  .doc-content { font-family: var(--font-serif); font-size: 16px; line-height: 1.75; color: var(--ink); max-width: 560px; }
+  .doc-content p { margin: 0 0 1.1em; }
+  .doc-content p:last-child { margin-bottom: 0; }
+
+  /* ============ CANVAS VIEW (draggable) ============ */
+  .canvas-wrap {
+    position: relative; width: 100%; height: 460px; border-radius: 10px;
+    background: radial-gradient(circle at 1px 1px, rgba(20,19,15,.06) 1px, transparent 0) 0 0/18px 18px, var(--surface-2);
+    overflow: hidden;
+  }
+  .canvas-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .connector { fill: none; stroke: var(--border-strong); stroke-width: 1.4; }
+
+  .card {
+    position: absolute; background: var(--panel); border: 1px solid var(--border); border-radius: 9px;
+    padding: 10px 12px; display: flex; flex-direction: column; gap: 5px; cursor: grab;
+    box-shadow: 0 1px 2px rgba(20,19,15,.05); user-select: none; touch-action: none;
+  }
+  .card:active { cursor: grabbing; }
+  .card.dragging { box-shadow: 0 8px 20px -6px rgba(20,19,15,.22); z-index: 10; }
+  .card-tag { font-family: var(--font-mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; }
+  .card-text { font-size: 11.5px; line-height: 1.35; color: var(--ink); }
+  .card[data-type="EVIDENCE"] .card-tag { color: #2A6B57; }
+  .card[data-type="ASSUMPTION"] .card-tag { color: var(--amber); }
+  .card[data-type="QUESTION"] .card-tag { color: var(--ink); }
+  .card[data-type="ANSWER"] { background: var(--accent); border-color: var(--accent); }
+  .card[data-type="ANSWER"] .card-tag { color: #9CC3B4; }
+  .card[data-type="ANSWER"] .card-text { color: #fff; font-family: var(--font-serif); font-size: 20px; font-weight: 600; }
+  .canvas-hint { font-size: 11px; color: var(--muted-2); margin-top: 8px; font-family: var(--font-mono); }
+
+  /* ============ GRAPH VIEW ============ */
+  .graph-table { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .graph-row { display: grid; grid-template-columns: 42px 90px 1fr 56px; gap: 0; align-items: center; padding: 9px 13px; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+  .graph-row:last-child { border-bottom: none; }
+  .graph-row-header { background: var(--surface-2); font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .gr-id { font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; }
+  .gr-type { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .05em; }
+  .gr-weight { font-family: var(--font-mono); font-size: 11.5px; text-align: right; font-weight: 600; color: var(--muted); }
+
+  /* ============ TIMELINE VIEW ============ */
+  .tl-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 7px; }
+  .tl-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+  .tl-tag { font-family: var(--font-mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+  .tl-text { font-size: 12.5px; color: var(--ink); }
+
+  /* ============ TABLE VIEW ============ */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .data-table th { text-align: left; padding: 9px 12px; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); background: var(--surface-2); border-bottom: 1px solid var(--border); }
+  .data-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--ink-2); }
+  .data-table tr:last-child td { border-bottom: none; }
+
+  .footnote { font-size: 11px; color: var(--muted-2); margin-top: 18px; line-height: 1.5; }
+
+  @media (max-width: 560px) {
+    .input-row { flex-direction: column; }
+    .answer-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .view-tabs { overflow-x: auto; }
+    .graph-row { grid-template-columns: 34px 66px 1fr 44px; font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ LANDING (before first question) ============ -->
+<div class="landing" id="landing">
+  <div class="brand"><span class="dot"></span>ASK — FANTASY RESEARCH</div>
+  <div class="headline">What do you want to know?</div>
+  <div class="sub">Ask a question. You'll get back a live, structured answer — the same thing, viewable as cells, canvas, graph, timeline, table, or plain prose.</div>
+
+  <div class="input-row">
+    <input class="input" id="qInput" type="text" placeholder="Will Okafor outscore Mensah this week?" />
+    <button class="submit" id="qSubmit">ASK</button>
+  </div>
+  <div class="chips">
+    <button class="chip" data-q="Will Okafor outscore Mensah this week?">Okafor vs Mensah?</button>
+    <button class="chip" data-q="Will Lionel Messi reach the age of 72?">Will Messi reach 72?</button>
+  </div>
+</div>
+
+<!-- ============ PAGE (after asking — the notebook IS the page) ============ -->
+<div class="shell" id="shell">
+  <div class="page-brand"><span class="dot"></span>ASK — FANTASY RESEARCH</div>
+
+  <div class="notebook" id="notebook">
+    <div class="nb-topbar">
+      <div class="nb-q" id="nbQ"></div>
+    </div>
+
+    <div class="view-tabs" id="viewTabs">
+      <button class="view-tab active" data-view="cells">Cells</button>
+      <button class="view-tab" data-view="document">Document</button>
+      <button class="view-tab" data-view="canvas">Canvas</button>
+      <button class="view-tab" data-view="graph">Graph</button>
+      <button class="view-tab" data-view="timeline">Timeline</button>
+      <button class="view-tab" data-view="table">Table</button>
+    </div>
+
+    <!-- CELLS -->
+    <div class="view-panel active" id="panel-cells">
+      <div class="answer-card">
+        <div class="answer-score" id="answerScore">—</div>
+        <div class="answer-body">
+          <div class="answer-verdict" id="answerVerdict"></div>
+          <div class="answer-detail" id="answerDetail"></div>
+        </div>
+      </div>
+
+      <div class="section-title" id="leversTitle">Assumptions — drag to test them</div>
+      <div id="leversContainer"></div>
+
+      <div class="section-title">Evidence — toggle to include or remove</div>
+      <div id="evidenceContainer"></div>
+      <div class="footnote">Numbers here are illustrative for this preview.</div>
+    </div>
+
+    <!-- DOCUMENT -->
+    <div class="view-panel" id="panel-document">
+      <div class="doc-content" id="docContent"></div>
+    </div>
+
+    <!-- CANVAS (draggable) -->
+    <div class="view-panel" id="panel-canvas">
+      <div class="canvas-wrap" id="canvasWrap">
+        <svg class="canvas-svg" id="canvasSvg"></svg>
+        <div id="canvasCards"></div>
+      </div>
+      <div class="canvas-hint">drag any card — connections follow</div>
+    </div>
+
+    <!-- GRAPH -->
+    <div class="view-panel" id="panel-graph">
+      <div class="graph-table" id="graphTable"></div>
+    </div>
+
+    <!-- TIMELINE -->
+    <div class="view-panel" id="panel-timeline">
+      <div id="timelineList"></div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="view-panel" id="panel-table">
+      <table class="data-table" id="dataTable"></table>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- ============ FIXED BOTTOM ASK BAR ============ -->
+<div class="bottom-ask" id="bottomAsk">
+  <div class="bottom-ask-inner">
+    <input class="bottom-input" id="bottomInput" type="text" placeholder="Ask a follow-up…" autocomplete="off" />
+    <button class="bottom-submit" id="bottomSubmit">ASK</button>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // SCENARIOS — same tag structure (Question/Evidence/Assumption/Answer),
+  // completely different content and answer unit per question type.
+  // In production this is where a real model would generate the tagged
+  // structure; here it's two fixed illustrative datasets so the UI can
+  // be judged on its own terms.
+  // ============================================================
+  const tagColors = { QUESTION: '#14130F', EVIDENCE: '#2A6B57', ASSUMPTION: '#B8860B', ANSWER: '#1A4D3E' };
+
+  const scenarios = {
+    okafor: {
+      question: 'Will Okafor outscore Mensah this week?',
+      unit: 'pts',
+      baseline: 3.2,
+      verdict: 'Okafor over Mensah — weeks 13–16',
+      detail: "The usage trend and role change outweigh the schedule risk. Conservative on injury until Friday's reports.",
+      levers: [
+        { id: 'usage', label: "Okafor's usage holds", hint: 'Share of backfield touches, weeks 13–16', type: 'slider', min: 40, max: 100, value: 85, fmt: v => v + '%', contrib: v => Math.max(0, (v - 60) / 40) * 4.5 },
+        { id: 'injury', label: 'Conservative injury adjustment', hint: "Discount until Friday's practice reports clear him", type: 'toggle', value: 1, fmt: v => v === 1 ? 'ON' : 'OFF', contrib: v => v === 1 ? 0 : -3.5 }
+      ],
+      evidence: [
+        { label: 'Usage trend rising, last 6 weeks', src: 'snap data · post-week 11', weight: 3.6, neg: false },
+        { label: 'Took the lead-back role after week 7', src: 'beat reporters', weight: 2.6, neg: false },
+        { label: "Opponent's best pass-rusher ruled out", src: 'injury report · Wednesday', weight: 2.0, neg: false },
+        { label: 'Two tough matchups in the stretch', src: 'schedule strength · weeks 13–16', weight: 1.6, neg: true },
+        { label: 'One outdoor game, wind risk', src: 'weather feed', weight: 1.2, neg: true }
+      ],
+      doc: [
+        "Okafor's usage has climbed six weeks straight. He took the lead-back role in week 7. The opponent's best pass-rusher is out this Sunday. Two tough matchups in the stretch, but the volume is there.",
+        "The ankle concern is the big unknown — staying conservative on that until Friday's reports land.",
+        "After running the numbers: Okafor over Mensah, weeks 13 through 16."
+      ]
+    },
+    messi: {
+      question: 'Will Lionel Messi reach the age of 72?',
+      unit: '%',
+      baseline: 68,
+      verdict: 'Likely — comfortably above the population baseline',
+      detail: 'Elite athletic conditioning and lifelong access to top-tier healthcare outweigh the actuarial uncertainty of forecasting 34 years out.',
+      levers: [
+        { id: 'health', label: 'Elite-athlete health advantage applies', hint: 'Cardiovascular and metabolic benefit measured in retired top-level athletes', type: 'slider', min: 0, max: 100, value: 75, fmt: v => v + '%', contrib: v => (v / 100) * 12 },
+        { id: 'care', label: 'Continued access to top-tier healthcare', hint: 'Assumes ongoing private medical monitoring, not just current wealth', type: 'toggle', value: 1, fmt: v => v === 1 ? 'ON' : 'OFF', contrib: v => v === 1 ? 0 : -14 }
+      ],
+      evidence: [
+        { label: 'Argentine male life expectancy at birth ≈ 72.9 years', src: 'actuarial baseline', weight: 8, neg: false },
+        { label: 'Elite athletes show measurably lower cardiovascular mortality risk', src: 'longevity studies, retired professionals', weight: 6, neg: false },
+        { label: 'High socioeconomic status independently extends life expectancy', src: 'public health literature', weight: 4, neg: false },
+        { label: 'Family medical history not publicly known', src: 'no disclosed data', weight: 5, neg: true },
+        { label: 'Career included recurring soft-tissue injuries', src: 'injury history, weak signal for longevity', weight: 2, neg: true }
+      ],
+      doc: [
+        'Messi is currently in his late thirties, so this question reaches about 34 years into the future — well past anything sports data alone can speak to.',
+        'The baseline comes from Argentine male life expectancy. On top of that, elite athletes as a group measurably outlive the general population, and high socioeconomic status adds a further, separate effect.',
+        "The honest uncertainty is family medical history, which isn't public. Assuming continued access to elite healthcare, the odds land comfortably above the population baseline."
+      ]
+    }
+  };
+
+  let activeScenario = scenarios.okafor;
+
+  function pickScenario(q) {
+    const t = q.toLowerCase();
+    if (t.includes('messi') || (t.includes('age') && /\d/.test(t))) return scenarios.messi;
+    return scenarios.okafor;
+  }
+
+  // ============================================================
+  // BUILD CELLS (for Canvas / Graph / Timeline / Table) FROM SCENARIO
+  // ============================================================
+  let cells = [];
+
+  function buildCellsFromScenario(scn, questionText) {
+    const evCount = scn.evidence.length;
+    const evWidth = 200, gap = 20;
+    const totalRow = evCount * evWidth + (evCount - 1) * gap;
+    const startX = Math.max(20, (760 - totalRow) / 2 - 40);
+
+    const list = [
+      { id: 'q1', type: 'QUESTION', text: questionText, x: 30, y: 20, w: 300, h: 70 }
+    ];
+    scn.evidence.forEach((ev, i) => {
+      list.push({
+        id: 'e' + i, type: 'EVIDENCE', text: ev.label,
+        weight: ev.neg ? -ev.weight : ev.weight,
+        x: startX + i * (evWidth + gap), y: 130, w: evWidth, h: 90, feeds: 'ans1'
+      });
+    });
+    scn.levers.forEach((lv, i) => {
+      list.push({
+        id: 'as' + i, type: 'ASSUMPTION', text: lv.label,
+        weight: lv.contrib(lv.value),
+        x: 60 + i * 260, y: 260, w: 230, h: 80, feeds: 'ans1'
+      });
+    });
+    list.push({ id: 'ans1', type: 'ANSWER', text: '—', x: 250, y: 370, w: 240, h: 70 });
+    return list;
+  }
+
+  // ============================================================
+  // RENDER: LEVERS + EVIDENCE (built fresh per scenario)
+  // ============================================================
+  function renderLevers(scn) {
+    const el = document.getElementById('leversContainer');
+    document.getElementById('leversTitle').textContent =
+      scn.unit === '%' ? 'Assumptions — drag to test them' : 'Assumptions — drag to test them';
+    el.innerHTML = scn.levers.map(lv => `
+      <div class="lever" data-lever="${lv.id}">
+        <div class="lr"><label>${lv.label}</label><span class="val" data-role="val">${lv.fmt(lv.value)}</span></div>
+        <input type="range" min="${lv.min !== undefined ? lv.min : 0}" max="${lv.max !== undefined ? lv.max : 1}" value="${lv.value}" ${lv.type === 'toggle' ? 'step="1"' : ''}>
+        <div class="hint">${lv.hint}</div>
+      </div>
+    `).join('');
+
+    el.querySelectorAll('.lever').forEach(leverEl => {
+      const lv = scn.levers.find(l => l.id === leverEl.dataset.lever);
+      leverEl.querySelector('input[type="range"]').addEventListener('input', (e) => {
+        lv.value = parseInt(e.target.value, 10);
+        leverEl.querySelector('[data-role="val"]').textContent = lv.fmt(lv.value);
+        recompute();
+      });
+    });
+  }
+
+  function renderEvidence(scn) {
+    const el = document.getElementById('evidenceContainer');
+    el.innerHTML = scn.evidence.map((ev, i) => `
+      <div class="ev" data-idx="${i}" data-weight="${ev.weight}" data-neg="${ev.neg ? 1 : 0}">
+        <span class="tick">✓</span>
+        <span><span class="lbl">${ev.label}</span><span class="src">${ev.src}</span></span>
+        <span class="contrib ${ev.neg ? 'neg' : ''}">${ev.neg ? '−' : '+'}${ev.weight.toFixed(1)}</span>
+      </div>
+    `).join('');
+    el.querySelectorAll('.ev').forEach(evEl => {
+      evEl.addEventListener('click', () => { evEl.classList.toggle('off'); recompute(); });
+    });
+  }
+
+  function renderDoc(scn) {
+    document.getElementById('docContent').innerHTML = scn.doc.map(p => `<p>${p}</p>`).join('');
+  }
+
+  // ============================================================
+  // COMPUTE
+  // ============================================================
+  function currentScore(scn) {
+    let total = scn.baseline;
+    scn.levers.forEach(lv => { total += lv.contrib(lv.value); });
+    document.querySelectorAll('#evidenceContainer .ev').forEach(el => {
+      if (el.classList.contains('off')) return;
+      const w = parseFloat(el.dataset.weight);
+      const neg = el.dataset.neg === '1';
+      total += neg ? -w : w;
+    });
+    if (scn.unit === '%') total = Math.max(3, Math.min(98, total));
+    return total;
+  }
+
+  function formatScore(total, unit) {
+    if (unit === '%') return Math.round(total) + '<span class="answer-unit">%</span>';
+    return (total >= 0 ? '+' : '') + total.toFixed(1) + '<span class="answer-unit">pts</span>';
+  }
+
+  function recompute() {
+    const scn = activeScenario;
+    const total = currentScore(scn);
+    const scoreEl = document.getElementById('answerScore');
+    scoreEl.innerHTML = formatScore(total, scn.unit);
+    scoreEl.classList.remove('flash'); void scoreEl.offsetWidth; scoreEl.classList.add('flash');
+
+    // keep canvas Answer card in sync
+    const canvasAns = cells.find(c => c.type === 'ANSWER');
+    if (canvasAns) {
+      canvasAns.text = scn.unit === '%' ? Math.round(total) + '%' : (total >= 0 ? '+' : '') + total.toFixed(1) + ' pts';
+      const ansCardEl = document.querySelector('.card[data-id="' + canvasAns.id + '"] .card-text');
+      if (ansCardEl) ansCardEl.textContent = canvasAns.text;
+    }
+
+    renderGraph();
+    renderTable();
+  }
+
+  // ============================================================
+  // CANVAS VIEW — draggable cards + connectors
+  // ============================================================
+  function renderCanvas() {
+    const container = document.getElementById('canvasCards');
+    container.innerHTML = '';
+    cells.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.id = c.id;
+      card.dataset.type = c.type;
+      card.style.left = c.x + 'px';
+      card.style.top = c.y + 'px';
+      card.style.width = c.w + 'px';
+
+      const tag = document.createElement('div');
+      tag.className = 'card-tag';
+      tag.textContent = c.type;
+      card.appendChild(tag);
+
+      const text = document.createElement('div');
+      text.className = 'card-text';
+      text.textContent = c.text;
+      card.appendChild(text);
+
+      makeDraggable(card, c);
+      container.appendChild(card);
+    });
+    drawConnectors();
+  }
+
+  function drawConnectors() {
+    const svg = document.getElementById('canvasSvg');
+    svg.innerHTML = '';
+    cells.forEach(c => {
+      if (!c.feeds) return;
+      const target = cells.find(t => t.id === c.feeds);
+      if (!target) return;
+      const x1 = c.x + c.w / 2, y1 = c.y + c.h;
+      const x2 = target.x + target.w / 2, y2 = target.y;
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', `M ${x1} ${y1} L ${x2} ${y2}`);
+      path.setAttribute('class', 'connector');
+      svg.appendChild(path);
+    });
+  }
+
+  function makeDraggable(el, model) {
+    let dragging = false, offX = 0, offY = 0;
+
+    function onDown(e) {
+      dragging = true;
+      el.classList.add('dragging');
+      const point = e.touches ? e.touches[0] : e;
+      const rect = el.getBoundingClientRect();
+      offX = point.clientX - rect.left;
+      offY = point.clientY - rect.top;
+      e.preventDefault();
+    }
+    function onMove(e) {
+      if (!dragging) return;
+      const wrapRect = document.getElementById('canvasWrap').getBoundingClientRect();
+      const point = e.touches ? e.touches[0] : e;
+      let nx = point.clientX - wrapRect.left - offX;
+      let ny = point.clientY - wrapRect.top - offY;
+      nx = Math.max(0, Math.min(nx, wrapRect.width - el.offsetWidth));
+      ny = Math.max(0, Math.min(ny, wrapRect.height - el.offsetHeight));
+      model.x = nx; model.y = ny;
+      el.style.left = nx + 'px';
+      el.style.top = ny + 'px';
+      drawConnectors();
+    }
+    function onUp() {
+      dragging = false;
+      el.classList.remove('dragging');
+    }
+
+    el.addEventListener('mousedown', onDown);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    el.addEventListener('touchstart', onDown, { passive: false });
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onUp);
+  }
+
+  // ============================================================
+  // GRAPH VIEW
+  // ============================================================
+  function renderGraph() {
+    const el = document.getElementById('graphTable');
+    let html = `<div class="graph-row graph-row-header"><span>ID</span><span>Type</span><span>Statement</span><span style="text-align:right">Weight</span></div>`;
+    cells.forEach((c, i) => {
+      const color = tagColors[c.type] || '#76756E';
+      html += `<div class="graph-row">
+        <span class="gr-id">P${i+1}</span>
+        <span class="gr-type" style="color:${color}">${c.type}</span>
+        <span>${c.text}</span>
+        <span class="gr-weight">${c.weight !== undefined ? (c.weight).toFixed(1) : '—'}</span>
+      </div>`;
+    });
+    el.innerHTML = html;
+  }
+
+  // ============================================================
+  // TIMELINE VIEW
+  // ============================================================
+  function renderTimeline() {
+    const el = document.getElementById('timelineList');
+    let html = '';
+    cells.forEach(c => {
+      const color = tagColors[c.type] || '#76756E';
+      html += `<div class="tl-item">
+        <span class="tl-dot" style="background:${color}"></span>
+        <div><div class="tl-tag" style="color:${color}">${c.type}</div><div class="tl-text">${c.text}</div></div>
+      </div>`;
+    });
+    el.innerHTML = html;
+  }
+
+  // ============================================================
+  // TABLE VIEW
+  // ============================================================
+  function renderTable() {
+    const el = document.getElementById('dataTable');
+    let html = `<thead><tr><th>Tag</th><th>Statement</th><th style="text-align:right">Weight</th></tr></thead><tbody>`;
+    cells.forEach(c => {
+      const color = tagColors[c.type] || '#76756E';
+      html += `<tr>
+        <td style="color:${color};font-family:var(--font-mono);font-size:10.5px;letter-spacing:.05em">${c.type}</td>
+        <td>${c.text}</td>
+        <td style="text-align:right;font-family:var(--font-mono);color:var(--muted)">${c.weight !== undefined ? c.weight.toFixed(1) : '—'}</td>
+      </tr>`;
+    });
+    html += `</tbody>`;
+    el.innerHTML = html;
+  }
+
+  // ============================================================
+  // VIEW SWITCHING
+  // ============================================================
+  document.querySelectorAll('.view-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t === tab));
+      document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-' + tab.dataset.view).classList.add('active');
+    });
+  });
+
+  // ============================================================
+  // ASK FLOW
+  // ============================================================
+  function ask(q) {
+    activeScenario = pickScenario(q);
+    const scn = activeScenario;
+
+    document.getElementById('nbQ').textContent = q;
+    document.getElementById('answerVerdict').textContent = scn.verdict;
+    document.getElementById('answerDetail').textContent = scn.detail;
+
+    renderLevers(scn);
+    renderEvidence(scn);
+    renderDoc(scn);
+
+    cells = buildCellsFromScenario(scn, q);
+
+    // landing -> full page: input relocates to the bottom, notebook becomes the page
+    document.getElementById('landing').classList.add('hidden');
+    document.getElementById('shell').classList.add('visible');
+    document.getElementById('bottomAsk').classList.add('visible');
+
+    renderCanvas();
+    renderGraph();
+    renderTimeline();
+    renderTable();
+    recompute();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  document.getElementById('qSubmit').addEventListener('click', () => {
+    const q = document.getElementById('qInput').value.trim();
+    if (q) ask(q);
+  });
+  document.getElementById('qInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const q = e.target.value.trim();
+      if (q) ask(q);
+    }
+  });
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.getElementById('qInput').value = chip.dataset.q;
+      ask(chip.dataset.q);
+    });
+  });
+
+  // bottom bar re-asks (replaces the current notebook with a fresh one, same page stays put)
+  document.getElementById('bottomSubmit').addEventListener('click', () => {
+    const q = document.getElementById('bottomInput').value.trim();
+    if (q) { ask(q); document.getElementById('bottomInput').value = ''; }
+  });
+  document.getElementById('bottomInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const q = e.target.value.trim();
+      if (q) { ask(q); e.target.value = ''; }
+    }
+  });
+</script>
+
+</body>
+</html>
+

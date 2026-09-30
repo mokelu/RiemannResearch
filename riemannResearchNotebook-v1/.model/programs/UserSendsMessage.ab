@@ -1,0 +1,32 @@
+# =====================================================================
+#  UserSendsMessage.ab
+# =====================================================================
+#  sentence   User Send Message
+#  app        src/ChatPanel.jsx — send() (line 48): askRiemann() ->
+#             JSON.parse -> validateReasoning -> onAdopt.  every
+#             refusal is pushed as an error bubble in the thread.
+#  triggers   the send button (line 150) · Enter in the composer
+#             (line 144) · a suggestion chip (line 127)
+#             three widgets, one sentence, one program.
+#  status     PARTIAL — the chain runs only where OPENAI_API_KEY
+#             and the dev proxy exist; in a static build ask()
+#             fails and the failure surfaces as an error bubble.
+#             parse failure and boundary refusal are IMPLEMENTED
+#             (they are caught below as reply.validate.invalid).
+
+program UserSendsMessage
+
+sentence  User Send Message
+enter     message.send.requested
+
+step system ask assistant
+  catch assistant.ask.ok     goto system validate reply
+  catch assistant.ask.failed goto ReportFailure
+
+step system validate reply
+  catch reply.validate.ok       goto system save workspace
+  catch reply.validate.invalid  goto ReportFailure
+
+step system save workspace
+  catch workspace.save.ok     goto Redraw
+  catch workspace.save.failed goto ReportFailure

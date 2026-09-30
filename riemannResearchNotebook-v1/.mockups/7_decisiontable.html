@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decision Table</title>
+<style>
+  :root{
+    --bg:#FAF9F5;
+    --panel:#FFFFFF;
+    --ink:#14130F;
+    --ink-2:#45443F;
+    --muted:#76756E;
+    --muted-2:#9A9992;
+    --border:#E6E5DF;
+    --border-strong:#D6D5CE;
+    --rule:#1A4D3E;
+    --serif:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg);color:var(--ink);
+    font-family:var(--sans);font-size:14px;line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    padding:72px 24px 120px;
+    display:flex;justify-content:center;
+  }
+  .wrap{width:100%;max-width:740px}
+
+  .label{
+    font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:28px;
+    display:flex;align-items:center;gap:12px;
+  }
+  .label::before{
+    content:'';width:22px;height:1px;background:var(--muted-2);
+  }
+
+  .sentence{
+    font-family:var(--serif);font-size:32px;font-weight:600;
+    letter-spacing:-.022em;line-height:1.22;color:var(--ink);
+    margin-bottom:44px;max-width:560px;
+  }
+
+  .table{
+    background:var(--panel);border:1px solid var(--border);
+    border-radius:12px;overflow:hidden;
+    box-shadow:0 1px 3px rgba(20,19,15,.03);
+  }
+
+  .thead{
+    display:grid;grid-template-columns:48px 1fr 1.15fr 1fr;
+    background:#FCFBF7;
+    border-bottom:1px solid var(--border);
+  }
+  .thead > div{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);
+    padding:14px 18px;font-weight:500;
+  }
+
+  .row{
+    display:grid;grid-template-columns:48px 1fr 1.15fr 1fr;
+    grid-template-rows:auto 0fr;
+    border-bottom:1px solid var(--border);
+    cursor:pointer;transition:background .15s, grid-template-rows .3s ease;
+    align-items:start;
+  }
+  .row:last-child{border-bottom:none}
+  .row:hover{background:#FCFBF7}
+  .row.open{background:#FCFBF7;grid-template-rows:auto 1fr}
+
+  .row > .num,
+  .row > .when,
+  .row > .decision,
+  .row > .then{
+    padding:18px;
+    font-size:13.5px;line-height:1.5;
+  }
+  .row > .num{
+    font-family:var(--mono);font-size:11.5px;color:var(--muted-2);
+    font-weight:600;text-align:center;
+    transition:color .2s;
+  }
+  .row.open > .num{color:var(--rule)}
+  .row > .when{color:var(--ink);font-weight:500}
+  .row > .decision{color:var(--ink-2)}
+  .row > .then{color:var(--ink-2);font-style:italic}
+
+  .note{
+    grid-column:1 / -1;
+    display:grid;
+    grid-template-rows:0fr;
+    transition:grid-template-rows .3s ease;
+  }
+  .row.open .note{
+    grid-template-rows:1fr;
+  }
+  .note-clip{overflow:hidden}
+  .note-inner{
+    margin:0 18px 20px 66px;
+    padding:2px 0 2px 16px;
+    border-left:2px solid var(--rule);
+    font-family:var(--serif);font-size:14.5px;line-height:1.6;
+    color:var(--muted);font-style:italic;
+  }
+
+  .row.conclusion{
+    background:var(--rule);border-color:var(--rule);
+    cursor:default;
+  }
+  .row.conclusion:hover{background:var(--rule)}
+  .row.conclusion > .num{color:rgba(255,255,255,.55)}
+  .row.conclusion > .when,
+  .row.conclusion > .decision,
+  .row.conclusion > .then{color:#fff}
+  .row.conclusion > .then{font-style:normal;font-weight:600}
+  .row.conclusion > .num,
+  .row.conclusion > .when,
+  .row.conclusion > .decision,
+  .row.conclusion > .then{padding-top:22px;padding-bottom:22px}
+
+  @media(max-width:660px){
+    body{padding:40px 16px 80px}
+    .sentence{font-size:24px;margin-bottom:32px}
+    .thead{grid-template-columns:32px 1fr 1fr}
+    .thead > div:nth-child(4){display:none}
+    .row{grid-template-columns:32px 1fr 1fr}
+    .row > .then{display:none}
+    .row > .num,
+    .row > .when,
+    .row > .decision{padding:14px 12px;font-size:12.5px}
+    .note-inner{margin-left:44px;font-size:13.5px}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="label">Decision Table</div>
+    <h1 class="sentence">Will Lionel Messi reach the age of 72?</h1>
+
+    <div class="table">
+      <div class="thead">
+        <div>#</div>
+        <div>When</div>
+        <div>Decision</div>
+        <div>Then</div>
+      </div>
+
+      <div class="row" data-note="Life expectancy at birth is the age at which half the cohort has died. For Argentine males, that point sits at 72.9. Reaching 72 is not a milestone — it is roughly the median.">
+        <div class="num">1</div>
+        <div class="when">the subject is an Argentine male</div>
+        <div class="decision">apply the actuarial baseline</div>
+        <div class="then">the odds are about even</div>
+      </div>
+
+      <div class="row" data-note="Retired elite athletes as a cohort show measurably lower cardiovascular mortality than the general population. The effect is real but modest — it moves the odds, it does not determine them.">
+        <div class="num">2</div>
+        <div class="when">the subject is a retired elite athlete</div>
+        <div class="decision">apply the athlete cohort advantage</div>
+        <div class="then">the odds shift upward</div>
+      </div>
+
+      <div class="row" data-note="High socioeconomic status extends life expectancy independently of athletic history. Better access, better monitoring, better outcomes. This is a separate effect layered on top of the athlete one.">
+        <div class="num">3</div>
+        <div class="when">the subject has high socioeconomic status</div>
+        <div class="decision">apply the status advantage</div>
+        <div class="then">the odds shift upward again</div>
+      </div>
+
+      <div class="row" data-note="Family medical history is the single strongest predictor of individual longevity, and it is not public. This is the honest gap in the answer. No model should pretend to fill it.">
+        <div class="num">4</div>
+        <div class="when">family medical history is undisclosed</div>
+        <div class="decision">cannot be evaluated</div>
+        <div class="then">this is the honest gap</div>
+      </div>
+
+      <div class="row" data-note="Recurring soft-tissue injuries are a weak signal for longevity. They speak to load management, not to cardiovascular or metabolic risk. Their absence would not have changed the answer.">
+        <div class="num">5</div>
+        <div class="when">the career included recurring injuries</div>
+        <div class="decision">apply as a weak signal</div>
+        <div class="then">no clear direction either way</div>
+      </div>
+
+      <div class="row conclusion">
+        <div class="num">★</div>
+        <div class="when">all rules above are applied together</div>
+        <div class="decision">compose the contributions</div>
+        <div class="then">the odds land above the baseline</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  document.querySelectorAll('.row').forEach(row => {
+    if (row.dataset.note) {
+      const note = document.createElement('div');
+      note.className = 'note';
+      note.innerHTML = '<div class="note-clip"><div class="note-inner">' + row.dataset.note + '</div></div>';
+      row.appendChild(note);
+    }
+    if (row.classList.contains('conclusion')) return;
+    row.addEventListener('click', () => row.classList.toggle('open'));
+  });
+</script>
+</body>
+</html>

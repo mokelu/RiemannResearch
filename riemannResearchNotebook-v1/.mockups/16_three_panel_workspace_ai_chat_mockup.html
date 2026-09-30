@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riemann Research — Three-Panel Workspace · Left Dock · Center Views · AI Chat</title>
+<!-- favicon: same plate as the titlebar logo — white mark on black rounded square -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='12' fill='%23000000'/%3E%3Cg fill='%23ffffff'%3E%3Crect x='3' y='30' width='6' height='12' rx='1.5'/%3E%3Crect x='12' y='18' width='6' height='24' rx='1.5'/%3E%3Crect x='21' y='4' width='6' height='38' rx='1.5'/%3E%3Crect x='30' y='18' width='6' height='24' rx='1.5'/%3E%3Crect x='39' y='30' width='6' height='12' rx='1.5'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- CDN only: React 18 + React Flow v11 (canvas & graph views) + Chart.js + marked -->
+<link rel="stylesheet" href="https://unpkg.com/reactflow@11.11.4/dist/style.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/reactflow@11.11.4/dist/umd/index.js"></script>
+<script src="https://unpkg.com/chart.js@4.4.7/dist/chart.umd.js"></script>
+<script src="https://unpkg.com/marked@15.0.4/marked.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
+<style>
+  :root{
+    --bg:#FBFAF7; --panel:#F4F3EE; --panel2:#FFFFFF; --panel3:#ECEAE3;
+    --line:#E6E5DF; --line2:#D6D5CE;
+    --text:#14130F; --mut:#45443F; --mut2:#76756E;
+    --amber:#1A4D3E; --amber-dim:#EAF1ED;  /* --amber = legacy name, now Riemann Green */
+    --up:#1A7F37; --dn:#CF2221; --blue:#0969DA; --violet:#8250DF;
+    --sans:"Space Grotesk",sans-serif; --mono:"IBM Plex Mono",monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  ::selection{background:rgba(26,77,62,.18);color:var(--text)}
+  html,body,#root{height:100%}
+  body{background:#F4F3EE;color:var(--text);font-family:var(--sans);overflow:hidden;caret-color:var(--amber)}
+  #root{display:flex;flex-direction:column}
+  #mainRow{flex:1;min-height:0;display:flex;align-items:stretch}
+
+  /* ══════════ tiny header — VS Code titlebar style ══════════ */
+  #titleBar{flex:none;height:30px;background:#FBFAF7;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:10px;padding:0 12px;user-select:none}
+  #titleBar .logo{width:22px;height:22px;flex:none;color:#FFFFFF;background:#000000;border-radius:6px;padding:3px;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:-1px}
+  /* the mark's viewBox carries 4 units of air on top vs 6 on the bottom; over a 16px render that skew is 0.67px, so -1px re-centers it */
+  #titleBar .logo svg{width:100%;height:100%;display:block}
+  #titleBar .brand{display:flex;align-items:baseline;gap:8px}
+  #titleBar .brand .serif{font-family:Georgia,'Palatino Linotype',Palatino,serif;font-weight:500;font-size:15px;letter-spacing:-.01em;color:var(--text)}
+  #titleBar .brand .mono{font-family:var(--mono);font-size:8px;letter-spacing:.34em;text-transform:uppercase;color:var(--amber)}
+
+  /* ══════════ tiny footer — empty VS Code status bar strip, nothing inside ══════════ */
+  #statusBar{flex:none;height:22px;background:#FBFAF7;border-top:1px solid var(--line)}
+
+  button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  input,textarea,select{font-family:var(--mono);color:var(--text);background:var(--bg);border:1px solid var(--line2);border-radius:6px;outline:none;font-size:11px}
+  input:focus,textarea:focus,select:focus{border-color:var(--amber)}
+  textarea{resize:vertical;caret-color:var(--amber)}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#C9C7BE;border-radius:6px;border:2px solid var(--bg)}
+  ::-webkit-scrollbar-thumb:hover{background:#D6D5CE}
+
+  /* ══════════ docks (VS Code style, at the outer edges) ══════════ */
+  .dock{width:46px;height:100%;background:#FBFAF7;flex:none;
+    display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:4px;position:relative}
+  #dockL{border-right:1px solid var(--line)}
+  #dockR{border-left:1px solid var(--line)}
+  .dock-btn{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    color:var(--mut2);position:relative;transition:color .15s,background .15s;font-size:15px}
+  .dock-btn .ic{width:18px;height:18px;display:flex;align-items:center;justify-content:center}
+  .dock-btn .ic svg{width:18px;height:18px}
+  .dock-btn:hover{color:var(--text);background:var(--panel2)}
+  .dock-btn.on{color:var(--amber)}
+  #dockL .dock-btn.on::before{content:"";position:absolute;left:-5px;top:9px;bottom:9px;width:2px;background:var(--amber);border-radius:2px}
+  #dockR .dock-btn.on::before{content:"";position:absolute;right:-5px;top:9px;bottom:9px;width:2px;background:var(--amber);border-radius:2px}
+  .dock-sep{width:22px;height:1px;background:var(--line);margin:6px 0}
+
+  /* popover menus anchored to the right dock */
+  .dockPop{position:absolute;right:52px;top:8px;width:250px;max-height:70vh;overflow-y:auto;
+    background:var(--panel);border:1px solid var(--line2);border-radius:12px;z-index:40;
+    box-shadow:0 10px 30px rgba(20,19,15,.12);padding:8px}
+  .dockPop .ph{display:flex;align-items:center;gap:6px;padding:4px 8px 8px;font-family:var(--mono);
+    font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--mut2)}
+  .dockPop .ph .x{margin-left:auto;cursor:pointer;color:var(--mut2)}
+  .dockPop .ph .x:hover{color:var(--dn)}
+  .convItem{padding:8px 10px;border-radius:8px;cursor:pointer;margin-bottom:2px}
+  .convItem:hover{background:var(--panel2)}
+  .convItem.on{background:var(--amber-dim)}
+  .convItem .ct{font-size:12px;font-weight:600;color:#3A3933;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .convItem.on .ct{color:var(--amber)}
+  .convItem .cm2{font-family:var(--mono);font-size:9px;color:var(--mut2);margin-top:2px}
+
+  /* ══════════ LEFT PANEL (from file 10) ══════════ */
+  #left{width:292px;height:100%;background:var(--bg);border-right:1px solid var(--line);
+    display:flex;flex-direction:column;flex:none}
+  .panelView{display:none;flex-direction:column;height:100%;min-height:0}
+  .panelView.on{display:flex}
+  .topActions{padding:12px 12px 0}
+  #newNbBtn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;
+    background:var(--amber);color:#FFFFFF;border-radius:8px;font-weight:600;font-size:13px;transition:filter .15s}
+  #newNbBtn:hover{filter:brightness(1.08)}
+  #newNbBtn kbd{margin-left:auto;font-family:var(--mono);font-size:9px;background:rgba(0,0,0,.25);
+    padding:2px 5px;border-radius:4px;color:#3A3933}
+  #list{flex:1;overflow-y:auto;padding:2px 8px 10px}
+  .nb{margin-bottom:2px}
+  .nbrow{display:flex;align-items:center;gap:6px;padding:8px;border-radius:8px;cursor:pointer;user-select:none}
+  .nbrow:hover{background:var(--panel2)}
+  .chev{display:flex;color:var(--mut2);flex:none;transition:transform .2s;padding:2px;font-size:11px}
+  .nb.open .chev{transform:rotate(0deg)}
+  .nb:not(.open) .chev{transform:rotate(-90deg)}
+  .nb .nm{flex:1;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nb .cnt{font-family:var(--mono);font-size:9.5px;color:var(--mut2)}
+  .nbbody{display:grid;grid-template-rows:1fr;transition:grid-template-rows .25s ease}
+  .nb:not(.open) .nbbody{grid-template-rows:0fr}
+  .nbbody-in{overflow:hidden;min-height:0;padding-left:10px;border-left:1px solid var(--line);margin-left:14px}
+  .sec{margin:8px 0 2px}
+  .sechead{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;cursor:pointer;user-select:none}
+  .sechead:hover{background:var(--panel2)}
+  .sechead .sico{color:var(--mut2);font-size:11px;width:13px;text-align:center;flex:none}
+  .sechead .chev2{transition:transform .2s}
+  .sechead .lbl{flex:1;font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;color:var(--mut2);text-transform:uppercase}
+  .sechead .n{font-family:var(--mono);font-size:9.5px;color:var(--mut2)}
+  .sec.closed .sechead .chev2{transform:rotate(-90deg)}
+  .seclist{display:grid;grid-template-rows:1fr;transition:grid-template-rows .22s ease}
+  .sec.closed .seclist{grid-template-rows:0fr}
+  .seclist-in{overflow:hidden;min-height:0}
+  .subhead{display:flex;align-items:center;gap:6px;padding:4px 8px 3px 12px;margin-top:4px;cursor:pointer;user-select:none;border-radius:6px}
+  .subhead:hover{background:var(--panel2)}
+  .subhead .chev3{transition:transform .2s;display:flex;color:var(--mut2);font-size:10px}
+  .subsec.closed .subhead .chev3{transform:rotate(-90deg)}
+  .subhead .lbl{flex:1;font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--mut2);text-transform:uppercase}
+  .subhead .n{font-family:var(--mono);font-size:9px;color:var(--mut2)}
+  .sublist{display:grid;grid-template-rows:1fr;transition:grid-template-rows .2s ease}
+  .subsec.closed .sublist{grid-template-rows:0fr}
+  .sublist-in{overflow:hidden;min-height:0}
+  .actrow{display:flex;align-items:center;gap:7px;margin:1px 0;padding:5px 8px;border-radius:7px;
+    cursor:pointer;color:var(--mut2);font-size:12px}
+  .actrow:hover{color:var(--amber);background:var(--panel2)}
+  .actrow .sico{font-size:11px;width:13px;text-align:center}
+  .lrow{display:flex;align-items:center;gap:8px;margin:1px 0;padding:5px 8px;border-radius:7px;cursor:pointer}
+  .lrow:hover{background:var(--panel2)}
+  .lrow.on{background:var(--amber-dim)}
+  .lrow .rt{flex:1;font-size:12.5px;color:#3A3933;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lrow.on .rt{color:var(--amber)}
+  .lrow .rm{font-family:var(--mono);font-size:9.5px;color:var(--mut2);flex:none}
+  .cdot{width:5px;height:5px;border-radius:50%;background:var(--mut2);flex:none;opacity:.4}
+  .lrow.on .cdot{background:var(--amber);opacity:1}
+  .ficon{width:18px;height:18px;border-radius:5px;background:var(--panel3);display:flex;
+    align-items:center;justify-content:center;flex:none;border:1px solid var(--line);font-size:10px;color:var(--mut)}
+  .ext{font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;padding:2px 4px;border-radius:4px;flex:none}
+  .ext.csv{color:var(--up);background:rgba(26,77,62,.10)}
+  .ext.md{color:#0969DA;background:rgba(9,105,218,.10)}
+  .ext.parquet{color:#57AB41;background:rgba(26,127,55,.10)}
+  .aicon{width:18px;height:18px;border-radius:5px;background:var(--panel3);display:flex;
+    align-items:center;justify-content:center;flex:none;border:1px solid var(--line);font-size:10px;color:var(--mut)}
+  .lrow.on .aicon{border-color:#CFCFC7}
+  .k-chart .aicon{color:#1A4D3E}
+  .k-note .aicon{color:#0969DA}
+  .k-sheet .aicon{color:var(--up)}
+  .k-board .aicon{color:#57AB41}
+  .fromcv{font-family:var(--mono);font-size:9px;color:var(--mut2);flex:none;opacity:.7}
+  #searchView{padding:12px}
+  #searchView .sv-head{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;color:var(--mut2);
+    text-transform:uppercase;margin:2px 2px 10px}
+  #searchView .sv-box{display:flex;align-items:center;gap:8px;padding:8px 10px;
+    border:1px solid var(--line2);border-radius:8px;background:var(--panel)}
+  #searchView .sv-box input{flex:1;font-size:12.5px;border:none;background:none}
+  #searchView .sv-box input::placeholder{color:var(--mut2)}
+  #searchView .sv-scope{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+  #searchView .sv-scope span{font-family:var(--mono);font-size:9.5px;color:var(--mut2);
+    border:1px solid var(--line);border-radius:20px;padding:3px 9px;cursor:pointer}
+  #searchView .sv-scope span:hover{color:var(--text);border-color:var(--line2)}
+  #searchView .sv-scope span.on{color:var(--amber);border-color:#CFCFC7;background:var(--amber-dim)}
+  #searchView .sv-hint{margin-top:14px;font-size:11.5px;line-height:1.6;color:var(--mut2)}
+  #searchView .sv-hint b{color:var(--mut);font-weight:500}
+
+  /* ══════════ CENTER (from file 15) ══════════ */
+  #center{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;background:var(--panel)}
+  .nTop{flex:none;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 14px 0}
+  .nRow1{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .nName{font-size:14px;font-weight:700}
+  .nMeta{font-family:var(--mono);font-size:9.5px;color:var(--mut2)}
+  .nThesis{font-size:10.5px;color:var(--mut2);margin-left:auto}
+  .nThesis b{color:var(--amber)}
+  .tabs{display:flex;gap:2px;margin-top:9px}
+  .tab{padding:8px 14px 9px;font-size:11px;font-weight:600;color:var(--mut2);border-radius:9px 9px 0 0;border:1px solid transparent;border-bottom:none;display:flex;gap:7px;align-items:center;position:relative;top:1px}
+  .tab:hover{color:var(--text);background:var(--panel2)}
+  .tab.on{color:var(--amber);background:var(--panel);border-color:var(--line)}
+  .tab .tnum{font-family:var(--mono);font-size:8.5px;border:1px solid var(--line2);border-radius:4px;padding:0 4px;color:var(--mut2)}
+  .tab.on .tnum{border-color:var(--amber);color:var(--amber)}
+  .tBar{flex:none;display:flex;align-items:center;gap:6px;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--bg);overflow-x:auto;flex-wrap:nowrap}
+  .tBar .vb{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);margin-right:4px}
+  .addBtn{font-size:11px;padding:4px 10px;border:1px solid var(--line2);border-radius:7px;color:var(--mut);white-space:nowrap}
+  .addBtn:hover{color:var(--amber);border-color:var(--amber);background:var(--amber-dim)}
+  .seedBtn{font-size:11px;padding:4px 10px;border-radius:7px;background:var(--amber);color:#FFFFFF;font-weight:600;white-space:nowrap}
+  .seedBtn:hover{filter:brightness(1.08)}
+  .tHint{margin-left:auto;font-size:10px;color:var(--mut2);white-space:nowrap;padding-left:12px}
+  #stage{flex:1;min-height:0;position:relative;overflow:hidden}
+  .scroller{height:100%;overflow-y:auto;padding:18px 0 60px}
+  .wrap{max-width:860px;margin:0 auto;padding:0 20px}
+  .blk{background:var(--panel2);border:1px solid var(--line2);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;width:100%;height:100%}
+  .bHead{display:flex;align-items:center;gap:8px;padding:8px 11px;border-bottom:1px solid var(--line);background:var(--panel3);flex:none}
+  .bType{font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:#FFFFFF;background:var(--amber);border-radius:4px;padding:1.5px 6px;font-weight:600}
+  .bName{font-size:12px;font-weight:600;flex:1;min-width:0;background:none;border:none;color:var(--text);font-family:var(--sans)}
+  .bAge{font-family:var(--mono);font-size:8.5px;color:var(--mut2)}
+  .bCtl button{width:20px;height:20px;border-radius:5px;color:var(--mut2);font-family:var(--mono);font-size:12px}
+  .bCtl button:hover{color:var(--dn);background:var(--line2)}
+  .bBody{flex:1;overflow:auto;padding:11px;min-height:0}
+  .empty{border:1.5px dashed var(--line2);border-radius:9px;padding:14px 12px;text-align:center;color:var(--mut2);font-size:11px;line-height:1.6}
+  .empty b{color:var(--mut)}
+  .crow{display:flex;gap:6px;align-items:center;margin-bottom:7px;flex-wrap:wrap}
+  .crow label{font-family:var(--mono);font-size:9px;color:var(--mut2);text-transform:uppercase;letter-spacing:.08em}
+  .miniBtn{font-size:10px;padding:4px 9px;border:1px solid var(--line2);border-radius:6px;color:var(--mut)}
+  .miniBtn:hover{color:var(--amber);border-color:var(--amber)}
+  .miniBtn.warn:hover{color:var(--dn);border-color:var(--dn)}
+  .taFull{width:100%;min-height:96px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:12px;line-height:1.65;color:var(--text);font-family:var(--sans)}
+  .taMono{font-family:var(--mono);font-size:10.5px;line-height:1.7}
+  .mdPrev{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12.5px;line-height:1.65;min-height:40px;margin-top:7px}
+  .mdPrev h1,.mdPrev h2,.mdPrev h3{margin:.5em 0 .3em;font-size:1.05em}
+  .mdPrev p{margin:.4em 0}.mdPrev code{font-family:var(--mono);font-size:.9em;color:var(--amber)}
+  .mdPrev ul{margin:.4em 0 .4em 1.2em}
+  table.v{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px}
+  table.v th{color:var(--mut2);font-weight:500;text-align:left;padding:3px 7px;border-bottom:1px solid var(--line2);position:sticky;top:0;background:var(--panel2);letter-spacing:.05em}
+  table.v td{padding:3px 7px;border-bottom:1px solid var(--line);color:var(--text);white-space:nowrap}
+  .csvInput{width:100%;min-height:56px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:10px;color:var(--text)}
+  .chartBox{position:relative;height:160px}
+  .cal{width:100%;border-collapse:collapse;table-layout:fixed}
+  .cal th{font-family:var(--mono);font-size:8.5px;color:var(--mut2);padding:3px 0;text-transform:uppercase}
+  .cal td{border:1px solid var(--line);height:30px;padding:2px 4px;font-family:var(--mono);font-size:9px;color:var(--mut);cursor:pointer}
+  .cal td.today{border-color:var(--amber);color:var(--amber)}
+  .col{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px;margin-bottom:6px}
+  .colHead{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);margin-bottom:5px}
+  .cardItem{display:flex;gap:6px;background:var(--panel3);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;font-size:11px;margin-bottom:4px}
+  .cardItem button{margin-left:auto;color:var(--mut2);font-family:var(--mono)}
+  .cardItem button:hover{color:var(--dn)}
+  .addCard{width:100%;background:none;border:1px dashed var(--line2);border-radius:6px;padding:4px 8px;font-size:10px;color:var(--mut2)}
+  .accItem{border:1px solid var(--line2);border-radius:8px;margin-bottom:5px;overflow:hidden}
+  .accHead{display:flex;gap:8px;padding:6px 10px;background:var(--bg);font-size:11.5px;cursor:pointer}
+  .accHead .car{margin-left:auto;font-family:var(--mono);color:var(--mut2)}
+  .accBody{padding:7px 10px;font-size:11px;color:var(--mut);border-top:1px solid var(--line)}
+  input[type=range]{width:100%;accent-color:var(--amber);background:none;border:none}
+  .slVal{font-family:var(--mono);font-size:14px;color:var(--amber);text-align:center;padding:6px 0}
+  .seqItem{margin-bottom:16px;display:flex;gap:10px;align-items:flex-start}
+  .seqIdx{font-family:var(--mono);font-size:10px;color:var(--mut2);padding-top:12px;width:22px;text-align:right;flex:none}
+  .seqItem .blk{max-height:520px}
+  .listRow{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+  .listRow:hover{background:var(--panel2)}
+  .listRow .grip{color:var(--mut2);font-family:var(--mono);font-size:12px}
+  .srcPre{font-family:var(--mono);font-size:10.5px;line-height:1.75;color:var(--mut);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:16px 18px;white-space:pre-wrap;overflow:auto}
+  .srcPre .cm{color:var(--mut2)}.srcPre .bl{color:var(--amber)}.srcPre .st{color:var(--blue)}.srcPre .kw{color:var(--violet)}
+  .tlin{position:absolute;inset:0;display:flex;flex-direction:column}
+  .tlStage{flex:1;min-height:0;display:flex;align-items:stretch;justify-content:center;padding:16px 18px 8px}
+  .tlStage .blk{max-width:940px;animation:blockIn .22s ease}
+  @keyframes blockIn{from{opacity:0;transform:translateY(8px) scale(.995)}}
+  .tlStamp{font-family:var(--mono);font-size:8.5px;color:var(--mut2);white-space:nowrap}
+  .stripWrap{flex:none;border-top:1px solid var(--line);background:var(--bg)}
+  .stripHead{display:flex;align-items:center;gap:10px;padding:6px 14px 2px;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut2)}
+  .sortTog{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .sortTog button{padding:2px 9px;font-size:9px;letter-spacing:.08em;color:var(--mut2)}
+  .sortTog button.on{background:var(--amber-dim);color:var(--amber)}
+  .stripHint{margin-left:auto;text-transform:none;letter-spacing:0;font-size:9.5px;opacity:.8}
+  #strip{display:flex;gap:8px;align-items:center;padding:6px 14px 12px;overflow-x:auto;scroll-behavior:smooth;cursor:grab;user-select:none}
+  #strip.drag{cursor:grabbing;scroll-behavior:auto}
+  .scard{flex:none;width:158px;background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:7px 9px;cursor:pointer;transition:all .14s;position:relative}
+  .scard:hover{border-color:#C3C2BA;transform:translateY(-2px)}
+  .scard.on{border-color:var(--amber);background:#FFFFFF;box-shadow:0 0 0 1px var(--amber),0 6px 18px rgba(20,19,15,.12);transform:translateY(-3px)}
+  .scard .stype{font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;color:#FFFFFF;background:var(--amber);border-radius:3px;padding:1px 5px;font-weight:600}
+  .scard .sname{font-size:11px;font-weight:600;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .scard .stime{font-family:var(--mono);font-size:8.5px;color:var(--mut2);margin-top:2px}
+  .scard .ssum{font-size:9px;color:var(--mut2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .scard::after{content:"";position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);width:0;height:0;border:5px solid transparent;opacity:0}
+  .scard.on::after{opacity:1;border-bottom-color:var(--amber)}
+  .sadd{flex:none;width:40px;height:58px;border:1.5px dashed var(--line2);border-radius:9px;color:var(--mut2);font-size:18px;display:flex;align-items:center;justify-content:center}
+  .sadd:hover{color:var(--amber);border-color:var(--amber)}
+  .tlNav{margin-left:auto;display:flex;gap:4px;align-items:center;flex:none}
+  .tlHint{font-size:10px;color:var(--mut2);white-space:nowrap;margin-right:8px}
+  .tlNav button{width:26px;height:26px;border:1px solid var(--line2);border-radius:7px;color:var(--mut);font-family:var(--mono);font-size:12px;display:flex;align-items:center;justify-content:center}
+  .tlNav button:hover{color:var(--amber);border-color:var(--amber)}
+  .tlPos{font-family:var(--mono);font-size:9.5px;color:var(--mut2);padding:0 6px;white-space:nowrap}
+  table.blocks{width:100%;border-collapse:collapse;font-size:11.5px}
+  table.blocks th{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line2)}
+  table.blocks td{padding:9px 10px;border-bottom:1px solid var(--line);color:var(--text)}
+  table.blocks tr:hover td{background:var(--panel2)}
+  .pill{font-family:var(--mono);font-size:8.5px;border:1px solid var(--line2);border-radius:99px;padding:1.5px 8px;color:var(--mut)}
+  .pill.has{border-color:rgba(26,77,62,.35);color:var(--up)}
+  .flowFill{height:100%}
+  .react-flow{background:var(--panel)}
+  .react-flow__attribution{display:none}
+  .react-flow__handle{opacity:0;width:4px;height:4px;border:none}
+  .react-flow__node{cursor:grab}
+  .react-flow__resize-control.handle{background:var(--amber);border-color:var(--bg)}
+  .react-flow__edge-path{stroke:#C3C2BA;stroke-width:1.3;stroke-dasharray:3 3}
+  .react-flow__controls{box-shadow:none;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .react-flow__controls-button{background:var(--panel2);border-bottom:1px solid var(--line);color:var(--mut);fill:var(--mut)}
+  .react-flow__controls-button:hover{background:var(--panel3)}
+  .graphLegend{position:absolute;left:14px;bottom:12px;font-size:10px;color:var(--mut2);background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:5px 12px;z-index:5}
+  .graphLegend b{color:var(--mut)}
+  .zero{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--mut2);font-size:12.5px}
+  .zero .big{font-size:15px;color:var(--mut);font-weight:600}
+
+  /* ══════════ RIGHT PANEL — the AI chat ══════════ */
+  #right{width:380px;height:100%;background:var(--bg);border-left:1px solid var(--line);
+    display:flex;flex-direction:column;flex:none}
+  .chatHead{flex:none;display:flex;align-items:center;gap:9px;padding:11px 13px;border-bottom:1px solid var(--line)}
+  .chatHead .aiDot{width:22px;height:22px;flex:none;color:#14130F;display:flex;align-items:center;justify-content:center}
+  .chatHead .aiDot svg{width:16px;height:16px;display:block}
+  .chatHead .cht{font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+  .chatHead .chs{font-family:var(--mono);font-size:8.5px;color:var(--mut2)}
+  .chatHead .newc{margin-left:auto;font-size:15px;color:var(--mut2);width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center}
+  .chatHead .newc:hover{color:var(--amber);background:var(--panel2)}
+  #msgs{flex:1;overflow-y:auto;padding:14px 13px 8px;display:flex;flex-direction:column;gap:12px}
+  .msgU{align-self:flex-end;max-width:86%;background:#E7E6DF;border:1px solid var(--line2);
+    border-radius:12px 12px 3px 12px;padding:8px 12px;font-size:12.5px;line-height:1.55;color:var(--text)}
+  .msgA{align-self:flex-start;max-width:94%;display:flex;gap:9px}
+  .msgA .amark{width:18px;height:18px;flex:none;margin-top:2px;color:#14130F;display:flex;align-items:center;justify-content:center}
+  .msgA .amark svg{width:13px;height:13px;display:block}
+  .msgA .abody{font-size:12.5px;line-height:1.65;color:#45443F;min-width:0}
+  .msgA .abody p{margin:.35em 0}
+  .msgA .abody h1,.msgA .abody h2,.msgA .abody h3{margin:.5em 0 .3em;font-size:1.02em;color:var(--text)}
+  .msgA .abody ul{margin:.4em 0 .4em 1.1em}
+  .msgA .abody code{font-family:var(--mono);font-size:.88em;color:var(--amber)}
+  .msgA .abody table{border-collapse:collapse;font-family:var(--mono);font-size:10px;margin:.5em 0}
+  .msgA .abody th,.msgA .abody td{border:1px solid var(--line2);padding:3px 8px}
+  .msgA .abody th{color:var(--mut2)}
+  .msgA .quote{display:inline-flex;align-items:center;gap:6px;margin-top:5px;font-family:var(--mono);
+    font-size:9.5px;color:var(--mut2);border:1px solid var(--line);border-radius:99px;padding:3px 10px;cursor:pointer}
+  .msgA .quote:hover{color:var(--amber);border-color:var(--amber)}
+  .typing{display:inline-flex;gap:4px;padding:4px 2px}
+  .typing i{width:5px;height:5px;border-radius:50%;background:var(--mut2);animation:bl 1.1s infinite}
+  .typing i:nth-child(2){animation-delay:.18s}.typing i:nth-child(3){animation-delay:.36s}
+  @keyframes bl{0%,100%{opacity:.25}50%{opacity:1}}
+  .chatEmpty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--mut2);padding:0 26px;text-align:center}
+  .chatEmpty .big{font-size:13.5px;color:var(--mut);font-weight:600}
+  .suggest{font-size:11.5px;border:1px solid var(--line2);border-radius:99px;padding:6px 13px;color:var(--mut);cursor:pointer}
+  .suggest:hover{color:var(--amber);border-color:var(--amber);background:var(--amber-dim)}
+
+  /* the composer — model selector, mode, voice, send ALL inside the input box */
+  .composer{flex:none;padding:10px 12px 12px}
+  .cbox{border:1px solid var(--line2);border-radius:14px;background:var(--panel);overflow:hidden;
+    transition:border-color .15s}
+  .cbox:focus-within{border-color:var(--amber)}
+  .cbox textarea{width:100%;min-height:58px;max-height:170px;background:none;border:none;padding:11px 13px 4px;
+    font-family:var(--sans);font-size:12.5px;line-height:1.55;color:var(--text);outline:none;resize:none;display:block}
+  .cbox textarea::placeholder{color:var(--mut2)}
+  .crow2{display:flex;align-items:center;gap:6px;padding:6px 8px 8px}
+  .selwrap{position:relative}
+  .pillSel{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9.5px;color:var(--mut);
+    border:1px solid var(--line2);border-radius:99px;padding:4px 9px;background:var(--bg);cursor:pointer;white-space:nowrap}
+  .pillSel:hover{color:var(--text);border-color:var(--mut2)}
+  .pillSel .car{font-size:8px;color:var(--mut2)}
+  .selMenu{position:absolute;bottom:calc(100% + 6px);left:0;min-width:190px;background:var(--panel2);
+    border:1px solid var(--line2);border-radius:10px;padding:5px;z-index:50;box-shadow:0 10px 30px rgba(20,19,15,.14)}
+  .selMenu .sopt{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:7px;cursor:pointer;font-size:11.5px}
+  .selMenu .sopt:hover{background:var(--panel3)}
+  .selMenu .sopt.on{color:var(--amber)}
+  .selMenu .sopt .sd{width:5px;height:5px;border-radius:50%;background:var(--mut2);flex:none}
+  .selMenu .sopt.on .sd{background:var(--amber)}
+  .selMenu .sopt small{margin-left:auto;font-family:var(--mono);font-size:8.5px;color:var(--mut2)}
+  .icBtn{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    color:var(--mut2);flex:none;transition:color .15s,background .15s}
+  .icBtn:hover{color:var(--text);background:var(--panel3)}
+  .icBtn.rec{color:var(--dn);background:rgba(207,34,33,.12);animation:pulse 1.2s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(207,34,33,.35)}50%{box-shadow:0 0 0 6px rgba(207,34,33,0)}}
+  .icBtn svg{width:14px;height:14px}
+  #sendBtn{margin-left:auto;width:30px;height:30px;border-radius:50%;background:var(--amber);color:#FFFFFF;
+    display:flex;align-items:center;justify-content:center;transition:filter .15s,opacity .15s;flex:none}
+  #sendBtn svg{width:14px;height:14px;stroke-width:2.6}
+  #sendBtn:hover{filter:brightness(1.1)}
+  #sendBtn.off{opacity:.35;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useRef, useEffect, useCallback, useMemo } = React;
+const { ReactFlow, Background, Controls, Handle, Position } = window.ReactFlow;
+
+/* ════════════════════════════════════════════════════════════════
+   THREE-PANEL WORKSPACE — joins:
+   · file 10 → left dock + left panel (notebooks / search)
+   · file 15 → center: the notebook, seven projections, timeline strip
+   · NEW     → right panel: the AI chat (model + mode + voice + send
+     all live INSIDE the composer box) and the right dock with exactly
+     two icons: conversations, history.
+   Layout:  [dockL 46][left 292][center flex][right 380][dockR 46]
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── tiny inline icons (no icon lib needed — 4 glyphs total) ── */
+const Ico = ({ d, ...p }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+    strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d={d} />
+  </svg>
+);
+const IC = {
+  mic: "M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z M19 10v1a7 7 0 0 1-14 0v-1 M12 18v4",
+  send: "M12 19V5 M5 12l7-7 7 7",
+  chat: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z",
+  hist: "M3 12a9 9 0 1 0 3.5-7.1 M3 4v5h5 M12 7v5l3 3",
+  nb: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20 M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z",
+  srch: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14Z M21 21l-4.35-4.35",
+};
+
+/* ── the Riemann mark — a Riemann sum: discrete bars composing a curve ── */
+const RiemannMark = () => (
+  <svg viewBox="0 0 48 48" fill="currentColor" aria-hidden="true">
+    <rect x="3" y="30" width="6" height="12" rx="1.5" />
+    <rect x="12" y="18" width="6" height="24" rx="1.5" />
+    <rect x="21" y="4" width="6" height="38" rx="1.5" />
+    <rect x="30" y="18" width="6" height="24" rx="1.5" />
+    <rect x="39" y="30" width="6" height="12" rx="1.5" />
+  </svg>
+);
+
+/* ── utils ── */
+function parseCSV(text) {
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"' && text[i+1] === '"') { cell += '"'; i++; } else if (c === '"') q = false; else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i+1] === "\n") i++;
+      row.push(cell); cell = "";
+      if (row.some(v => v !== "")) rows.push(row); row = [];
+    } else cell += c;
+  }
+  row.push(cell); if (row.some(v => v !== "")) rows.push(row);
+  if (!rows.length) return null;
+  return { cols: rows[0].map(s => s.trim()), rows: rows.slice(1) };
+}
+const timeAgo = (ts) => {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return s + "s ago"; if (s < 3600) return Math.floor(s/60) + "m ago";
+  if (s < 86400) return Math.floor(s/3600) + "h ago"; return Math.floor(s/86400) + "d ago";
+};
+const fmtTime = (ts) => new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+const summarize = (b) => {
+  const c = b.content || {};
+  if (b.type === "sheet") return c.cols ? `${c.rows.length}×${c.cols.length} · ${c.name}` : "empty lens";
+  if (b.type === "chart") return c.tableId ? `${c.ctype || "bar"} · x=${c.xCol || "?"} y=${c.yCol || "?"}` : "awaiting table";
+  if (b.type === "note" || b.type === "code" || b.type === "markdown") { const t = c.text || c.src || ""; return t ? t.slice(0, 26) + (t.length > 26 ? "…" : "") : "empty lens"; }
+  if (b.type === "slider") return "value " + (c.value ?? 50);
+  if (b.type === "board") return Object.values(c.cards || {}).flat().length + " cards";
+  if (b.type === "accordion") return (c.items || []).length + " sections";
+  if (b.type === "calendar") return Object.keys(c.marks || {}).length + " marks";
+  return "—";
+};
+
+/* ════════════ BLOCK BODIES (identical lenses to file 15) ════════════ */
+function NoteBody({ d }) {
+  return <textarea className="taFull" placeholder="Type a note…" value={d.content.text || ""} onChange={e => d.patch({ text: e.target.value })} />;
+}
+function CodeBlockBody({ d }) {
+  return (
+    <div>
+      <div className="crow"><label>language</label>
+        <select value={d.content.lang || "rust"} onChange={e => d.patch({ lang: e.target.value })}>
+          {["rust","typescript","python","go"].map(l => <option key={l}>{l}</option>)}
+        </select></div>
+      <textarea className="taFull taMono" placeholder="// empty until you type" value={d.content.text || ""} onChange={e => d.patch({ text: e.target.value })} />
+    </div>
+  );
+}
+function MarkdownBody({ d }) {
+  return (
+    <div>
+      <textarea className="taFull taMono" placeholder="# source" value={d.content.src || ""} onChange={e => d.patch({ src: e.target.value })} />
+      <div className="mdPrev" dangerouslySetInnerHTML={{ __html: d.content.src ? window.marked.parse(d.content.src) : "<i style='color:var(--mut2)'>preview — lens on the source above</i>" }} />
+    </div>
+  );
+}
+function SheetBody({ d }) {
+  const c = d.content, fileRef = useRef(null);
+  const load = (text, name) => {
+    const p = parseCSV(text);
+    if (!p) { d.patch({ error: "could not parse" }); return; }
+    d.patch({ name, cols: p.cols, rows: p.rows, error: null });
+  };
+  if (!c.cols) return (
+    <div className="empty"><b>no data loaded</b><br />this sheet is a lens, not a spreadsheet with secrets
+      <div className="crow" style={{ justifyContent: "center", marginTop: 8 }}>
+        <button className="miniBtn" onClick={() => fileRef.current && fileRef.current.click()}>load .csv file</button>
+        <button className="miniBtn" onClick={() => d.patch({ paste: !c.paste })}>paste CSV</button>
+      </div>
+      <input ref={fileRef} type="file" accept=".csv,.txt" style={{ display: "none" }}
+        onChange={e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => load(r.result, f.name); r.readAsText(f); }} />
+      {c.paste ? <div><textarea className="csvInput" style={{ marginTop: 7 }} placeholder={"a,b,c\n1,2,3"} value={c.buf || ""} onChange={e => d.patch({ buf: e.target.value })} /></div> : null}
+      {c.paste ? <div style={{ marginTop: 5 }}><button className="miniBtn" onClick={() => load(c.buf || "", "pasted.csv")}>parse</button></div> : null}
+      {c.error ? <div style={{ color: "var(--dn)", marginTop: 6, fontFamily: "var(--mono)", fontSize: 9 }}>{c.error}</div> : null}
+    </div>
+  );
+  return (
+    <div>
+      <div className="crow">
+        <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--up)" }}>✓ {c.name}</span>
+        <span style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--mut2)", marginLeft: "auto" }}>{c.rows.length}×{c.cols.length}</span>
+        <button className="miniBtn warn" onClick={() => d.patch({ cols: null, rows: null, name: null, tblId: null })}>clear</button>
+      </div>
+      <div style={{ overflow: "auto", maxHeight: 240 }}>
+        <table className="v"><thead><tr>{c.cols.map(h => <th key={h}>{h}</th>)}</tr></thead>
+          <tbody>{c.rows.map((r, i) => <tr key={i}>{c.cols.map((_, j) => <td key={j}>{r[j] ?? ""}</td>)}</tr>)}</tbody></table>
+      </div>
+    </div>
+  );
+}
+function ChartBody({ d }) {
+  const c = d.content, cRef = useRef(null), inst = useRef(null);
+  const tables = d.tables;
+  const active = tables.find(t => t.id === c.tableId) || tables[0] || null;
+  const xCol = active && (c.xCol && active.cols.includes(c.xCol) ? c.xCol : active.cols[0]);
+  const yCol = active && (c.yCol && active.cols.includes(c.yCol) ? c.yCol : active.cols.find(k => k !== xCol));
+  const type = c.ctype || "bar";
+  useEffect(() => {
+    if (!active || !cRef.current) return;
+    const xi = active.cols.indexOf(xCol), yi = active.cols.indexOf(yCol);
+    const ys = active.rows.map(r => { const n = parseFloat(r[yi]); return isNaN(n) ? 0 : n; });
+    inst.current = new window.Chart(cRef.current, {
+      type, data: { labels: active.rows.map(r => r[xi]),
+        datasets: [{ label: yCol, data: ys, backgroundColor: ys.map(v => v >= 0 ? "rgba(26,127,55,.75)" : "rgba(207,34,33,.75)"), borderColor: "#1A4D3E", borderWidth: type === "line" ? 2 : 0 }] },
+      options: { responsive: true, maintainAspectRatio: false, animation: { duration: 200 },
+        plugins: { legend: { labels: { color: "#76756E", font: { family: "IBM Plex Mono", size: 9 } } } },
+        scales: type.startsWith("pie") || type === "doughnut" ? {} :
+          { x: { ticks: { color: "#76756E", font: { size: 9 } }, grid: { color: "#E3E2DB" } }, y: { ticks: { color: "#76756E", font: { size: 9 } }, grid: { color: "#E3E2DB" } } } },
+    });
+    return () => { inst.current && inst.current.destroy(); };
+  }, [active && active.id, xCol, yCol, type, d.rev]);
+  if (!tables.length) return <div className="empty"><b>nothing to render</b><br />add a Sheet block and load a CSV — this lens carries no data of its own</div>;
+  return (
+    <div>
+      <div className="crow">
+        <label>table</label>
+        <select value={active.id} onChange={e => d.patch({ tableId: e.target.value, xCol: null, yCol: null })}>
+          {tables.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+        <select value={type} onChange={e => d.patch({ ctype: e.target.value })}>
+          {["bar","line","pie","doughnut"].map(t => <option key={t}>{t}</option>)}
+        </select>
+      </div>
+      <div className="crow"><label>x</label>
+        <select value={xCol} onChange={e => d.patch({ xCol: e.target.value })}>{active.cols.map(cc => <option key={cc}>{cc}</option>)}</select>
+        <label>y</label>
+        <select value={yCol || ""} onChange={e => d.patch({ yCol: e.target.value })}><option value="">(pick y)</option>{active.cols.map(cc => <option key={cc}>{cc}</option>)}</select>
+      </div>
+      <div className="chartBox"><canvas ref={cRef} /></div>
+    </div>
+  );
+}
+function CalendarBody({ d }) {
+  const c = d.content, today = new Date();
+  const first = new Date(today.getFullYear(), today.getMonth(), 1).getDay();
+  const days = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const cells = []; for (let i = 0; i < first; i++) cells.push(null); for (let x = 1; x <= days; x++) cells.push(x);
+  while (cells.length % 7) cells.push(null);
+  const marked = c.marks || {};
+  return (
+    <table className="cal"><thead><tr>{["Su","Mo","Tu","We","Th","Fr","Sa"].map(x => <th key={x}>{x}</th>)}</tr></thead>
+      <tbody>{Array.from({ length: cells.length / 7 }, (_, w) => (
+        <tr key={w}>{cells.slice(w * 7, w * 7 + 7).map((dd, i) => dd === null
+          ? <td key={i} style={{ opacity: .25 }} />
+          : <td key={i} className={dd === today.getDate() && !marked[dd] ? "today" : ""} style={marked[dd] ? { borderColor: "var(--amber)", color: "var(--amber)" } : {}}
+              onClick={() => { const mk = { ...marked }; if (mk[dd]) delete mk[dd]; else mk[dd] = true; d.patch({ marks: mk }); }}>{dd}{marked[dd] ? " •" : ""}</td>)}</tr>))}</tbody></table>
+  );
+}
+function BoardBody({ d }) {
+  const c = d.content, cols = ["Todo","Doing","Done"], cards = c.cards || {};
+  return (
+    <div>{cols.map(col => (
+      <div className="col" key={col}>
+        <div className="colHead">{col} · {(cards[col] || []).length}</div>
+        {(cards[col] || []).map((t, i) => <div className="cardItem" key={i}>{t}<button onClick={() => d.patch({ cards: { ...cards, [col]: cards[col].filter((_, j) => j !== i) } })}>×</button></div>)}
+        <input className="addCard" placeholder="+ enter to add" onKeyDown={e => { if (e.key === "Enter" && e.target.value.trim()) { d.patch({ cards: { ...cards, [col]: [...(cards[col] || []), e.target.value.trim()] } }); e.target.value = ""; } }} />
+      </div>))}</div>
+  );
+}
+function AccordionBody({ d }) {
+  const c = d.content, items = c.items || [];
+  return (
+    <div>{items.map((it, i) => (
+      <div className="accItem" key={i}>
+        <div className="accHead" onClick={() => d.patch({ items: items.map((x, j) => j === i ? { ...x, open: !x.open } : x) })}>
+          {it.title || "(untitled)"}<span className="car">{it.open ? "−" : "+"}</span></div>
+        {it.open ? <div className="accBody">{it.body || <i>empty section</i>}</div> : null}
+      </div>))}
+      <button className="miniBtn" onClick={() => d.patch({ items: [...items, { title: "Section " + (items.length + 1), open: false }] })}>+ section</button></div>
+  );
+}
+function SliderBody({ d }) {
+  const c = d.content, v = c.value ?? 50, lo = c.min ?? 0, hi = c.max ?? 100;
+  return (
+    <div>
+      <div className="slVal">{v}</div>
+      <input type="range" min={lo} max={hi} value={v} onChange={e => d.patch({ value: +e.target.value })} />
+      <div className="crow" style={{ marginTop: 6 }}><label>min</label><input type="number" value={lo} style={{ width: 52 }} onChange={e => d.patch({ min: +e.target.value })} />
+        <label>max</label><input type="number" value={hi} style={{ width: 52 }} onChange={e => d.patch({ max: +e.target.value })} /></div>
+    </div>
+  );
+}
+const TYPES = {
+  note: { label: "Note", Body: NoteBody, icon: "¶" },
+  markdown: { label: "Markdown", Body: MarkdownBody, icon: "M↓" },
+  code: { label: "Code", Body: CodeBlockBody, icon: "⌨" },
+  sheet: { label: "Sheet", Body: SheetBody, icon: "▦" },
+  chart: { label: "Chart", Body: ChartBody, icon: "∑" },
+  calendar: { label: "Calendar", Body: CalendarBody, icon: "▣" },
+  board: { label: "Board", Body: BoardBody, icon: "≡" },
+  accordion: { label: "Accordion", Body: AccordionBody, icon: "⌄" },
+  slider: { label: "Slider", Body: SliderBody, icon: "⇹" },
+};
+function Lens({ b, app, showBody = true, compact = false }) {
+  const T = TYPES[b.type];
+  const d = { content: b.content || {}, tables: app.tables, patch: (p) => app.patchBlock(b.id, p), rev: app.rev };
+  return (
+    <div className="blk">
+      <div className="bHead">
+        <span className="bType">{T.label}</span>
+        <input className="bName" value={b.name} style={compact ? { fontSize: 11 } : {}} onChange={e => app.renameBlock(b.id, e.target.value)} onClick={e => e.stopPropagation()} />
+        <span className="bAge">{timeAgo(b.createdAt)}</span>
+        <span className="bCtl"><button onClick={() => app.removeBlock(b.id)}>×</button></span>
+      </div>
+      {showBody ? <div className="bBody"><T.Body d={d} /></div> : null}
+    </div>
+  );
+}
+
+/* ── canvas / graph via React Flow ── */
+function FlowNode({ data }) {
+  return (
+    <div style={{ width: "100%", height: "100%" }}>
+      <Handle type="target" position={Position.Left} />
+      <Handle type="source" position={Position.Right} />
+      <Handle type="target" position={Position.Right} id="r" />
+      <Handle type="source" position={Position.Left} id="l" />
+      <Lens b={data.b} app={data.app} showBody={!data.compact} compact={data.compact} />
+    </div>
+  );
+}
+const flowNodeTypes = { lens: FlowNode };
+function CanvasView({ app, layout, setLayout }) {
+  const nodes = app.blocks.map((b, i) => ({
+    id: b.id, type: "lens",
+    position: layout[b.id]?.pos || { x: 50 + (i % 4) * 320, y: 50 + Math.floor(i / 4) * 260 },
+    width: layout[b.id]?.w || 300, height: layout[b.id]?.h || (layout[b.id]?.min ? 42 : 230),
+    resizable: true, data: { b, app },
+  }));
+  const onNodesChange = useCallback((changes) => {
+    setLayout(l => {
+      const n = { ...l };
+      for (const ch of changes) {
+        n[ch.id] = n[ch.id] || {};
+        if (ch.type === "position" && ch.position) n[ch.id] = { ...n[ch.id], pos: ch.position };
+        if (ch.type === "dimensions" && ch.style) {
+          const upd = { ...n[ch.id] };
+          if (ch.style.width) upd.w = typeof ch.style.width === "string" ? parseFloat(ch.style.width) : ch.style.width;
+          if (ch.style.height) upd.h = typeof ch.style.height === "string" ? parseFloat(ch.style.height) : ch.style.height;
+          n[ch.id] = upd;
+        }
+      }
+      return n;
+    });
+  }, []);
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  return (
+    <ReactFlow nodes={nodes} edges={[]} nodeTypes={flowNodeTypes} onNodesChange={onNodesChange}
+      nodesConnectable={false} minZoom={.2} proOptions={{ hideAttribution: true }} className="flowFill">
+      <Background gap={22} size={1} color="#E3E2DB" />
+      <Controls showInteractive={false} />
+    </ReactFlow>
+  );
+}
+function GraphView({ app, layout, setLayout }) {
+  const nodes = app.blocks.map((b, i) => ({
+    id: b.id, type: "lens",
+    position: layout[b.id]?.pos || { x: b.type === "chart" ? 460 : 60, y: 46 + i * 130 },
+    width: 270, height: 84, data: { b, app, compact: true },
+  }));
+  const edges = [];
+  for (const t of app.tables) {
+    const sheetId = t.id.split(":")[0];
+    const consumers = app.blocks.filter(b => b.type === "chart" && b.content.tableId === t.id && b.id !== sheetId);
+    for (const cn of consumers) edges.push({ id: `${sheetId}-${cn.id}`, source: sheetId, target: cn.id, animated: false });
+  }
+  const onNodesChange = useCallback((changes) => {
+    setLayout(l => { const n = { ...l }; for (const ch of changes) { if (ch.type === "position" && ch.position) n[ch.id] = { ...(n[ch.id] || {}), pos: ch.position }; } return n; });
+  }, []);
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  return (
+    <div style={{ height: "100%", position: "relative" }}>
+      <ReactFlow nodes={nodes} edges={edges} nodeTypes={flowNodeTypes} onNodesChange={onNodesChange}
+        nodesConnectable={false} minZoom={.2} proOptions={{ hideAttribution: true }} className="flowFill">
+        <Background gap={22} size={1} color="#E3E2DB" />
+        <Controls showInteractive={false} />
+      </ReactFlow>
+      <div className="graphLegend"><b>{edges.length}</b> computed edge{edges.length === 1 ? "" : "s"} · two blocks connect <b>iff they touch the same data</b> · nothing was drawn by hand</div>
+    </div>
+  );
+}
+function SequenceView({ app }) {
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  return (
+    <div className="scroller"><div className="wrap">
+      {app.blocks.map((b, i) => (
+        <div className="seqItem" key={b.id}>
+          <span className="seqIdx">[{i}]</span>
+          <div style={{ flex: 1, minWidth: 0 }}><Lens b={b} app={app} /></div>
+        </div>))}
+    </div></div>
+  );
+}
+function ListView({ app }) {
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  return (
+    <div className="scroller"><div className="wrap">
+      {app.blocks.map(b => (
+        <div className="listRow" key={b.id}>
+          <span className="grip">⋮⋮</span>
+          <span className="bType">{TYPES[b.type].label}</span>
+          <span style={{ fontSize: 12.5, fontWeight: 600 }}>{b.name}</span>
+          <span className="bAge" style={{ marginLeft: "auto" }}>{timeAgo(b.createdAt)}</span>
+          <span className="bCtl"><button onClick={() => app.removeBlock(b.id)}>×</button></span>
+        </div>))}
+    </div></div>
+  );
+}
+function CodeView({ app }) {
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  const lines = [];
+  lines.push(`<span class="cm">// notebook: ${app.blocks.length} blocks · every view is a projection of this source</span>`);
+  app.blocks.forEach((b, i) => {
+    const c = b.content || {};
+    lines.push(`\n<span class="bl">// ── [${i}] ${b.type} "${b.name}"</span>`);
+    if (b.type === "note") lines.push(`<span class="st">${(c.text || "").replace(/</g, "&lt;") || "(empty)"}</span>`);
+    else if (b.type === "markdown") lines.push(`<span class="st">${(c.src || "(empty)").replace(/</g, "&lt;")}</span>`);
+    else if (b.type === "code") lines.push(`<span class="kw">${(c.lang || "rust")} ▼</span>\n${(c.text || "(empty)").replace(/</g, "&lt;")}`);
+    else if (b.type === "sheet") {
+      if (c.cols) lines.push(`@data("${c.name}")  <span class="cm">// ${c.rows.length}×${c.cols.length}</span>\n${c.cols.join(",")}\n${c.rows.map(r => r.join(",")).join("\n")}`);
+      else lines.push(`<span class="cm">@data() // no csv loaded yet</span>`);
+    }
+    else if (b.type === "chart") lines.push(`{ <span class="kw">"lens"</span>: "chart", <span class="kw">"table"</span>: ${JSON.stringify(c.tableId || null)}, <span class="kw">"x"</span>: ${JSON.stringify(c.xCol || null)}, <span class="kw">"y"</span>: ${JSON.stringify(c.yCol || null)}, <span class="kw">"as"</span>: "${c.ctype || "bar"}" }  <span class="cm">// selects from loaded data; carries none</span>`);
+    else lines.push(JSON.stringify(c, (k, v) => k === "paste" ? undefined : v));
+  });
+  return (
+    <div className="scroller"><div className="wrap">
+      <pre className="srcPre" dangerouslySetInnerHTML={{ __html: lines.join("\n") }} />
+    </div></div>
+  );
+}
+function TimelineView({ app, strip, focusId, setFocusId, sortBy, setSortBy }) {
+  const stripRef = useRef(null);
+  const cardRefs = useRef({});
+  const dragRef = useRef(null);
+  const focus = app.blocks.find(b => b.id === focusId) || null;
+  const idx = focus ? strip.findIndex(b => b.id === focus.id) : -1;
+  const go = (delta) => { if (strip.length) setFocusId(strip[Math.min(strip.length - 1, Math.max(0, idx + delta))].id); };
+  useEffect(() => {
+    const el = cardRefs.current[focusId];
+    if (el && stripRef.current) el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [focusId, sortBy, app.blocks.length]);
+  const onWheel = (e) => { if (stripRef.current) stripRef.current.scrollLeft += (e.deltaY || e.deltaX); };
+  const onDown = (e) => { dragRef.current = { x: e.clientX, sl: stripRef.current.scrollLeft }; stripRef.current.classList.add("drag"); };
+  const onMove = (e) => { if (dragRef.current) stripRef.current.scrollLeft = dragRef.current.sl - (e.clientX - dragRef.current.x); };
+  const onUp = () => { dragRef.current = null; stripRef.current && stripRef.current.classList.remove("drag"); };
+  const FBody = focus ? TYPES[focus.type].Body : null;
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  return (
+    <div className="tlin">
+      <div className="tlStage">
+        {focus ? (
+          <div className="blk">
+            <div className="bHead">
+              <span className="bType">{TYPES[focus.type].label}</span>
+              <input className="bName" value={focus.name} onChange={e => app.renameBlock(focus.id, e.target.value)} />
+              <span className="tlStamp">added {fmtTime(focus.createdAt)} · {timeAgo(focus.createdAt)} · touched {timeAgo(focus.lastTouched)}</span>
+              <span className="bCtl"><button onClick={() => app.removeBlock(focus.id)} title="remove block">×</button></span>
+            </div>
+            <div className="bBody"><FBody d={{ content: focus.content || {}, patch: (p) => app.patchBlock(focus.id, p), tables: app.tables, rev: app.rev }} /></div>
+          </div>
+        ) : (
+          <div className="zero" style={{ height: "100%" }}>
+            <span className="big">no block is focused</span>
+            <span>click a card in the strip — one block at a time owns the center</span>
+          </div>
+        )}
+      </div>
+      <div className="stripWrap">
+        <div className="stripHead">
+          the strip — same collection, sorted by
+          <div className="sortTog">
+            <button className={sortBy === "arrival" ? "on" : ""} onClick={() => setSortBy("arrival")}>arrival time</button>
+            <button className={sortBy === "recency" ? "on" : ""} onClick={() => setSortBy("recency")}>last touched</button>
+          </div>
+          <span className="stripHint">drag · wheel · click to focus · sort is the view's opinion, not the block's</span>
+        </div>
+        <div id="strip" ref={stripRef} onWheel={onWheel} onMouseDown={onDown} onMouseMove={onMove} onMouseUp={onUp} onMouseLeave={onUp}>
+          {strip.map(b => {
+            const on = focus && b.id === focus.id;
+            return (
+              <div key={b.id} ref={el => cardRefs.current[b.id] = el} className={"scard" + (on ? " on" : "")} onClick={() => setFocusId(b.id)}>
+                <span className="stype">{TYPES[b.type].label}</span>
+                <div className="sname">{b.name}</div>
+                <div className="stime">{sortBy === "arrival" ? fmtTime(b.createdAt) + " · added" : fmtTime(b.lastTouched) + " · touched"}</div>
+                <div className="ssum">{summarize(b)}</div>
+              </div>
+            );
+          })}
+          <button className="sadd" title="add a block (it joins the strip at NOW)"
+            onClick={(e) => {
+              const types = Object.keys(TYPES), base = types.length;
+              app.addBlock(types[(e.shiftKey ? 0 : (app.blocks.length % base) + 1) % base]);
+            }}>＋</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+function TableView({ app }) {
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  const summary = summarize;
+  const hasData = (b) => { const c = b.content || {}; return (c.text || c.src || c.cols || c.tableId || c.cards || c.items || c.marks || c.value !== undefined); };
+  return (
+    <div className="scroller"><div className="wrap">
+      <table className="blocks">
+        <thead><tr><th>#</th><th>name</th><th>type</th><th>content</th><th>data</th><th>age</th></tr></thead>
+        <tbody>{app.blocks.map((b, i) => (
+          <tr key={b.id} onClick={() => app.focusBlock(b.id)} style={{ cursor: "pointer" }}>
+            <td style={{ fontFamily: "var(--mono)", color: "var(--mut2)" }}>{i}</td>
+            <td style={{ fontWeight: 600 }}>{b.name}</td>
+            <td><span className="bType" style={{ background: "var(--panel3)", color: "var(--mut)" }}>{TYPES[b.type].label}</span></td>
+            <td style={{ color: "var(--mut)" }}>{summary(b)}</td>
+            <td><span className={"pill" + (hasData(b) ? " has" : "")}>{hasData(b) ? "has data" : "lens · empty"}</span></td>
+            <td style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--mut2)" }}>{timeAgo(b.createdAt)}</td>
+          </tr>))}</tbody>
+      </table>
+    </div></div>
+  );
+}
+function ZeroState({ app }) {
+  return (
+    <div className="zero">
+      <span className="big">the notebook has no blocks yet</span>
+      <span>add one with the ＋ buttons above, or</span>
+      <button className="seedBtn" onClick={app.seed}>load the sample notebook →</button>
+      <span style={{ fontSize: 10, maxWidth: 360, textAlign: "center", lineHeight: 1.7 }}>
+        (sample data only enters through an explicit action — then edit it, it stays yours)
+      </span>
+    </div>
+  );
+}
+const VIEWS = [
+  { key: "sequence", label: "Blocks",      hint: "order is the view's opinion — the collection has none" },
+  { key: "canvas",   label: "Canvas",      hint: "positions live in this tab's layout, never in a block" },
+  { key: "list",     label: "List",        hint: "names only — the thinnest projection" },
+  { key: "code",     label: "Code",        hint: "the whole notebook serialised · blocks are data" },
+  { key: "graph",    label: "Graph",       hint: "edges computed from shared data · nothing hand-drawn" },
+  { key: "timeline", label: "Timeline",    hint: "one block at the center · the strip is the collection seen from the side" },
+  { key: "table",    label: "Table",       hint: "the notebook about itself" },
+];
+</script>
+
+<script type="text/babel" data-presets="react">
+/* ════════════ CENTER — the notebook shell ════════════ */
+let uid = 0;
+const nid = () => "b" + (++uid);
+
+function CenterNotebook({ app }) {
+  const { blocks, view, setView, addBlock, tlStrip, tlFocusId, setTlFocusId, tlSort, setTlSort,
+          layouts, setLayout } = app;
+  const cur = VIEWS.find(v => v.key === view);
+  return (
+    <main id="center">
+      <div className="nTop">
+        <div className="nRow1">
+          <span className="nName">BTC Q3 Thesis</span>
+          <span className="nMeta">notebook · {blocks.length} block{blocks.length === 1 ? "" : "s"} · one collection</span>
+          <span className="nThesis">the notebook is the <b>collection</b> · these seven tabs are <b>projections</b></span>
+        </div>
+        <div className="tabs">
+          {VIEWS.map((v, i) => (
+            <button key={v.key} className={"tab" + (view === v.key ? " on" : "")} onClick={() => setView(v.key)}>
+              <span className="tnum">{i + 1}</span>{v.label}
+            </button>))}
+        </div>
+      </div>
+      <div className="tBar">
+        <span className="vb">{cur.label}</span>
+        {Object.keys(TYPES).map(k => <button key={k} className="addBtn" onClick={() => addBlock(k)}>＋ {TYPES[k].label}</button>)}
+        {view === "timeline" && blocks.length ? (
+          <span className="tlNav">
+            <span className="tlHint">← → to scrub · one block owns the center</span>
+            <button title="previous block" onClick={() => { const i = tlStrip.findIndex(b => b.id === tlFocusId); if (i > 0) setTlFocusId(tlStrip[i - 1].id); }}>←</button>
+            <span className="tlPos">{tlFocusId ? `${tlStrip.findIndex(b => b.id === tlFocusId) + 1} / ${blocks.length}` : `0 / ${blocks.length}`}</span>
+            <button title="next block" onClick={() => { const i = tlStrip.findIndex(b => b.id === tlFocusId); if (i >= 0 && i < tlStrip.length - 1) setTlFocusId(tlStrip[i + 1].id); }}>→</button>
+          </span>
+        ) : <span className="tHint">{cur.hint}</span>}
+      </div>
+      <div id="stage">
+        {view === "sequence" && <SequenceView app={app} />}
+        {view === "canvas" && <CanvasView app={app} layout={layouts.canvas} setLayout={setLayout("canvas")} />}
+        {view === "list" && <ListView app={app} />}
+        {view === "code" && <CodeView app={app} />}
+        {view === "graph" && <GraphView app={app} layout={layouts.graph} setLayout={setLayout("graph")} />}
+        {view === "timeline" && <TimelineView app={app} strip={tlStrip} focusId={tlFocusId} setFocusId={setTlFocusId} sortBy={tlSort} setSortBy={setTlSort} />}
+        {view === "table" && <TableView app={app} />}
+      </div>
+    </main>
+  );
+}
+
+/* ════════════ LEFT PANEL — from file 10 (dock + notebooks + search) ════════════ */
+function LeftPanel({ leftView, setLeftView }) {
+  const [nbOpen, setNbOpen] = useState(true);
+  const [closed, setClosed] = useState({});
+  const [subClosed, setSubClosed] = useState({});
+  const [sel, setSel] = useState("conv-1");
+  const [scope, setScope] = useState("All");
+  const tog = (id) => setClosed(c => ({ ...c, [id]: !c[id] }));
+  const togSub = (id) => setSubClosed(c => ({ ...c, [id]: !c[id] }));
+  const convs = [
+    ["conv-1", "Build me a drawdown chart", "11:40"], ["conv-2", "Is this a regime change?", "10:05"],
+    ["conv-3", "62k support — 3rd test", "Sep 18"], ["conv-4", "Funding rates vs spot", "Sep 18"],
+    ["conv-5", "Liquidation map reading", "Sep 17"], ["conv-6", "Compare to Mar '24 top", "Sep 16"],
+    ["conv-7", "DXY correlation check", "Sep 16"], ["conv-8", "What broke my stop rule", "Sep 15"],
+    ["conv-9", "ETF flows as signal?", "Sep 14"], ["conv-10", "Session windows — Asia", "Sep 13"],
+    ["conv-11", "Sentiment vs structure", "Sep 12"], ["conv-12", "Initial thesis brainstorm", "Sep 11"],
+  ];
+  const Row = ({ id, on, children }) => (
+    <div className={"lrow" + (on ? " on" : "")} onClick={() => id && setSel(id)}>{children}</div>
+  );
+  const Sec = ({ id, icon, label, n, children }) => (
+    <div className={"sec" + (closed[id] ? " closed" : "")}>
+      <div className="sechead" onClick={() => tog(id)}>
+        <span className="chev2" style={{ fontSize: 10, color: "var(--mut2)" }}>▾</span>
+        <span className="sico">{icon}</span>
+        <span className="lbl">{label}</span><span className="n">{n}</span>
+      </div>
+      <div className="seclist"><div className="seclist-in">{children}</div></div>
+    </div>
+  );
+  const Sub = ({ id, label, n, children }) => (
+    <div className={"subsec" + (subClosed[id] ? " closed" : "")}>
+      <div className="subhead" onClick={() => togSub(id)}>
+        <span className="chev3">▾</span><span className="lbl">{label}</span><span className="n">{n}</span>
+      </div>
+      <div className="sublist"><div className="sublist-in">{children}</div></div>
+    </div>
+  );
+  return (
+    <React.Fragment>
+      <nav className="dock" id="dockL">
+        <button className={"dock-btn" + (leftView === "notebooks" ? " on" : "")} title="Notebooks" onClick={() => setLeftView("notebooks")}>
+          <span className="ic"><Ico d={IC.nb} /></span>
+        </button>
+        <button className={"dock-btn" + (leftView === "search" ? " on" : "")} title="Search" onClick={() => setLeftView("search")}>
+          <span className="ic"><Ico d={IC.srch} /></span>
+        </button>
+      </nav>
+      <aside id="left">
+        <div className={"panelView" + (leftView === "notebooks" ? " on" : "")}>
+          <div className="topActions">
+            <button id="newNbBtn">＋ New Notebook<kbd>⌘N</kbd></button>
+          </div>
+          <div id="list">
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 8px 6px", fontFamily: "var(--mono)", fontSize: "9.5px", letterSpacing: ".16em", color: "var(--mut2)" }}>
+              <span>NOTEBOOKS</span><span>1</span>
+            </div>
+            <div className={"nb" + (nbOpen ? " open" : "")}>
+              <div className="nbrow" onClick={() => setNbOpen(o => !o)}>
+                <span className="chev">▾</span>
+                <span className="nm">BTC drawdown study</span>
+                <span className="cnt">31</span>
+              </div>
+              <div className="nbbody"><div className="nbbody-in">
+                <Sec id="conv" icon="💬" label="Conversations" n="12">
+                  <div className="actrow"><span className="sico">＋</span>New conversation</div>
+                  {convs.map(([id, t, tm], i) => (
+                    <Row key={id} id={id} on={sel === id}>
+                      <span className="cdot"></span><span className="rt">{t}</span><span className="rm">{tm}</span>
+                    </Row>))}
+                </Sec>
+                <Sec id="files" icon="📎" label="Files" n="5">
+                  <div className="actrow"><span className="sico">↑</span>Upload file</div>
+                  <Row><span className="ficon">▦</span><span className="rt">btc_4h.csv</span><span className="ext csv">CSV</span><span className="rm">2.1 MB</span></Row>
+                  <Row><span className="ficon">¶</span><span className="rt">thesis.md</span><span className="ext md">MD</span><span className="rm">4 KB</span></Row>
+                  <Row><span className="ficon">▦</span><span className="rt">funding_rates.csv</span><span className="ext csv">CSV</span><span className="rm">860 KB</span></Row>
+                  <Row><span className="ficon">▦</span><span className="rt">liquidations_sep.parquet</span><span className="ext parquet">PQT</span><span className="rm">14 MB</span></Row>
+                  <Row><span className="ficon">¶</span><span className="rt">exchange_notes.md</span><span className="ext md">MD</span><span className="rm">11 KB</span></Row>
+                </Sec>
+                <Sec id="arts" icon="◈" label="Artifacts" n="14">
+                  <Sub id="charts" label="Charts" n="5">
+                    <Row id="a1" on={sel === "a1"}><span className="aicon k-chart">∑</span><span className="rt">June–Sept equity curve</span><span className="fromcv">cv2</span></Row>
+                    <Row id="a2" on={sel === "a2"}><span className="aicon k-chart">∑</span><span className="rt">Drawdown depth vs Mar '24</span><span className="fromcv">cv2</span></Row>
+                    <Row id="a3" on={sel === "a3"}><span className="aicon k-chart">∑</span><span className="rt">62k support retests</span><span className="fromcv">cv3</span></Row>
+                    <Row id="a4" on={sel === "a4"}><span className="aicon k-chart">∑</span><span className="rt">Funding vs spot basis</span><span className="fromcv">cv4</span></Row>
+                    <Row id="a5" on={sel === "a5"}><span className="aicon k-chart">∑</span><span className="rt">DXY overlay, 90d</span><span className="fromcv">cv7</span></Row>
+                  </Sub>
+                  <Sub id="notes" label="Notes" n="4">
+                    <Row id="n1" on={sel === "n1"}><span className="aicon k-note">¶</span><span className="rt">Thesis</span><span className="rm">edited 2h</span></Row>
+                    <Row id="n2" on={sel === "n2"}><span className="aicon k-note">¶</span><span className="rt">Assumption list</span><span className="rm">Sep 17</span></Row>
+                    <Row id="n3" on={sel === "n3"}><span className="aicon k-note">¶</span><span className="rt">What broke my stop rule</span><span className="rm">Sep 15</span></Row>
+                    <Row id="n4" on={sel === "n4"}><span className="aicon k-note">¶</span><span className="rt">Open questions</span><span className="rm">Sep 13</span></Row>
+                  </Sub>
+                  <Sub id="sheets" label="Sheets" n="3">
+                    <Row id="s1" on={sel === "s1"}><span className="aicon k-sheet">▦</span><span className="rt">Entry log</span><span className="fromcv">cv2</span></Row>
+                    <Row id="s2" on={sel === "s2"}><span className="aicon k-sheet">▦</span><span className="rt">Scenario payoffs</span><span className="rm">Sep 16</span></Row>
+                    <Row id="s3" on={sel === "s3"}><span className="aicon k-sheet">▦</span><span className="rt">Risk per idea</span><span className="rm">Sep 14</span></Row>
+                  </Sub>
+                  <Sub id="boards" label="Boards" n="2">
+                    <Row id="b1" on={sel === "b1"}><span className="aicon k-board">≡</span><span className="rt">Wall — main view</span><span className="rm">6 items</span></Row>
+                    <Row id="b2" on={sel === "b2"}><span className="aicon k-board">≡</span><span className="rt">Evidence for thesis</span><span className="rm">4 items</span></Row>
+                  </Sub>
+                </Sec>
+              </div></div>
+            </div>
+          </div>
+        </div>
+        <div className={"panelView" + (leftView === "search" ? " on" : "")} id="searchView">
+          <div className="sv-head">SEARCH</div>
+          <div className="sv-box"><span style={{ color: "var(--mut2)", fontSize: 13 }}>⌕</span>
+            <input placeholder="Search everything…" /></div>
+          <div className="sv-scope">
+            {["All", "Notebooks", "Conversations", "Files", "Artifacts"].map(s => (
+              <span key={s} className={scope === s ? "on" : ""} onClick={() => setScope(s)}>{s}</span>))}
+          </div>
+          <div className="sv-hint">Search crosses <b>every notebook</b> — titles, chats, files, artifacts. Start typing; results appear grouped here.</div>
+        </div>
+      </aside>
+    </React.Fragment>
+  );
+}
+</script>
+
+<script type="text/babel" data-presets="react">
+/* ════════════ RIGHT PANEL — modern AI chat ════════════
+   The composer holds everything: model selector · mode · voice · send.
+   The right dock carries only two icons: conversations, history.   ════════════ */
+const MODELS = [
+  { name: "Riemann 1", tag: "market", desc: "the research model" },
+  { name: "Riemann 1 · Pro", tag: "market", desc: "deeper investigation" },
+  { name: "General", tag: "fast", desc: "quick answers" },
+];
+const MODES = ["Ask", "Investigate", "Deep search"];
+
+function answer(text) {
+  const t = text.toLowerCase();
+  if (t.includes("chart")) return "I've projected the loaded sheet onto a **Chart** block in the center — `date` on x, `pnl` on y, bars tinted green/red by sign. Change the lens columns up top and every projection follows, because they all read the same collection.";
+  if (t.includes("drawdown") || t.includes("dd")) return "**3 drawdowns ≥ 20%** in the loaded window (Sep 01 – Sep 05 sample):\n\n| Window | Depth | Recovered in |\n|---|---|---|\n| Sep 02 | −40 | 1 day |\n\nYour threshold slider currently sits at **20%** — drag it and I'll re-flag every region that crosses.";
+  if (t.includes("regime")) return "Honest answer: not yet — the notebook holds one sheet. Regime claims need funding + liquidation series side by side. Both are already in **Files** on the left; want me to open them as sheets and align the dates?";
+  if (t.includes("idea") || t.includes("thesis")) return "Your note *Q3 idea* says drawdowns past 20% marked cycle floors in 2021-11 and 2022-06. I can turn that sentence into a testable **decision table** (input: dd ≥ threshold → action: flag) and run it against the loaded window. Say the word.";
+  return "Noted. I read this notebook as one unordered collection — {N} blocks. I can explain any block, project it differently, or write a new block on top of the existing data. I **never mutate what's stored**: anything I add arrives as a new interpretation, inspectable next to its evidence. What should I dig into?";
+}
+
+function ChatPanel({ chatOpen, activeId, setActiveId, conversations, setConversations }) {
+  const [draft, setDraft] = useState("");
+  const [model, setModel] = useState(MODELS[0].name);
+  const [mode, setMode] = useState(MODES[0]);
+  const [menu, setMenu] = useState(null);           // "model" | "mode" | null
+  const [rec, setRec] = useState(false);
+  const [thinking, setThinking] = useState(false);
+  const bodyRef = useRef(null);
+  const taRef = useRef(null);
+  const conv = conversations.find(c => c.id === activeId) || conversations[0];
+  const effId = conv.id;
+
+  useEffect(() => { if (bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight; }, [conv.msgs.length, thinking, chatOpen]);
+
+  const send = (text) => {
+    const content = (text ?? draft).trim();
+    if (!content || thinking) return;
+    setConversations(cs => cs.map(c => c.id === effId
+      ? { ...c, title: c.msgs.length ? c.title : content.slice(0, 34), msgs: [...c.msgs, { role: "u", content, ts: Date.now() }] }
+      : c));
+    setDraft("");
+    setThinking(true);
+    setTimeout(() => {
+      const reply = answer(content).replace("{N}", "8");
+      setConversations(cs => cs.map(c => c.id === effId
+        ? { ...c, msgs: [...c.msgs, { role: "a", content: reply, ts: Date.now() }] }
+        : c));
+      setThinking(false);
+    }, 900);
+  };
+  const newChat = () => {
+    const id = "c" + (Date.now() % 100000);
+    setConversations(cs => [{ id, title: "New conversation", ts: Date.now(), msgs: [] }, ...cs]);
+    setActiveId(id);
+  };
+  const voice = () => {
+    setRec(r => !r);
+    if (!rec) setTimeout(() => { setRec(false); setDraft(d => (d ? d + " " : "") + "what drove the largest drawdown?"); }, 1400);
+  };
+
+  return (
+    <aside id="right" style={{ display: chatOpen ? "flex" : "none" }}>
+      <div className="chatHead">
+        <span className="aiDot"><RiemannMark /></span>
+        <div style={{ minWidth: 0 }}>
+          <div className="cht">{conv.title}</div>
+          <div className="chs">{conv.msgs.length} message{conv.msgs.length === 1 ? "" : "s"} · nothing here edits the notebook</div>
+        </div>
+        <button className="newc" title="New conversation" onClick={newChat}>＋</button>
+      </div>
+
+      <div id="msgs" ref={bodyRef}>
+        {conv.msgs.length === 0 && !thinking && (
+          <div className="chatEmpty" style={{ flex: 1 }}>
+            <span className="big">Ask about this notebook</span>
+            <span style={{ fontSize: 11, lineHeight: 1.7 }}>I read the blocks you've collected — I answer with evidence,<br />and every answer can become a new block.</span>
+            {["Build me a drawdown chart", "Is this a regime change?", "What broke my stop rule?"].map(s => (
+              <button key={s} className="suggest" onClick={() => send(s)}>{s}</button>))}
+          </div>
+        )}
+        {conv.msgs.map((m, i) => m.role === "u" ? (
+          <div className="msgU" key={i}>{m.content}</div>
+        ) : (
+          <div className="msgA" key={i}>
+            <span className="amark"><RiemannMark /></span>
+            <div>
+              <div className="abody" dangerouslySetInnerHTML={{ __html: window.marked.parse(m.content) }} />
+              <span className="quote" title="keep this answer as a note block">❝ turn into a block</span>
+            </div>
+          </div>
+        ))}
+        {thinking && (
+          <div className="msgA">
+            <span className="amark"><RiemannMark /></span>
+            <span className="typing"><i></i><i></i><i></i></span>
+          </div>
+        )}
+      </div>
+
+      <div className="composer">
+        <div className="cbox">
+          <textarea ref={taRef} rows="2" placeholder={"Ask " + model + " about this notebook…"}
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
+          <div className="crow2" style={{ padding: 0, paddingLeft: 8, paddingRight: 8, paddingBottom: 8, marginBottom: 0 }}>
+            {/* model selector — inside the box */}
+            <div className="selwrap">
+              <button className="pillSel" onClick={() => setMenu(menu === "model" ? null : "model")}>
+                ◈ {model}<span className="car">▾</span>
+              </button>
+              {menu === "model" && (
+                <div className="selMenu">
+                  {MODELS.map(m => (
+                    <div key={m.name} className={"sopt" + (model === m.name ? " on" : "")}
+                      onClick={() => { setModel(m.name); setMenu(null); }}>
+                      <span className="sd"></span>{m.name}<small>{m.tag}</small>
+                    </div>))}
+                </div>
+              )}
+            </div>
+            {/* mode — inside the box */}
+            <div className="selwrap">
+              <button className="pillSel" onClick={() => setMenu(menu === "mode" ? null : "mode")}>
+                {mode}<span className="car">▾</span>
+              </button>
+              {menu === "mode" && (
+                <div className="selMenu">
+                  {MODES.map(m => (
+                    <div key={m} className={"sopt" + (mode === m ? " on" : "")}
+                      onClick={() => { setMode(m); setMenu(null); }}>
+                      <span className="sd"></span>{m}
+                    </div>))}
+                </div>
+              )}
+            </div>
+            {/* voice — inside the box */}
+            <button className={"icBtn" + (rec ? " rec" : "")} title={rec ? "Listening…" : "Voice input"} onClick={voice}>
+              <Ico d={IC.mic} />
+            </button>
+            {/* send — inside the box */}
+            <button id="sendBtn" className={draft.trim() ? "" : "off"} title="Send (Enter)" onClick={() => send()}>
+              <Ico d={IC.send} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+/* ── right dock: exactly two icons — conversations, history ── */
+function RightDock({ chatOpen, setChatOpen, pop, setPop, conversations, activeId, openConv }) {
+  const toggle = (p) => setPop(pop === p ? null : p);
+  return (
+    <nav className="dock" id="dockR">
+      <button className={"dock-btn" + (chatOpen && !pop ? " on" : "")} title="Conversations"
+        onClick={() => { if (!chatOpen) { setChatOpen(true); setPop(null); } else toggle("conv"); }}>
+        <span className="ic"><Ico d={IC.chat} /></span>
+      </button>
+      <button className={"dock-btn" + (pop === "hist" ? " on" : "")} title="History" onClick={() => toggle("hist")}>
+        <span className="ic"><Ico d={IC.hist} /></span>
+      </button>
+
+      {pop === "conv" && (
+        <div className="dockPop">
+          <div className="ph">Conversations<span className="x" onClick={() => setPop(null)}>×</span></div>
+          {conversations.map(c => (
+            <div key={c.id} className={"convItem" + (c.id === activeId ? " on" : "")} onClick={() => { openConv(c.id); setPop(null); }}>
+              <div className="ct">{c.title}</div>
+              <div className="cm2">{c.msgs.length} msg · {timeAgo(c.ts)}</div>
+            </div>))}
+        </div>
+      )}
+      {pop === "hist" && (
+        <div className="dockPop">
+          <div className="ph">History<span className="x" onClick={() => setPop(null)}>×</span></div>
+          {[["Chart", "Equity curve — lens changed to bar", "6m ago"],
+            ["Slider", "dd threshold — value 20", "3m ago"],
+            ["Note", "Answered: \"Is this a regime change?\"", "1h ago"],
+            ["Note", "Q3 idea — text edited", "47m ago"],
+            ["Sheet", "sample.csv loaded (5×3)", "33m ago"],
+            ["Notebook", "run #2 forked from run #1", "Sep 18"]]
+            .map(([k, t, when], i) => (
+            <div key={i} className="convItem">
+              <div className="ct">{t}</div>
+              <div className="cm2">{k} · {when}</div>
+            </div>))}
+        </div>
+      )}
+    </nav>
+  );
+}
+</script>
+
+<script type="text/babel" data-presets="react">
+/* ════════════ TINY HEADER — logo + name, nothing else ════════════ */
+function TitleBar() {
+  return (
+    <header id="titleBar">
+      <span className="logo"><RiemannMark /></span>
+      <span className="brand"><span className="serif">Riemann</span><span className="mono">Research</span></span>
+    </header>
+  );
+}
+
+/* ════════════ APP — wires the three panels ════════════ */
+function App() {
+  /* left: dock view switching (file 10 behavior) */
+  const [leftView, setLeftView] = useState("notebooks");
+
+  /* center: the notebook collection (file 15 behavior) */
+  const [blocks, setBlocks] = useState([]);
+  const [view, setView] = useState("timeline");
+  const [layouts, setLayouts] = useState({ canvas: {}, graph: {} });
+  const [rev, setRev] = useState(0);
+  const [tlFocusId, setTlFocusId] = useState(null);
+  const [tlSort, setTlSort] = useState("arrival");
+
+  const patchBlock = (id, p) => setBlocks(bs => bs.map(b => b.id === id ? { ...b, content: { ...b.content, ...p }, lastTouched: Date.now() } : b));
+  const renameBlock = (id, name) => setBlocks(bs => bs.map(b => b.id === id ? { ...b, name } : b));
+  const removeBlock = (id) => { setBlocks(bs => bs.filter(b => b.id !== id)); if (tlFocusId === id) setTlFocusId(null); };
+  const focusBlock = (id) => { setView("timeline"); setTlFocusId(id); };
+  const addBlock = (type) => {
+    const id = nid(), now = Date.now();
+    setBlocks(bs => [...bs, { id, type, name: TYPES[type].label + " " + (bs.filter(b => b.type === type).length + 1), content: {}, createdAt: now, lastTouched: now }]);
+    setTlFocusId(id);
+    setRev(r => r + 1);
+  };
+  const tables = useMemo(
+    () => blocks.filter(b => b.type === "sheet" && b.content && b.content.cols)
+                .map(b => ({ id: b.id + ":" + b.content.name, name: b.content.name, sheetId: b.id, cols: b.content.cols, rows: b.content.rows })),
+    [blocks]);
+  const tlStrip = useMemo(
+    () => [...blocks].sort((a, b) => tlSort === "arrival" ? a.createdAt - b.createdAt : a.lastTouched - b.lastTouched),
+    [blocks, tlSort]);
+  useEffect(() => {
+    if (view === "timeline" && tlStrip.length && !tlStrip.some(b => b.id === tlFocusId)) setTlFocusId(tlStrip[0].id);
+  }, [view, tlStrip, tlFocusId]);
+  useEffect(() => {
+    const h = (e) => {
+      if (view !== "timeline" || !tlStrip.length) return;
+      const tag = (e.target.tagName || "").toLowerCase();
+      if (tag === "input" || tag === "textarea" || tag === "select") return;
+      const i = tlStrip.findIndex(b => b.id === tlFocusId);
+      if (i < 0) return;
+      if (e.key === "ArrowRight") { e.preventDefault(); setTlFocusId(tlStrip[Math.min(tlStrip.length - 1, i + 1)].id); }
+      if (e.key === "ArrowLeft")  { e.preventDefault(); setTlFocusId(tlStrip[Math.max(0, i - 1)].id); }
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  });
+
+  function seed() {
+    const t = Date.now();
+    const sheetId = nid(), chartId = nid();
+    const csv = "date,asset,pnl\n2026-09-01,BTC,120\n2026-09-02,BTC,-40\n2026-09-03,BTC,88\n2026-09-04,BTC,203\n2026-09-05,BTC,-12";
+    const parsed = parseCSV(csv);
+    setBlocks([
+      { id: nid(), type: "note", name: "Q3 idea", createdAt: t - 1000 * 60 * 47, lastTouched: t - 1000 * 60 * 47,
+        content: { text: "BTC drawdowns past 20% have marked cycle floors so far. Checking 2021-11 and 2022-06 next." } },
+      { id: nid(), type: "markdown", name: "Method", createdAt: t - 1000 * 60 * 41, lastTouched: t - 1000 * 60 * 41,
+        content: { src: "# Method\n\n- load daily pnl\n- plot against date\n- watch for **dd ≥ 20%**" } },
+      { id: sheetId, type: "sheet", name: "sample.csv", createdAt: t - 1000 * 60 * 33, lastTouched: t - 1000 * 60 * 33,
+        content: { name: "sample.csv", cols: parsed.cols, rows: parsed.rows } },
+      { id: chartId, type: "chart", name: "Equity curve", createdAt: t - 1000 * 60 * 21, lastTouched: t - 1000 * 60 * 21,
+        content: { tableId: sheetId + ":sample.csv", xCol: "date", yCol: "pnl", ctype: "bar" } },
+      { id: nid(), type: "code", name: "Rolling dd", createdAt: t - 1000 * 60 * 14, lastTouched: t - 1000 * 60 * 14,
+        content: { lang: "rust", text: "fn drawdown(p: &[f64]) -> f64 {\n    let peak = p.iter().fold(0.0, f64::max);\n    peak - p[p.len() - 1]\n}" } },
+      { id: nid(), type: "board", name: "Open threads", createdAt: t - 1000 * 60 * 8, lastTouched: t - 1000 * 60 * 8,
+        content: { cards: { Todo: ["verify 2022-06 dd"], Doing: [], Done: [] } } },
+      { id: nid(), type: "slider", name: "dd threshold", createdAt: t - 1000 * 60 * 3, lastTouched: t - 1000 * 60 * 3,
+        content: { min: 0, max: 50, value: 20 } },
+    ]);
+    setTlFocusId(chartId);
+    setRev(r => r + 1);
+  }
+  /* the workspace opens seeded — an empty demo proves nothing about the three panels */
+  useEffect(() => { seed(); }, []);
+
+  const setLayout = (key) => (fn) => setLayouts(ls => ({ ...ls, [key]: typeof fn === "function" ? fn(ls[key]) : { ...ls[key], ...fn } }));
+  const app = {
+    blocks, patchBlock, renameBlock, removeBlock, focusBlock, addBlock, tables, rev, seed,
+    view, setView, tlStrip, tlFocusId, setTlFocusId, tlSort, setTlSort, layouts, setLayout,
+  };
+
+  /* right: chat + its dock */
+  const [chatOpen, setChatOpen] = useState(true);
+  const [pop, setPop] = useState(null);            // "conv" | "hist" | null
+  const [activeConv, setActiveConv] = useState("c1");
+  const [conversations, setConversations] = useState([
+    { id: "c1", title: "Build me a drawdown chart", ts: Date.now() - 60000 * 4,
+      msgs: [
+        { role: "u", content: "Build me a drawdown chart from the loaded CSV", ts: Date.now() - 60000 * 5 },
+        { role: "a", content: "I've projected the loaded sheet onto a **Chart** block in the center — `date` on x, `pnl` on y, bars tinted green/red by sign. Change the lens columns up top and every projection follows, because they all read the same collection.", ts: Date.now() - 60000 * 4 },
+      ] },
+    { id: "c2", title: "Is this a regime change?", ts: Date.now() - 60000 * 65, msgs: [] },
+    { id: "c3", title: "Initial thesis brainstorm", ts: Date.now() - 60000 * 300, msgs: [] },
+  ]);
+
+  /* ChatPanel's active conversation is lifted here so the dock popover can switch it */
+  const openConv = (id) => { setActiveConv(id); setChatOpen(true); };
+
+  return (
+    <React.Fragment>
+      <TitleBar />
+      <div id="mainRow">
+        <LeftPanel leftView={leftView} setLeftView={setLeftView} />
+        <CenterNotebook app={app} />
+        <ChatPanel chatOpen={chatOpen} activeId={activeConv} setActiveId={setActiveConv}
+                   conversations={conversations} setConversations={setConversations} />
+        <RightDock chatOpen={chatOpen} setChatOpen={setChatOpen} pop={pop} setPop={setPop}
+                   conversations={conversations} activeId={activeConv} openConv={openConv} />
+      </div>
+      <footer id="statusBar"></footer>
+    </React.Fragment>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

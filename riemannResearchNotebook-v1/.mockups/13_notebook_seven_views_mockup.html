@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riemann Research — The Notebook · One Collection, Seven Views</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- CDN only: React 18 + React Flow v11 (canvas & graph views) + Chart.js + marked -->
+<link rel="stylesheet" href="https://unpkg.com/reactflow@11.11.4/dist/style.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/reactflow@11.11.4/dist/umd/index.js"></script>
+<script src="https://unpkg.com/chart.js@4.4.7/dist/chart.umd.js"></script>
+<script src="https://unpkg.com/marked@15.0.4/marked.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
+<style>
+  :root{
+    --bg:#0C0B09; --panel:#12110E; --panel2:#17150F; --panel3:#1C1913;
+    --line:#262319; --line2:#332E22;
+    --text:#EDEAE0; --mut:#9A937F; --mut2:#6E6857;
+    --amber:#F2A93B; --amber-dim:rgba(242,169,59,.14);
+    --up:#4CC38A; --dn:#E5484D; --blue:#6FA8DC; --violet:#A78BFA;
+    --sans:"Space Grotesk",sans-serif; --mono:"IBM Plex Mono",monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  ::selection{background:rgba(242,169,59,.28);color:var(--text)}
+  html,body,#root{height:100%}
+  #root{display:flex;flex-direction:column}
+  body{background:var(--panel);color:var(--text);font-family:var(--sans);overflow:hidden}
+  button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  input,textarea,select{font-family:var(--mono);color:var(--text);background:var(--bg);border:1px solid var(--line2);border-radius:6px;outline:none;font-size:11px}
+  input:focus,textarea:focus,select:focus{border-color:var(--amber)}
+  textarea{resize:vertical;caret-color:var(--amber)}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#292419;border-radius:6px;border:2px solid var(--bg)}
+
+  /* ── top chrome: notebook identity + the seven projections ── */
+  .nTop{flex:none;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 14px 0}
+  .nRow1{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .nName{font-size:14px;font-weight:700}
+  .nMeta{font-family:var(--mono);font-size:9.5px;color:var(--mut2)}
+  .nThesis{font-size:10.5px;color:var(--mut2);margin-left:auto}
+  .nThesis b{color:var(--amber)}
+  .tabs{display:flex;gap:2px;margin-top:9px}
+  .tab{padding:8px 14px 9px;font-size:11px;font-weight:600;color:var(--mut2);border-radius:9px 9px 0 0;border:1px solid transparent;border-bottom:none;display:flex;gap:7px;align-items:center;position:relative;top:1px}
+  .tab:hover{color:var(--text);background:var(--panel2)}
+  .tab.on{color:var(--amber);background:var(--panel);border-color:var(--line)}
+  .tab .tnum{font-family:var(--mono);font-size:8.5px;border:1px solid var(--line2);border-radius:4px;padding:0 4px;color:var(--mut2)}
+  .tab.on .tnum{border-color:var(--amber);color:var(--amber)}
+
+  /* ── toolbar (per view) ── */
+  .tBar{flex:none;display:flex;align-items:center;gap:6px;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--bg);overflow-x:auto;flex-wrap:nowrap}
+  .tBar .vb{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);margin-right:4px}
+  .addBtn{font-size:11px;padding:4px 10px;border:1px solid var(--line2);border-radius:7px;color:var(--mut);white-space:nowrap}
+  .addBtn:hover{color:var(--amber);border-color:var(--amber);background:var(--amber-dim)}
+  .seedBtn{font-size:11px;padding:4px 10px;border-radius:7px;background:var(--amber);color:#171204;font-weight:600;white-space:nowrap}
+  .seedBtn:hover{filter:brightness(1.08)}
+  .tHint{margin-left:auto;font-size:10px;color:var(--mut2);white-space:nowrap;padding-left:12px}
+
+  #stage{flex:1;min-height:0;position:relative;overflow:hidden}
+  .scroller{height:100%;overflow-y:auto;padding:18px 0 60px}
+  .wrap{max-width:860px;margin:0 auto;padding:0 20px}
+
+  /* ── the block lens (shared across views) ── */
+  .blk{background:var(--panel2);border:1px solid var(--line2);border-radius:12px;display:flex;flex-direction:column;overflow:hidden;width:100%;height:100%}
+  .bHead{display:flex;align-items:center;gap:8px;padding:8px 11px;border-bottom:1px solid var(--line);background:var(--panel3);flex:none}
+  .bType{font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:#171204;background:var(--amber);border-radius:4px;padding:1.5px 6px;font-weight:600}
+  .bName{font-size:12px;font-weight:600;flex:1;min-width:0;background:none;border:none;color:var(--text);font-family:var(--sans)}
+  .bAge{font-family:var(--mono);font-size:8.5px;color:var(--mut2)}
+  .bCtl button{width:20px;height:20px;border-radius:5px;color:var(--mut2);font-family:var(--mono);font-size:12px}
+  .bCtl button:hover{color:var(--dn);background:var(--line2)}
+  .bBody{flex:1;overflow:auto;padding:11px;min-height:0}
+  .empty{border:1.5px dashed var(--line2);border-radius:9px;padding:14px 12px;text-align:center;color:var(--mut2);font-size:11px;line-height:1.6}
+  .empty b{color:var(--mut)}
+  .row{display:flex;gap:6px;align-items:center;margin-bottom:7px;flex-wrap:wrap}
+  .row label{font-family:var(--mono);font-size:9px;color:var(--mut2);text-transform:uppercase;letter-spacing:.08em}
+  .miniBtn{font-size:10px;padding:4px 9px;border:1px solid var(--line2);border-radius:6px;color:var(--mut)}
+  .miniBtn:hover{color:var(--amber);border-color:var(--amber)}
+  .miniBtn.warn:hover{color:var(--dn);border-color:var(--dn)}
+
+  .taFull{width:100%;min-height:96px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:12px;line-height:1.65;color:var(--text);font-family:var(--sans)}
+  .taMono{font-family:var(--mono);font-size:10.5px;line-height:1.7}
+  .mdPrev{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12.5px;line-height:1.65;min-height:40px;margin-top:7px}
+  .mdPrev h1,.mdPrev h2,.mdPrev h3{margin:.5em 0 .3em;font-size:1.05em}
+  .mdPrev p{margin:.4em 0}.mdPrev code{font-family:var(--mono);font-size:.9em;color:var(--amber)}
+  .mdPrev ul{margin:.4em 0 .4em 1.2em}
+
+  table.v{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px}
+  table.v th{color:var(--mut2);font-weight:500;text-align:left;padding:3px 7px;border-bottom:1px solid var(--line2);position:sticky;top:0;background:var(--panel2);letter-spacing:.05em}
+  table.v td{padding:3px 7px;border-bottom:1px solid var(--line);color:var(--text);white-space:nowrap}
+  .csvInput{width:100%;min-height:56px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:10px;color:var(--text)}
+  .chartBox{position:relative;height:160px}
+
+  .cal{width:100%;border-collapse:collapse;table-layout:fixed}
+  .cal th{font-family:var(--mono);font-size:8.5px;color:var(--mut2);padding:3px 0;text-transform:uppercase}
+  .cal td{border:1px solid var(--line);height:30px;padding:2px 4px;font-family:var(--mono);font-size:9px;color:var(--mut);cursor:pointer}
+  .cal td.today{border-color:var(--amber);color:var(--amber)}
+
+  .col{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px;margin-bottom:6px}
+  .colHead{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);margin-bottom:5px}
+  .cardItem{display:flex;gap:6px;background:var(--panel3);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;font-size:11px;margin-bottom:4px}
+  .cardItem button{margin-left:auto;color:var(--mut2);font-family:var(--mono)}
+  .cardItem button:hover{color:var(--dn)}
+  .addCard{width:100%;background:none;border:1px dashed var(--line2);border-radius:6px;padding:4px 8px;font-size:10px;color:var(--mut2)}
+
+  .accItem{border:1px solid var(--line2);border-radius:8px;margin-bottom:5px;overflow:hidden}
+  .accHead{display:flex;gap:8px;padding:6px 10px;background:var(--bg);font-size:11.5px;cursor:pointer}
+  .accHead .car{margin-left:auto;font-family:var(--mono);color:var(--mut2)}
+  .accBody{padding:7px 10px;font-size:11px;color:var(--mut);border-top:1px solid var(--line)}
+
+  input[type=range]{width:100%;accent-color:var(--amber);background:none;border:none}
+  .slVal{font-family:var(--mono);font-size:14px;color:var(--amber);text-align:center;padding:6px 0}
+
+  /* ── view 1: sequence ── */
+  .seqItem{margin-bottom:16px;display:flex;gap:10px;align-items:flex-start}
+  .seqIdx{font-family:var(--mono);font-size:10px;color:var(--mut2);padding-top:12px;width:22px;text-align:right;flex:none}
+  .seqItem .blk{max-height:520px}
+
+  /* ── view 3: list ── */
+  .listRow{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+  .listRow:hover{background:var(--panel2)}
+  .listRow .grip{color:var(--mut2);font-family:var(--mono);font-size:12px}
+
+  /* ── view 4: code ── */
+  .srcPre{font-family:var(--mono);font-size:10.5px;line-height:1.75;color:var(--mut);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:16px 18px;white-space:pre-wrap;overflow:auto}
+  .srcPre .cm{color:var(--mut2)}.srcPre .bl{color:var(--amber)}.srcPre .st{color:var(--blue)}.srcPre .kw{color:var(--violet)}
+
+  /* ── view 6: timeline ── */
+  .tl{position:relative;padding-left:26px}
+  .tl::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--line2)}
+  .tlItem{position:relative;margin-bottom:18px}
+  .tlItem::before{content:"";position:absolute;left:-25px;top:12px;width:10px;height:10px;border-radius:50%;background:var(--panel);border:2px solid var(--amber)}
+  .tlAge{font-family:var(--mono);font-size:9px;color:var(--mut2);margin-bottom:5px}
+  .tlItem .blk{max-height:300px}
+
+  /* ── view 7: table ── */
+  table.blocks{width:100%;border-collapse:collapse;font-size:11.5px}
+  table.blocks th{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line2)}
+  table.blocks td{padding:9px 10px;border-bottom:1px solid var(--line);color:var(--text)}
+  table.blocks tr:hover td{background:var(--panel2)}
+  .pill{font-family:var(--mono);font-size:8.5px;border:1px solid var(--line2);border-radius:99px;padding:1.5px 8px;color:var(--mut)}
+  .pill.has{border-color:rgba(76,195,138,.4);color:var(--up)}
+
+  /* ── canvas / graph via react flow ── */
+  .flowFill{height:100%}
+  .react-flow{background:var(--panel)}
+  .react-flow__attribution{display:none}
+  .react-flow__handle{opacity:0;width:4px;height:4px;border:none}
+  .react-flow__node{cursor:grab}
+  .react-flow__resize-control.handle{background:var(--amber);border-color:var(--bg)}
+  .react-flow__edge-path{stroke:#4A422E;stroke-width:1.3;stroke-dasharray:3 3}
+  .react-flow__controls{box-shadow:none;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .react-flow__controls-button{background:var(--panel2);border-bottom:1px solid var(--line);color:var(--mut);fill:var(--mut)}
+  .react-flow__controls-button:hover{background:var(--panel3)}
+  .graphLegend{position:absolute;left:14px;bottom:12px;font-size:10px;color:var(--mut2);background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:5px 12px;z-index:5}
+  .graphLegend b{color:var(--mut)}
+
+  .zero{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--mut2);font-size:12.5px}
+  .zero .big{font-size:15px;color:var(--mut);font-weight:600}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useRef, useEffect, useCallback, useMemo } = React;
+const { ReactFlow, Background, Controls, Handle, Position } = window.ReactFlow;
+
+/* ════════════════════════════════════════════════════════════════
+   THE CLAIM THIS FILE DEMONSTRATES
+   A notebook is ONE unordered collection of blocks.
+   The seven tabs are projections of that same collection:
+     1 Sequence (Jupyter/Observable order)   · 2 Canvas (spatial)
+     3 List (names only)                     · 4 Code (serialised source)
+     5 Graph (co-data edges, COMPUTED)       · 6 Timeline (by arrival)
+     7 Table (blocks as rows)
+   Edit a block in any view → every other view reflects it.
+   Layout metadata (positions) lives in the VIEW, never in the block.
+   Graph edges are not drawn by a user: two blocks connect iff they
+   touch the same data. No verbs, no wire-pulling.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── utils ── */
+function parseCSV(text) {
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"' && text[i+1] === '"') { cell += '"'; i++; } else if (c === '"') q = false; else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i+1] === "\n") i++;
+      row.push(cell); cell = "";
+      if (row.some(v => v !== "")) rows.push(row); row = [];
+    } else cell += c;
+  }
+  row.push(cell); if (row.some(v => v !== "")) rows.push(row);
+  if (!rows.length) return null;
+  return { cols: rows[0].map(s => s.trim()), rows: rows.slice(1) };
+}
+const timeAgo = (ts) => {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return s + "s ago"; if (s < 3600) return Math.floor(s/60) + "m ago";
+  if (s < 86400) return Math.floor(s/3600) + "h ago"; return Math.floor(s/86400) + "d ago";
+};
+
+/* ── block bodies (the lenses — identical across all seven views) ── */
+
+function NoteBody({ d }) {
+  return <textarea className="taFull" placeholder="Type a note…" value={d.content.text || ""} onChange={e => d.patch({ text: e.target.value })} />;
+}
+function CodeBlockBody({ d }) {
+  return (
+    <div>
+      <div className="row"><label>language</label>
+        <select value={d.content.lang || "rust"} onChange={e => d.patch({ lang: e.target.value })}>
+          {["rust","typescript","python","go"].map(l => <option key={l}>{l}</option>)}
+        </select></div>
+      <textarea className="taFull taMono" placeholder="// empty until you type" value={d.content.text || ""} onChange={e => d.patch({ text: e.target.value })} />
+    </div>
+  );
+}
+function MarkdownBody({ d }) {
+  return (
+    <div>
+      <textarea className="taFull taMono" placeholder="# source" value={d.content.src || ""} onChange={e => d.patch({ src: e.target.value })} />
+      <div className="mdPrev" dangerouslySetInnerHTML={{ __html: d.content.src ? window.marked.parse(d.content.src) : "<i style='color:var(--mut2)'>preview — lens on the source above</i>" }} />
+    </div>
+  );
+}
+function SheetBody({ d }) {
+  const c = d.content, fileRef = useRef(null);
+  const load = (text, name) => {
+    const p = parseCSV(text);
+    if (!p) { d.patch({ error: "could not parse" }); return; }
+    d.patch({ name, cols: p.cols, rows: p.rows, error: null });
+  };
+  if (!c.cols) return (
+    <div className="empty"><b>no data loaded</b><br />this sheet is a lens, not a spreadsheet with secrets
+      <div className="row" style={{ justifyContent: "center", marginTop: 8 }}>
+        <button className="miniBtn" onClick={() => fileRef.current && fileRef.current.click()}>load .csv file</button>
+        <button className="miniBtn" onClick={() => d.patch({ paste: !c.paste })}>paste CSV</button>
+      </div>
+      <input ref={fileRef} type="file" accept=".csv,.txt" style={{ display: "none" }}
+        onChange={e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => load(r.result, f.name); r.readAsText(f); }} />
+      {c.paste ? <div><textarea className="csvInput" style={{ marginTop: 7 }} placeholder={"a,b,c\n1,2,3"} value={c.buf || ""} onChange={e => d.patch({ buf: e.target.value })} /></div> : null}
+      {c.paste ? <div style={{ marginTop: 5 }}><button className="miniBtn" onClick={() => load(c.buf || "", "pasted.csv")}>parse</button></div> : null}
+      {c.error ? <div style={{ color: "var(--dn)", marginTop: 6, fontFamily: "var(--mono)", fontSize: 9 }}>{c.error}</div> : null}
+    </div>
+  );
+  return (
+    <div>
+      <div className="row">
+        <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--up)" }}>✓ {c.name}</span>
+        <span style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--mut2)", marginLeft: "auto" }}>{c.rows.length}×{c.cols.length}</span>
+        <button className="miniBtn warn" onClick={() => d.patch({ cols: null, rows: null, name: null, tblId: null })}>clear</button>
+      </div>
+      <div style={{ overflow: "auto", maxHeight: 240 }}>
+        <table className="v"><thead><tr>{c.cols.map(h => <th key={h}>{h}</th>)}</tr></thead>
+          <tbody>{c.rows.map((r, i) => <tr key={i}>{c.cols.map((_, j) => <td key={j}>{r[j] ?? ""}</td>)}</tr>)}</tbody></table>
+      </div>
+    </div>
+  );
+}
+function ChartBody({ d }) {
+  const c = d.content, cRef = useRef(null), inst = useRef(null);
+  const tables = d.tables;                      // [{id,name,cols,rows}] derived from sheets that hold data
+  const active = tables.find(t => t.id === c.tableId) || tables[0] || null;
+  const xCol = active && (c.xCol && active.cols.includes(c.xCol) ? c.xCol : active.cols[0]);
+  const yCol = active && (c.yCol && active.cols.includes(c.yCol) ? c.yCol : active.cols.find(k => k !== xCol));
+  const type = c.ctype || "bar";
+  useEffect(() => {
+    if (!active || !cRef.current) return;
+    const xi = active.cols.indexOf(xCol), yi = active.cols.indexOf(yCol);
+    const ys = active.rows.map(r => { const n = parseFloat(r[yi]); return isNaN(n) ? 0 : n; });
+    inst.current = new window.Chart(cRef.current, {
+      type, data: { labels: active.rows.map(r => r[xi]),
+        datasets: [{ label: yCol, data: ys, backgroundColor: ys.map(v => v >= 0 ? "rgba(76,195,138,.75)" : "rgba(229,72,77,.75)"), borderColor: "#F2A93B", borderWidth: type === "line" ? 2 : 0 }] },
+      options: { responsive: true, maintainAspectRatio: false, animation: { duration: 200 },
+        plugins: { legend: { labels: { color: "#9A937F", font: { family: "IBM Plex Mono", size: 9 } } } },
+        scales: type.startsWith("pie") || type === "doughnut" ? {} :
+          { x: { ticks: { color: "#6E6857", font: { size: 9 } }, grid: { color: "#262319" } }, y: { ticks: { color: "#6E6857", font: { size: 9 } }, grid: { color: "#262319" } } } },
+    });
+    return () => { inst.current && inst.current.destroy(); };
+  }, [active && active.id, xCol, yCol, type, d.rev]);
+  if (!tables.length) return <div className="empty"><b>nothing to render</b><br />add a Sheet block and load a CSV — this lens carries no data of its own</div>;
+  return (
+    <div>
+      <div className="row">
+        <label>table</label>
+        <select value={active.id} onChange={e => d.patch({ tableId: e.target.value, xCol: null, yCol: null })}>
+          {tables.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+        <select value={type} onChange={e => d.patch({ ctype: e.target.value })}>
+          {["bar","line","pie","doughnut"].map(t => <option key={t}>{t}</option>)}
+        </select>
+      </div>
+      <div className="row"><label>x</label>
+        <select value={xCol} onChange={e => d.patch({ xCol: e.target.value })}>{active.cols.map(cc => <option key={cc}>{cc}</option>)}</select>
+        <label>y</label>
+        <select value={yCol || ""} onChange={e => d.patch({ yCol: e.target.value })}><option value="">(pick y)</option>{active.cols.map(cc => <option key={cc}>{cc}</option>)}</select>
+      </div>
+      <div className="chartBox"><canvas ref={cRef} /></div>
+    </div>
+  );
+}
+function CalendarBody({ d }) {
+  const c = d.content, today = new Date();
+  const first = new Date(today.getFullYear(), today.getMonth(), 1).getDay();
+  const days = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const cells = []; for (let i = 0; i < first; i++) cells.push(null); for (let x = 1; x <= days; x++) cells.push(x);
+  while (cells.length % 7) cells.push(null);
+  const marked = c.marks || {};
+  return (
+    <table className="cal"><thead><tr>{["Su","Mo","Tu","We","Th","Fr","Sa"].map(x => <th key={x}>{x}</th>)}</tr></thead>
+      <tbody>{Array.from({ length: cells.length / 7 }, (_, w) => (
+        <tr key={w}>{cells.slice(w * 7, w * 7 + 7).map((dd, i) => dd === null
+          ? <td key={i} style={{ opacity: .25 }} />
+          : <td key={i} className={dd === today.getDate() && !marked[dd] ? "today" : ""} style={marked[dd] ? { borderColor: "var(--amber)", color: "var(--amber)" } : {}}
+              onClick={() => { const mk = { ...marked }; if (mk[dd]) delete mk[dd]; else mk[dd] = true; d.patch({ marks: mk }); }}>{dd}{marked[dd] ? " •" : ""}</td>)}</tr>))}</tbody></table>
+  );
+}
+function BoardBody({ d }) {
+  const c = d.content, cols = ["Todo","Doing","Done"], cards = c.cards || {};
+  return (
+    <div>{cols.map(col => (
+      <div className="col" key={col}>
+        <div className="colHead">{col} · {(cards[col] || []).length}</div>
+        {(cards[col] || []).map((t, i) => <div className="cardItem" key={i}>{t}<button onClick={() => d.patch({ cards: { ...cards, [col]: cards[col].filter((_, j) => j !== i) } })}>×</button></div>)}
+        <input className="addCard" placeholder="+ enter to add" onKeyDown={e => { if (e.key === "Enter" && e.target.value.trim()) { d.patch({ cards: { ...cards, [col]: [...(cards[col] || []), e.target.value.trim()] } }); e.target.value = ""; } }} />
+      </div>))}</div>
+  );
+}
+function AccordionBody({ d }) {
+  const c = d.content, items = c.items || [];
+  return (
+    <div>{items.map((it, i) => (
+      <div className="accItem" key={i}>
+        <div className="accHead" onClick={() => d.patch({ items: items.map((x, j) => j === i ? { ...x, open: !x.open } : x) })}>
+          {it.title || "(untitled)"}<span className="car">{it.open ? "−" : "+"}</span></div>
+        {it.open ? <div className="accBody">{it.body || <i>empty section</i>}</div> : null}
+      </div>))}
+      <button className="miniBtn" onClick={() => d.patch({ items: [...items, { title: "Section " + (items.length + 1), open: false }] })}>+ section</button></div>
+  );
+}
+function SliderBody({ d }) {
+  const c = d.content, v = c.value ?? 50, lo = c.min ?? 0, hi = c.max ?? 100;
+  return (
+    <div>
+      <div className="slVal">{v}</div>
+      <input type="range" min={lo} max={hi} value={v} onChange={e => d.patch({ value: +e.target.value })} />
+      <div className="row" style={{ marginTop: 6 }}><label>min</label><input type="number" value={lo} style={{ width: 52 }} onChange={e => d.patch({ min: +e.target.value })} />
+        <label>max</label><input type="number" value={hi} style={{ width: 52 }} onChange={e => d.patch({ max: +e.target.value })} /></div>
+    </div>
+  );
+}
+
+const TYPES = {
+  note: { label: "Note", Body: NoteBody, icon: "¶" },
+  markdown: { label: "Markdown", Body: MarkdownBody, icon: "M↓" },
+  code: { label: "Code", Body: CodeBlockBody, icon: "⌨" },
+  sheet: { label: "Sheet", Body: SheetBody, icon: "▦" },
+  chart: { label: "Chart", Body: ChartBody, icon: "∑" },
+  calendar: { label: "Calendar", Body: CalendarBody, icon: "▣" },
+  board: { label: "Board", Body: BoardBody, icon: "≡" },
+  accordion: { label: "Accordion", Body: AccordionBody, icon: "⌄" },
+  slider: { label: "Slider", Body: SliderBody, icon: "⇹" },
+};
+
+/* ── one block, rendered as a lens with chrome ── */
+function Lens({ b, app, showBody = true, compact = false }) {
+  const T = TYPES[b.type];
+  const d = {
+    content: b.content || {},
+    tables: app.tables,
+    patch: (p) => app.patchBlock(b.id, p),
+    rev: app.rev,
+  };
+  return (
+    <div className="blk">
+      <div className="bHead">
+        <span className="bType">{T.label}</span>
+        <input className="bName" value={b.name} style={compact ? { fontSize: 11 } : {}} onChange={e => app.renameBlock(b.id, e.target.value)} onClick={e => e.stopPropagation()} />
+        <span className="bAge">{timeAgo(b.createdAt)}</span>
+        <span className="bCtl"><button onClick={() => app.removeBlock(b.id)}>×</button></span>
+      </div>
+      {showBody ? <div className="bBody"><T.Body d={d} /></div> : null}
+    </div>
+  );
+}
+
+/* ── view 2 (canvas) & view 5 (graph): React Flow ── */
+function FlowNode({ data }) {
+  return (
+    <div style={{ width: "100%", height: "100%" }}>
+      <Handle type="target" position={Position.Left} />
+      <Handle type="source" position={Position.Right} />
+      <Handle type="target" position={Position.Right} id="r" />
+      <Handle type="source" position={Position.Left} id="l" />
+      <Lens b={data.b} app={data.app} showBody={!data.compact} compact={data.compact} />
+    </div>
+  );
+}
+const flowNodeTypes = { lens: FlowNode };
+
+function CanvasView({ app, layout, setLayout }) {
+  const nodes = app.blocks.map((b, i) => ({
+    id: b.id, type: "lens",
+    position: layout[b.id]?.pos || { x: 50 + (i % 4) * 320, y: 50 + Math.floor(i / 4) * 260 },
+    width: layout[b.id]?.w || 300, height: layout[b.id]?.h || (layout[b.id]?.min ? 42 : 230),
+    resizable: true, data: { b, app },
+  }));
+  const onNodesChange = useCallback((changes) => {
+    setLayout(l => {
+      const n = { ...l };
+      for (const ch of changes) {
+        n[ch.id] = n[ch.id] || {};
+        if (ch.type === "position" && ch.position) n[ch.id] = { ...n[ch.id], pos: ch.position };
+        if (ch.type === "dimensions" && ch.style) {
+          const upd = { ...n[ch.id] };
+          if (ch.style.width) upd.w = typeof ch.style.width === "string" ? parseFloat(ch.style.width) : ch.style.width;
+          if (ch.style.height) upd.h = typeof ch.style.height === "string" ? parseFloat(ch.style.height) : ch.style.height;
+          n[ch.id] = upd;
+        }
+      }
+      return n;
+    });
+  }, []);
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  return (
+    <ReactFlow nodes={nodes} edges={[]} nodeTypes={flowNodeTypes} onNodesChange={onNodesChange}
+      nodesConnectable={false} minZoom={.2} proOptions={{ hideAttribution: true }} className="flowFill">
+      <Background gap={22} size={1} color="#262319" />
+      <Controls showInteractive={false} />
+    </ReactFlow>
+  );
+}
+
+/** graph view: the SAME blocks; edges are COMPUTED from shared data, never drawn by a user */
+function GraphView({ app, layout, setLayout }) {
+  const nodes = app.blocks.map((b, i) => ({
+    id: b.id, type: "lens",
+    position: layout[b.id]?.pos || { x: b.type === "chart" ? 460 : 60, y: 46 + i * 130 },
+    width: 270, height: 84, data: { b, app, compact: true },
+  }));
+  const edges = [];
+  for (const t of app.tables) {
+    const sheetId = t.id.split(":")[0];
+    const consumers = app.blocks.filter(b => b.type === "chart" && b.content.tableId === t.id && b.id !== sheetId);
+    for (const cn of consumers)
+      edges.push({ id: `${sheetId}-${cn.id}`, source: sheetId, target: cn.id, animated: false });
+  }
+  const onNodesChange = useCallback((changes) => {
+    setLayout(l => { const n = { ...l }; for (const ch of changes) { if (ch.type === "position" && ch.position) n[ch.id] = { ...(n[ch.id] || {}), pos: ch.position }; } return n; });
+  }, []);
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  return (
+    <div style={{ height: "100%", position: "relative" }}>
+      <ReactFlow nodes={nodes} edges={edges} nodeTypes={flowNodeTypes} onNodesChange={onNodesChange}
+        nodesConnectable={false} minZoom={.2} proOptions={{ hideAttribution: true }} className="flowFill">
+        <Background gap={22} size={1} color="#262319" />
+        <Controls showInteractive={false} />
+      </ReactFlow>
+      <div className="graphLegend"><b>{edges.length}</b> computed edge{edges.length === 1 ? "" : "s"} · two blocks connect <b>iff they touch the same data</b> · nothing was drawn by hand</div>
+    </div>
+  );
+}
+
+/* ── view 1: sequence (the Jupyter projection) ── */
+function SequenceView({ app }) {
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  return (
+    <div className="scroller"><div className="wrap">
+      {app.blocks.map((b, i) => (
+        <div className="seqItem" key={b.id}>
+          <span className="seqIdx">[{i}]</span>
+          <div style={{ flex: 1, minWidth: 0 }}><Lens b={b} app={app} /></div>
+        </div>))}
+    </div></div>
+  );
+}
+
+/* ── view 3: list ── */
+function ListView({ app }) {
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  return (
+    <div className="scroller"><div className="wrap">
+      {app.blocks.map(b => (
+        <div className="listRow" key={b.id}>
+          <span className="grip">⋮⋮</span>
+          <span className="bType">{TYPES[b.type].label}</span>
+          <span style={{ fontSize: 12.5, fontWeight: 600 }}>{b.name}</span>
+          <span className="bAge" style={{ marginLeft: "auto" }}>{timeAgo(b.createdAt)}</span>
+          <span className="bCtl"><button onClick={() => app.removeBlock(b.id)}>×</button></span>
+        </div>))}
+    </div></div>
+  );
+}
+
+/* ── view 4: code (the whole notebook serialised) ── */
+function CodeView({ app }) {
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  const lines = [];
+  lines.push(`<span class="cm">// notebook: ${app.blocks.length} blocks · every view is a projection of this source</span>`);
+  app.blocks.forEach((b, i) => {
+    const c = b.content || {};
+    lines.push(`\n<span class="bl">// ── [${i}] ${b.type} "${b.name}"</span>`);
+    if (b.type === "note") lines.push(`<span class="st">${(c.text || "").replace(/</g, "&lt;") || "(empty)"}</span>`);
+    else if (b.type === "markdown") lines.push(`<span class="st">${(c.src || "(empty)").replace(/</g, "&lt;")}</span>`);
+    else if (b.type === "code") lines.push(`<span class="kw">${(c.lang || "rust")} ▼</span>\n${(c.text || "(empty)").replace(/</g, "&lt;")}`);
+    else if (b.type === "sheet") {
+      if (c.cols) lines.push(`@data("${c.name}")  <span class="cm">// ${c.rows.length}×${c.cols.length}</span>\n${c.cols.join(",")}\n${c.rows.map(r => r.join(",")).join("\n")}`);
+      else lines.push(`<span class="cm">@data() // no csv loaded yet</span>`);
+    }
+    else if (b.type === "chart") lines.push(`{ <span class="kw">"lens"</span>: "chart", <span class="kw">"table"</span>: ${JSON.stringify(c.tableId || null)}, <span class="kw">"x"</span>: ${JSON.stringify(c.xCol || null)}, <span class="kw">"y"</span>: ${JSON.stringify(c.yCol || null)}, <span class="kw">"as"</span>: "${c.ctype || "bar"}" }  <span class="cm">// selects from loaded data; carries none</span>`);
+    else lines.push(JSON.stringify(c, (k, v) => k === "paste" ? undefined : v));
+  });
+  return (
+    <div className="scroller"><div className="wrap">
+      <pre className="srcPre" dangerouslySetInnerHTML={{ __html: lines.join("\n") }} />
+    </div></div>
+  );
+}
+
+/* ── view 6: timeline ── */
+function TimelineView({ app }) {
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  const sorted = [...app.blocks].sort((a, b) => a.createdAt - b.createdAt);
+  return (
+    <div className="scroller"><div className="wrap"><div className="tl">
+      {sorted.map(b => (
+        <div className="tlItem" key={b.id}>
+          <div className="tlAge">{new Date(b.createdAt).toLocaleTimeString()} · {timeAgo(b.createdAt)} · added {b.type}</div>
+          <Lens b={b} app={app} />
+        </div>))}
+    </div></div></div>
+  );
+}
+
+/* ── view 7: table ── */
+function TableView({ app }) {
+  if (!app.blocks.length) return <ZeroState app={app} />;
+  const summary = (b) => {
+    const c = b.content || {};
+    if (b.type === "sheet") return c.cols ? `${c.rows.length} rows × ${c.cols.length} cols (${c.name})` : "empty";
+    if (b.type === "chart") return c.tableId ? `${c.ctype || "bar"} · x=${c.xCol || "?"} y=${c.yCol || "?"}` : "awaiting table";
+    if (b.type === "note" || b.type === "code" || b.type === "markdown") return `${((c.text || c.src || "") + "").length} chars`;
+    if (b.type === "slider") return `value ${c.value ?? 50}`;
+    if (b.type === "board") return Object.values(c.cards || {}).flat().length + " cards";
+    if (b.type === "accordion") return (c.items || []).length + " sections";
+    if (b.type === "calendar") return (Object.keys(c.marks || {}).length) + " marks";
+    return "—";
+  };
+  const hasData = (b) => { const c = b.content || {}; return (c.text || c.src || c.cols || c.tableId || c.cards || c.items || c.marks || c.value !== undefined); };
+  return (
+    <div className="scroller"><div className="wrap">
+      <table className="blocks">
+        <thead><tr><th>#</th><th>name</th><th>type</th><th>content</th><th>data</th><th>age</th></tr></thead>
+        <tbody>{app.blocks.map((b, i) => (
+          <tr key={b.id} onClick={() => app.focusBlock(b.id)} style={{ cursor: "pointer" }}>
+            <td style={{ fontFamily: "var(--mono)", color: "var(--mut2)" }}>{i}</td>
+            <td style={{ fontWeight: 600 }}>{b.name}</td>
+            <td><span className="bType" style={{ background: "var(--panel3)", color: "var(--mut)" }}>{TYPES[b.type].label}</span></td>
+            <td style={{ color: "var(--mut)" }}>{summary(b)}</td>
+            <td><span className={"pill" + (hasData(b) ? " has" : "")}>{hasData(b) ? "has data" : "lens · empty"}</span></td>
+            <td style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--mut2)" }}>{timeAgo(b.createdAt)}</td>
+          </tr>))}</tbody>
+      </table>
+    </div></div>
+  );
+}
+
+function ZeroState({ app }) {
+  return (
+    <div className="zero">
+      <span className="big">the notebook has no blocks yet</span>
+      <span>add one with the ＋ buttons above, or</span>
+      <button className="seedBtn" onClick={app.seed}>load the sample notebook →</button>
+      <span style={{ fontSize: 10, maxWidth: 360, textAlign: "center", lineHeight: 1.7 }}>
+        (sample data only enters through an explicit action — then edit it, it stays yours)
+      </span>
+    </div>
+  );
+}
+
+/* ── the seven projections ── */
+const VIEWS = [
+  { key: "sequence", label: "Blocks",      hint: "order is the view's opinion — the collection has none" },
+  { key: "canvas",   label: "Canvas",      hint: "positions live in this tab's layout, never in a block" },
+  { key: "list",     label: "List",        hint: "names only — the thinnest projection" },
+  { key: "code",     label: "Code",        hint: "the whole notebook serialised · blocks are data" },
+  { key: "graph",    label: "Graph",       hint: "edges computed from shared data · nothing hand-drawn" },
+  { key: "timeline", label: "Timeline",    hint: "sorted by arrival time (metadata, not content)" },
+  { key: "table",    label: "Table",       hint: "the notebook about itself" },
+];
+
+/* ── app ── */
+let uid = 0;
+const nid = () => "b" + (++uid);
+
+function App() {
+  const [blocks, setBlocks] = useState([]);
+  const [view, setView] = useState("sequence");
+  const [layouts, setLayouts] = useState({ canvas: {}, graph: {} });
+  const [rev, setRev] = useState(0);
+
+  const patchBlock = (id, p) => setBlocks(bs => bs.map(b => b.id === id ? { ...b, content: { ...b.content, ...p } } : b));
+  const renameBlock = (id, name) => setBlocks(bs => bs.map(b => b.id === id ? { ...b, name } : b));
+  const removeBlock = (id) => setBlocks(bs => bs.filter(b => b.id !== id));
+  const focusBlock = (id) => { setView("sequence"); };
+  const addBlock = (type) => {
+    setBlocks(bs => [...bs, { id: nid(), type, name: TYPES[type].label + " " + (bs.filter(b => b.type === type).length + 1), content: {}, createdAt: Date.now() }]);
+    setRev(r => r + 1);
+  };
+
+  /* derived: sheets holding parsed csv ARE the data pool — charts select from it, nothing is copied */
+  const tables = useMemo(
+    () => blocks.filter(b => b.type === "sheet" && b.content && b.content.cols)
+                .map(b => ({ id: b.id + ":" + b.content.name, name: b.content.name, sheetId: b.id, cols: b.content.cols, rows: b.content.rows })),
+    [blocks]);
+
+  const app = { blocks, patchBlock, renameBlock, removeBlock, focusBlock, addBlock, tables, rev, seed };
+
+  function seed() {
+    const t = Date.now();
+    const sheetId = nid(), chartId = nid();
+    const csv = "date,asset,pnl\n2026-09-01,BTC,120\n2026-09-02,BTC,-40\n2026-09-03,BTC,88\n2026-09-04,BTC,203\n2026-09-05,BTC,-12";
+    const parsed = parseCSV(csv);   /* sample flows through the SAME parser a real load would use */
+    setBlocks([
+      { id: nid(), type: "note", name: "Q3 idea", createdAt: t - 1000 * 60 * 47,
+        content: { text: "BTC drawdowns past 20% have marked cycle floors so far. Checking 2021-11 and 2022-06 next." } },
+      { id: nid(), type: "markdown", name: "Method", createdAt: t - 1000 * 60 * 41,
+        content: { src: "# Method\n\n- load daily pnl\n- plot against date\n- watch for **dd ≥ 20%**" } },
+      { id: sheetId, type: "sheet", name: "sample.csv", createdAt: t - 1000 * 60 * 33,
+        content: { name: "sample.csv", cols: parsed.cols, rows: parsed.rows } },
+      { id: chartId, type: "chart", name: "Equity curve", createdAt: t - 1000 * 60 * 21,
+        content: { tableId: sheetId + ":sample.csv", xCol: "date", yCol: "pnl", ctype: "bar" } },
+      { id: nid(), type: "code", name: "Rolling dd", createdAt: t - 1000 * 60 * 14,
+        content: { lang: "rust", text: "fn drawdown(p: &[f64]) -> f64 {\n    let peak = p.iter().fold(0.0, f64::max);\n    peak - p[p.len() - 1]\n}" } },
+      { id: nid(), type: "board", name: "Open threads", createdAt: t - 1000 * 60 * 8,
+        content: { cards: { Todo: ["verify 2022-06 dd"], Doing: [], Done: [] } } },
+      { id: nid(), type: "slider", name: "dd threshold", createdAt: t - 1000 * 60 * 3,
+        content: { min: 0, max: 50, value: 20 } },
+    ]);
+    setRev(r => r + 1);
+  }
+
+  const cur = VIEWS.find(v => v.key === view);
+  const setLayout = (key) => (fn) => setLayouts(ls => ({ ...ls, [key]: typeof fn === "function" ? fn(ls[key]) : { ...ls[key], ...fn } }));
+
+  return (
+    <>
+      <div className="nTop">
+        <div className="nRow1">
+          <span className="nName">BTC Q3 Thesis</span>
+          <span className="nMeta">notebook · {blocks.length} block{blocks.length === 1 ? "" : "s"} · one collection</span>
+          <span className="nThesis">the notebook is the <b>collection</b> · these seven tabs are <b>projections</b></span>
+        </div>
+        <div className="tabs">
+          {VIEWS.map((v, i) => (
+            <button key={v.key} className={"tab" + (view === v.key ? " on" : "")} onClick={() => setView(v.key)}>
+              <span className="tnum">{i + 1}</span>{v.label}
+            </button>))}
+        </div>
+      </div>
+
+      <div className="tBar">
+        <span className="vb">{cur.label}</span>
+        {Object.keys(TYPES).map(k => <button key={k} className="addBtn" onClick={() => addBlock(k)}>＋ {TYPES[k].label}</button>)}
+        <span className="tHint">{cur.hint}</span>
+      </div>
+
+      <div id="stage">
+        {view === "sequence" && <SequenceView app={app} />}
+        {view === "canvas" && <CanvasView app={app} layout={layouts.canvas} setLayout={setLayout("canvas")} />}
+        {view === "list" && <ListView app={app} />}
+        {view === "code" && <CodeView app={app} />}
+        {view === "graph" && <GraphView app={app} layout={layouts.graph} setLayout={setLayout("graph")} />}
+        {view === "timeline" && <TimelineView app={app} />}
+        {view === "table" && <TableView app={app} />}
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

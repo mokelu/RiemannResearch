@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workspace — Mockup</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#0d0f13; --panel:#121419; --rail:#0a0b0f;
+  --border:#22252d; --border-soft:#1a1d23;
+  --text:#e3e6ec; --muted:#828a97; --dim:#5c636e;
+  --accent:#5b9dff; --accent-soft:rgba(91,157,255,.13);
+  --hover:rgba(255,255,255,.045); --danger:#ff6b6b;
+}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg);color:var(--text);overflow:hidden;
+  font:13px/1.5 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+input{font:inherit}
+::selection{background:rgba(91,157,255,.3)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#252932;border-radius:6px;border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:#333844;background-clip:padding-box;border:2px solid transparent}
+::-webkit-scrollbar-track{background:transparent}
+
+.app{display:flex;flex-direction:column;height:100vh}
+.app-body{flex:1;display:flex;min-height:0}
+
+/* ---------- rail ---------- */
+.rail{width:48px;flex:none;background:var(--rail);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:2px}
+.rail-btn{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;color:var(--dim);position:relative;transition:.15s}
+.rail-btn:hover{color:var(--text);background:var(--hover)}
+.rail-btn.active{color:var(--text)}
+.rail-btn.active::before{content:"";position:absolute;left:-7px;top:50%;transform:translateY(-50%);
+  width:2px;height:18px;border-radius:2px;background:var(--accent)}
+.rail-spacer{flex:1}
+.rail-avatar{width:26px;height:26px;border-radius:50%;margin-top:6px;color:#fff;
+  background:linear-gradient(135deg,#5b9dff,#a06bff);display:grid;place-items:center;
+  font-size:11px;font-weight:600}
+
+/* ---------- sidebar ---------- */
+.sidebar{width:266px;flex:none;background:var(--panel);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;min-height:0}
+.side-head{height:42px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 14px}
+.side-title{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.side-actions{display:flex;gap:1px}
+.icon-btn{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;color:var(--muted)}
+.icon-btn:hover{background:var(--hover);color:var(--text)}
+.side-search{position:relative;padding:0 10px 8px;flex:none}
+.side-search input{width:100%;height:28px;background:#0b0d11;border:1px solid var(--border);
+  border-radius:7px;color:var(--text);padding:0 10px 0 28px;font-size:12px;outline:none;transition:.15s}
+.side-search input:focus{border-color:var(--accent);background:#0d1015}
+.side-search input::placeholder{color:var(--dim)}
+.search-ico{position:absolute;left:19px;top:7px;color:var(--dim);pointer-events:none;display:flex}
+
+.tree{flex:1;overflow:auto;padding:2px 8px 14px;min-height:0}
+.node{}
+.row{display:flex;align-items:center;gap:6px;height:26px;padding:0 4px 0 5px;border-radius:6px;
+  cursor:pointer;user-select:none;position:relative;transition:background .1s}
+.row:hover{background:var(--hover)}
+.row.selected{background:var(--accent-soft)}
+.row.drop-target{background:var(--accent-soft);box-shadow:inset 0 0 0 1px rgba(91,157,255,.55)}
+.chev{width:14px;height:14px;flex:none;display:grid;place-items:center;color:var(--dim);transition:transform .13s ease}
+.chev.open{transform:rotate(90deg)}
+.chev.leaf{visibility:hidden}
+.ico{flex:none;display:grid;place-items:center;color:var(--muted)}
+.ico-folder{color:#8593a8}
+.name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#c8ced8;font-size:13px}
+.row.selected .name{color:#eaf1ff}
+.row-more{width:20px;height:20px;flex:none;border-radius:5px;display:grid;place-items:center;
+  color:var(--muted);opacity:0;transition:.12s}
+.row:hover .row-more{opacity:1}
+.row-more:hover{background:rgba(255,255,255,.09);color:var(--text)}
+.children{margin-left:15px;border-left:1px solid var(--border-soft);padding-left:2px}
+.rename{flex:1;min-width:0;height:20px;background:#0a0c10;border:1px solid var(--accent);
+  border-radius:4px;color:#fff;font-size:13px;padding:0 5px;outline:none}
+.tree-empty{padding:22px 10px;text-align:center;color:var(--dim);font-size:12px}
+
+.ico-md{color:#6ea8fe}.ico-js{color:#f0d264}.ico-ts{color:#6aa6ff}.ico-css{color:#a78bfa}
+.ico-html{color:#ff8a5c}.ico-json{color:#f0b429}.ico-svg,.ico-png,.ico-jpg{color:#4ade80}
+.ico-txt{color:#9aa3b0}
+
+.side-foot{height:30px;flex:none;display:flex;align-items:center;gap:7px;padding:0 14px;
+  border-top:1px solid var(--border-soft);font-size:11px;color:var(--dim)}
+.dot{width:6px;height:6px;border-radius:50%;background:#3ddc84;box-shadow:0 0 8px rgba(61,220,132,.55)}
+
+/* ---------- main ---------- */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg)}
+.tabs{height:40px;flex:none;display:flex;align-items:stretch;gap:1px;border-bottom:1px solid var(--border);
+  overflow-x:auto;padding:0 6px}
+.tabs::-webkit-scrollbar{height:0}
+.tab{display:flex;align-items:center;gap:7px;padding:0 8px 0 12px;max-width:210px;color:var(--muted);
+  font-size:12.5px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:.12s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--text);background:linear-gradient(180deg,rgba(255,255,255,.035),transparent);
+  border-bottom-color:var(--accent)}
+.tab-name{overflow:hidden;text-overflow:ellipsis}
+.tab-close{width:18px;height:18px;border-radius:4px;display:grid;place-items:center;color:var(--dim);
+  font-size:14px;line-height:1}
+.tab-close:hover{background:rgba(255,255,255,.1);color:var(--text)}
+
+.editor{flex:1;overflow:auto;min-height:0}
+.empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  color:var(--dim);text-align:center;padding:24px}
+.empty .big{color:#2c313b;margin-bottom:10px}
+.empty h2{margin:0;font-size:14px;font-weight:500;color:var(--muted)}
+.empty p{margin:0;font-size:12px;max-width:320px;line-height:1.7}
+.kbd{display:inline-block;padding:1px 5px;border:1px solid #2b303a;border-radius:4px;
+  background:#161a20;color:var(--muted);font-size:11px;margin:0 1px}
+
+.doc{max-width:780px;margin:0 auto;padding:44px 40px 90px}
+.crumb{font-size:11.5px;color:var(--dim);letter-spacing:.02em;margin-bottom:16px}
+.crumb b{color:var(--muted);font-weight:500}
+.doc h1{font-size:26px;margin:0 0 8px;font-weight:600;letter-spacing:-.02em}
+.meta{font-size:12px;color:var(--dim);margin-bottom:36px}
+.line{height:10px;border-radius:5px;background:linear-gradient(90deg,#1c2027,#161a20);margin-bottom:14px}
+
+/* ---------- status bar ---------- */
+.statusbar{height:26px;flex:none;background:var(--rail);border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 14px;
+  font-size:11px;color:var(--dim)}
+.statusbar .right{display:flex;gap:16px}
+
+/* ---------- context menu ---------- */
+.ctx{position:fixed;z-index:1000;min-width:196px;background:#181b21;border:1px solid #2a2e37;
+  border-radius:9px;padding:5px;font-size:12.5px;
+  box-shadow:0 14px 38px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.4)}
+.ctx-item{display:flex;align-items:center;gap:9px;padding:6px 9px;border-radius:6px;
+  cursor:pointer;color:#c9cfd9;white-space:nowrap}
+.ctx-item:hover{background:rgba(255,255,255,.07);color:#fff}
+.ctx-item.danger{color:#ff8080}
+.ctx-item.danger:hover{background:rgba(255,107,107,.12)}
+.ctx-ico{width:14px;height:14px;display:grid;place-items:center;color:var(--muted);flex:none}
+.ctx-item.danger .ctx-ico{color:#ff8080}
+.ctx-short{margin-left:auto;color:var(--dim);font-size:11px;padding-left:18px}
+.ctx-sep{height:1px;background:#262a33;margin:5px 4px}
+
+/* ---------- dialog ---------- */
+.overlay{position:fixed;inset:0;background:rgba(5,6,9,.6);backdrop-filter:blur(3px);
+  display:grid;place-items:center;z-index:1100;animation:fade .12s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.dialog{width:346px;background:#171a20;border:1px solid #2a2e37;border-radius:12px;padding:20px;
+  box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.dialog h3{margin:0 0 8px;font-size:14.5px;font-weight:600}
+.dialog p{margin:0 0 18px;font-size:12.5px;color:var(--muted);line-height:1.55}
+.dialog-actions{display:flex;justify-content:flex-end;gap:8px}
+.btn{height:30px;padding:0 14px;border-radius:7px;font-size:12.5px;font-weight:500;transition:.12s}
+.btn.ghost{color:var(--muted);border:1px solid #2a2e37}
+.btn.ghost:hover{background:var(--hover);color:var(--text)}
+.btn.danger{background:#e5484d;color:#fff}
+.btn.danger:hover{background:#f0575c}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="app-body">
+
+    <!-- rail -->
+    <nav class="rail">
+      <button class="rail-btn active" title="Explorer">
+        <svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M9 1.5H4.5a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V5z"/><path d="M9 1.5V5h3.5"/></svg>
+      </button>
+      <button class="rail-btn" title="Search">
+        <svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>
+      </button>
+      <button class="rail-btn" title="Source control">
+        <svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="4.5" cy="3.5" r="1.8"/><circle cx="4.5" cy="12.5" r="1.8"/><circle cx="11.5" cy="6.5" r="1.8"/><path d="M4.5 5.3v5.4M9.9 7.6c-1.6.8-2.6.6-4.2 1.3"/></svg>
+      </button>
+      <button class="rail-btn" title="Extensions">
+        <svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+      </button>
+      <div class="rail-spacer"></div>
+      <button class="rail-btn" title="Settings">
+        <svg width="19" height="19" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v1.8M8 12.7v1.8M14.5 8h-1.8M3.3 8H1.5M12.6 3.4l-1.3 1.3M4.7 11.3l-1.3 1.3M12.6 12.6l-1.3-1.3M4.7 4.7 3.4 3.4"/></svg>
+      </button>
+      <div class="rail-avatar">A</div>
+    </nav>
+
+    <!-- sidebar -->
+    <aside class="sidebar">
+      <div class="side-head">
+        <span class="side-title">Explorer</span>
+        <div class="side-actions">
+          <button class="icon-btn" id="btnNewFile" title="New File">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M9 1.5H4.5a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V5z"/><path d="M9 1.5V5h3.5"/></svg>
+          </button>
+          <button class="icon-btn" id="btnNewFolder" title="New Folder">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M1.5 4.2a1 1 0 0 1 1-1h3l1.4 1.5h5.6a1 1 0 0 1 1 1v6.1a1 1 0 0 1-1 1H2.5a1 1 0 0 1-1-1z"/><path d="M8 8v3M6.5 9.5h3"/></svg>
+          </button>
+          <button class="icon-btn" id="btnCollapse" title="Collapse All">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5.5h10M5.5 8.5h5M7.5 11.5h1"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="side-search">
+        <span class="search-ico">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4.3"/><path d="M10.5 10.5 14 14"/></svg>
+        </span>
+        <input id="search" placeholder="Search files…" spellcheck="false">
+      </div>
+
+      <div class="tree" id="tree"></div>
+
+      <div class="side-foot">
+        <span class="dot"></span>
+        <span id="statLine">—</span>
+      </div>
+    </aside>
+
+    <!-- main -->
+    <main class="main">
+      <div class="tabs" id="tabs"></div>
+      <div class="editor" id="editor"></div>
+    </main>
+
+  </div>
+
+  <div class="statusbar">
+    <span id="sbLeft">Workspace</span>
+    <div class="right">
+      <span id="sbRight">0 files · 0 folders</span>
+      <span>UTF-8</span>
+      <span>Markdown</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   ICONS
+   ========================================================= */
+const CHEV = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M6 3.5 10.5 8 6 12.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const FILE = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M9 1.5H4.5a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V5z"/><path d="M9 1.5V5h3.5"/></svg>';
+const FOLDER = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M1.5 4.2a1 1 0 0 1 1-1h3l1.4 1.5h5.6a1 1 0 0 1 1 1v6.1a1 1 0 0 1-1 1H2.5a1 1 0 0 1-1-1z"/></svg>';
+const DOTS = '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><circle cx="3.5" cy="8" r="1.2"/><circle cx="8" cy="8" r="1.2"/><circle cx="12.5" cy="8" r="1.2"/></svg>';
+const I = {
+  file:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M9 1.5H4.5a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V5z"/><path d="M9 1.5V5h3.5"/></svg>',
+  folder:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M1.5 4.2a1 1 0 0 1 1-1h3l1.4 1.5h5.6a1 1 0 0 1 1 1v6.1a1 1 0 0 1-1 1H2.5a1 1 0 0 1-1-1z"/></svg>',
+  edit:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M11.2 2.3 13.7 4.8 5.9 12.6 2.8 13.2 3.4 10.1z"/></svg>',
+  trash:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4h11M6 4V2.8a.8.8 0 0 1 .8-.8h2.4a.8.8 0 0 1 .8.8V4M4 4l.6 9a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9L12 4"/></svg>',
+  copy:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="8" rx="1.2"/><path d="M10.5 5.5v-3a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h3"/></svg>',
+  expand:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5 10.5 8 6 12.5"/><path d="M2.5 3.5v9"/></svg>'
+};
+
+/* =========================================================
+   DATA
+   ========================================================= */
+let uid = 100;
+const nid = () => 'n' + (uid++);
+
+const root = {
+  id:'root', type:'folder', name:'Workspace', children:[
+    { id:'p1', type:'folder', name:'Projects', children:[
+      { id:'p2', type:'folder', name:'website', children:[
+        { id:'w1', type:'file', name:'index.html' },
+        { id:'w2', type:'file', name:'styles.css' },
+        { id:'w3', type:'file', name:'app.js' }
+      ]},
+      { id:'p3', type:'folder', name:'mobile-app', children:[
+        { id:'m1', type:'file', name:'README.md' }
+      ]}
+    ]},
+    { id:'n1', type:'folder', name:'Notes', children:[
+      { id:'nt1', type:'file', name:'ideas.md' },
+      { id:'nt2', type:'file', name:'meeting-notes.md' }
+    ]},
+    { id:'r1', type:'file', name:'package.json' },
+    { id:'r2', type:'file', name:'README.md' }
+  ]
+};
+
+const state = {
+  expanded: new Set(['p1','p2','n1']),
+  selected: null,
+  editing: null,      // { id, isNew, original }
+  tabs: [],
+  active: null,
+  query: ''
+};
+
+let dragId = null;
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const treeEl  = $('#tree');
+const tabsEl  = $('#tabs');
+const editorEl= $('#editor');
+
+function findNode(id, node = root){
+  if(node.id === id) return node;
+  if(node.children) for(const c of node.children){
+    const r = findNode(id, c); if(r) return r;
+  }
+  return null;
+}
+function findParent(id, node = root){
+  if(node.children) for(const c of node.children){
+    if(c.id === id) return node;
+    const r = findParent(id, c); if(r) return r;
+  }
+  return null;
+}
+function pathOf(id, node = root, acc = []){
+  const next = [...acc, node];
+  if(node.id === id) return next;
+  if(node.children) for(const c of node.children){
+    const r = pathOf(id, c, next); if(r) return r;
+  }
+  return null;
+}
+function isDescendantOf(nodeId, ancestorId){
+  const p = pathOf(nodeId);
+  return !!p && p.slice(0,-1).some(n => n.id === ancestorId);
+}
+function collectIds(node, out = []){
+  out.push(node.id);
+  if(node.children) node.children.forEach(c => collectIds(c, out));
+  return out;
+}
+function extOf(name){
+  const i = name.lastIndexOf('.');
+  return i > 0 ? name.slice(i+1).toLowerCase() : '';
+}
+function subtreeMatches(node, q){
+  if(node.name.toLowerCase().includes(q)) return true;
+  return node.children ? node.children.some(c => subtreeMatches(c, q)) : false;
+}
+
+/* =========================================================
+   RENDER — TREE
+   ========================================================= */
+function renderTree(){
+  treeEl.innerHTML = '';
+  const q = state.query.trim().toLowerCase();
+
+  root.children.forEach(n => {
+    if(q && !subtreeMatches(n, q)) return;
+    treeEl.appendChild(renderNode(n, q));
+  });
+
+  if(!treeEl.children.length){
+    const e = document.createElement('div');
+    e.className = 'tree-empty';
+    e.textContent = q ? 'No matching files' : 'Nothing here yet — create a file';
+    treeEl.appendChild(e);
+  }
+  updateStats();
+}
+
+function renderNode(node, q){
+  const isFolder = node.type === 'folder';
+  const wrap = document.createElement('div');
+  wrap.className = 'node';
+
+  const row = document.createElement('div');
+  row.className = 'row';
+  row.dataset.id = node.id;
+  if(state.selected === node.id) row.classList.add('selected');
+  row.draggable = true;
+
+  /* chevron */
+  const chev = document.createElement('span');
+  chev.className = 'chev';
+  if(isFolder){
+    chev.innerHTML = CHEV;
+    if(state.expanded.has(node.id) || q) chev.classList.add('open');
+  } else {
+    chev.classList.add('leaf');
+  }
+  row.appendChild(chev);
+
+  /* icon */
+  const ico = document.createElement('span');
+  ico.className = 'ico ' + (isFolder ? 'ico-folder' : 'ico-' + extOf(node.name));
+  ico.innerHTML = isFolder ? FOLDER : FILE;
+  row.appendChild(ico);
+
+  /* name / rename input */
+  if(state.editing && state.editing.id === node.id){
+    const input = document.createElement('input');
+    input.className = 'rename';
+    input.value = node.name;
+    input.spellcheck = false;
+    row.appendChild(input);
+    requestAnimationFrame(() => {
+      input.focus(); input.select();
+      input.scrollIntoView({ block:'nearest' });
+    });
+    input.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if(e.key === 'Enter'){ e.preventDefault(); commitEdit(node.id, input.value); }
+      else if(e.key === 'Escape'){ e.preventDefault(); cancelEdit(); }
+    });
+    input.addEventListener('blur', () => {
+      if(state.editing && state.editing.id === node.id) commitEdit(node.id, input.value);
+    });
+    input.addEventListener('click', e => e.stopPropagation());
+    input.addEventListener('dblclick', e => e.stopPropagation());
+  } else {
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = node.name || 'untitled';
+    row.appendChild(name);
+
+    const more = document.createElement('button');
+    more.className = 'row-more';
+    more.innerHTML = DOTS;
+    more.addEventListener('click', e => {
+      e.stopPropagation();
+      selectNode(node.id);
+      const r = more.getBoundingClientRect();
+      openMenuFor(node, r.left - 160, r.bottom + 4);
+    });
+    row.appendChild(more);
+  }
+
+  /* events */
+  row.addEventListener('click', e => {
+    if(e.target.tagName === 'INPUT') return;
+    selectNode(node.id);
+    if(isFolder) toggleFolder(node.id);
+    else openFile(node.id);
+  });
+  row.addEventListener('dblclick', e => {
+    e.stopPropagation();
+    if(!isFolder) startRename(node.id);
+  });
+  row.addEventListener('contextmenu', e => {
+    e.preventDefault(); e.stopPropagation();
+    selectNode(node.id);
+    openMenuFor(node, e.clientX, e.clientY);
+  });
+
+  /* drag & drop */
+  row.addEventListener('dragstart', e => {
+    e.stopPropagation();
+    dragId = node.id;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', node.id);
+  });
+  row.addEventListener('dragend', () => { dragId = null; clearDropTargets(); });
+  row.addEventListener('dragover', e => {
+    if(!dragId || dragId === node.id || !isFolder) return;
+    if(isDescendantOf(node.id, dragId)) return;
+    e.preventDefault(); e.stopPropagation();
+    clearDropTargets();
+    row.classList.add('drop-target');
+  });
+  row.addEventListener('dragleave', () => row.classList.remove('drop-target'));
+  row.addEventListener('drop', e => {
+    e.preventDefault(); e.stopPropagation();
+    row.classList.remove('drop-target');
+    if(dragId) moveNode(dragId, node.id);
+  });
+
+  wrap.appendChild(row);
+
+  /* children */
+  if(isFolder && (state.expanded.has(node.id) || q)){
+    const kids = document.createElement('div');
+    kids.className = 'children';
+    node.children.forEach(c => {
+      if(q && !subtreeMatches(c, q)) return;
+      kids.appendChild(renderNode(c, q));
+    });
+    if(kids.children.length) wrap.appendChild(kids);
+  }
+
+  return wrap;
+}
+
+function clearDropTargets(){
+  document.querySelectorAll('.row.drop-target').forEach(r => r.classList.remove('drop-target'));
+}
+
+function updateSelection(){
+  document.querySelectorAll('.row').forEach(r =>
+    r.classList.toggle('selected', r.dataset.id === state.selected)
+  );
+}
+
+function updateStats(){
+  let files = 0, folders = 0;
+  (function walk(n){
+    if(n.id !== 'root'){
+      if(n.type === 'folder') folders++; else files++;
+    }
+    if(n.children) n.children.forEach(walk);
+  })(root);
+  $('#statLine').textContent = `${files} files · ${folders} folders`;
+  $('#sbRight').textContent  = `${files} files · ${folders} folders`;
+}
+
+/* =========================================================
+   TREE ACTIONS
+   ========================================================= */
+function selectNode(id){
+  state.selected = id;
+  updateSelection();
+}
+
+function toggleFolder(id){
+  if(state.expanded.has(id)) state.expanded.delete(id);
+  else state.expanded.add(id);
+  renderTree();
+}
+
+function startRename(id){
+  const node = findNode(id);
+  if(!node) return;
+  state.editing = { id, isNew:false, original:node.name };
+  renderTree();
+}
+
+function commitEdit(id, value){
+  const ed = state.editing;
+  if(!ed || ed.id !== id) return;
+  state.editing = null;
+
+  const node = findNode(id);
+  const name = (value || '').trim();
+
+  if(node){
+    if(!name){
+      if(ed.isNew){
+        const p = findParent(id);
+        if(p) p.children.splice(p.children.indexOf(node), 1);
+      } else {
+        node.name = ed.original;
+      }
+    } else {
+      node.name = name;
+    }
+  }
+  renderTree();
+  renderTabs();
+  renderEditor();
+}
+
+function cancelEdit(){
+  const ed = state.editing;
+  if(!ed) return;
+  state.editing = null;
+  if(ed.isNew){
+    const node = findNode(ed.id);
+    if(node){
+      const p = findParent(ed.id);
+      if(p) p.children.splice(p.children.indexOf(node), 1);
+    }
+  }
+  renderTree();
+}
+
+function createNode(parentId, type){
+  let parent = parentId ? findNode(parentId) : root;
+  if(!parent || parent.type !== 'folder') parent = root;
+
+  const node = { id: nid(), type, name:'' };
+  if(type === 'folder') node.children = [];
+
+  parent.children.unshift(node);
+  if(parent.id !== 'root') state.expanded.add(parent.id);
+
+  state.selected = node.id;
+  state.query = '';
+  $('#search').value = '';
+  state.editing = { id: node.id, isNew:true, original:'' };
+  renderTree();
+}
+
+function deleteNode(id){
+  const node = findNode(id);
+  if(!node) return;
+
+  showConfirm(
+    `Delete “${node.name || 'untitled'}”?`,
+    node.type === 'folder'
+      ? 'The folder and everything inside it will be removed. This cannot be undone.'
+      : 'This file will be removed. This cannot be undone.',
+    () => {
+      const ids = collectIds(node);
+      const parent = findParent(id);
+      if(parent) parent.children.splice(parent.children.indexOf(node), 1);
+
+      state.tabs = state.tabs.filter(t => !ids.includes(t));
+      if(ids.includes(state.active)){
+        state.active = state.tabs[state.tabs.length - 1] || null;
+      }
+      renderTree(); renderTabs(); renderEditor();
+    }
+  );
+}
+
+function duplicateNode(id){
+  const node = findNode(id);
+  if(!node || node.type !== 'file') return;
+  const parent = findParent(id);
+  const copy = { id: nid(), type:'file', name: node.name.replace(/(\.[^.]+)?$/, m => ' copy' + (m || '')) };
+  parent.children.splice(parent.children.indexOf(node) + 1, 0, copy);
+  renderTree();
+  state.selected = copy.id;
+  updateSelection();
+  startRename(copy.id);
+}
+
+function moveNode(sourceId, targetId){
+  if(sourceId === targetId) return;
+  const src = findNode(sourceId);
+  const tgt = findNode(targetId);
+  if(!src || !tgt || tgt.type !== 'folder') return;
+  if(isDescendantOf(targetId, sourceId)) return;
+
+  const parent = findParent(sourceId);
+  if(!parent || parent.id === targetId) return;
+
+  parent.children.splice(parent.children.indexOf(src), 1);
+  tgt.children.unshift(src);
+  state.expanded.add(targetId);
+  renderTree();
+}
+
+/* =========================================================
+   TABS + EDITOR
+   ========================================================= */
+function openFile(id){
+  if(!state.tabs.includes(id)) state.tabs.push(id);
+  state.active = id;
+  state.selected = id;
+  renderTabs(); renderEditor(); updateSelection();
+}
+
+function closeTab(id){
+  const i = state.tabs.indexOf(id);
+  if(i < 0) return;
+  state.tabs.splice(i, 1);
+  if(state.active === id){
+    state.active = state.tabs[Math.min(i, state.tabs.length - 1)] || null;
+  }
+  renderTabs(); renderEditor();
+}
+
+function renderTabs(){
+  tabsEl.innerHTML = '';
+  state.tabs.forEach(id => {
+    const node = findNode(id);
+    if(!node){ return; }
+
+    const tab = document.createElement('div');
+    tab.className = 'tab' + (state.active === id ? ' active' : '');
+
+    const ico = document.createElement('span');
+    ico.className = 'ico ico-' + extOf(node.name);
+    ico.innerHTML = FILE;
+
+    const nm = document.createElement('span');
+    nm.className = 'tab-name';
+    nm.textContent = node.name;
+
+    const cl = document.createElement('button');
+    cl.className = 'tab-close';
+    cl.textContent = '×';
+    cl.addEventListener('click', e => { e.stopPropagation(); closeTab(id); });
+
+    tab.append(ico, nm, cl);
+    tab.addEventListener('click', () => {
+      state.active = id; state.selected = id;
+      renderTabs(); renderEditor(); updateSelection();
+    });
+    tabsEl.appendChild(tab);
+  });
+}
+
+function renderEditor(){
+  if(!state.active || !findNode(state.active)){
+    editorEl.innerHTML = `
+      <div class="empty">
+        <div class="big">
+          <svg width="46" height="46" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round">
+            <path d="M9 1.5H4.5a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V5z"/><path d="M9 1.5V5h3.5"/>
+          </svg>
+        </div>
+        <h2>No file open</h2>
+        <p>Pick a file from the explorer, or right-click in the sidebar to create one.<br>
+        <span class="kbd">F2</span> rename &nbsp;·&nbsp; <span class="kbd">Del</span> delete &nbsp;·&nbsp; <span class="kbd">Esc</span> cancel</p>
+      </div>`;
+    return;
+  }
+
+  const node = findNode(state.active);
+  const path = pathOf(node.id).map(n => n.name);
+  const crumb = path.slice(0, -1).map(n => `<b>${n}</b>`).join(' / ');
+
+  const widths = [96, 88, 92, 70, 84, 60, 90, 76, 40];
+  const lines = widths.map(w => `<div class="line" style="width:${w}%"></div>`).join('');
+
+  editorEl.innerHTML = `
+    <div class="doc">
+      <div class="crumb">${crumb}</div>
+      <h1>${node.name}</h1>
+      <div class="meta">Last edited just now · auto-saved</div>
+      ${lines}
+    </div>`;
+}
+
+/* =========================================================
+   CONTEXT MENU
+   ========================================================= */
+let menuEl = null;
+
+function hideMenu(){
+  if(menuEl){ menuEl.remove(); menuEl = null; }
+}
+
+function showMenu(x, y, items){
+  hideMenu();
+  const m = document.createElement('div');
+  m.className = 'ctx';
+  m.style.visibility = 'hidden';
+
+  items.forEach(it => {
+    if(it.sep){
+      const s = document.createElement('div');
+      s.className = 'ctx-sep';
+      m.appendChild(s);
+      return;
+    }
+    const b = document.createElement('div');
+    b.className = 'ctx-item' + (it.danger ? ' danger' : '');
+    b.innerHTML = `<span class="ctx-ico">${it.icon || ''}</span><span>${it.label}</span>` +
+                  (it.short ? `<span class="ctx-short">${it.short}</span>` : '');
+    b.addEventListener('click', e => {
+      e.stopPropagation();
+      hideMenu();
+      it.action();
+    });
+    m.appendChild(b);
+  });
+
+  document.body.appendChild(m);
+  const r = m.getBoundingClientRect();
+  m.style.left = Math.max(6, Math.min(x, innerWidth  - r.width  - 8)) + 'px';
+  m.style.top  = Math.max(6, Math.min(y, innerHeight - r.height - 8)) + 'px';
+  m.style.visibility = 'visible';
+  menuEl = m;
+}
+
+function openMenuFor(node, x, y){
+  const isFolder = node.type === 'folder';
+  const items = [];
+
+  if(isFolder){
+    items.push(
+      { label:'New File',   icon:I.file,   action:() => createNode(node.id, 'file') },
+      { label:'New Folder', icon:I.folder, action:() => createNode(node.id, 'folder') },
+      { sep:true },
+      { label:'Rename', icon:I.edit, short:'F2', action:() => startRename(node.id) },
+      { label:'Delete', icon:I.trash, short:'Del', danger:true, action:() => deleteNode(node.id) },
+      { sep:true },
+      { label:'Copy Path', icon:I.copy, action:() => copyPath(node.id) },
+      { label:'Expand All', icon:I.expand, action:() => {
+          collectIds(node).forEach(id => {
+            const n = findNode(id);
+            if(n && n.type === 'folder') state.expanded.add(id);
+          });
+          renderTree();
+        }}
+    );
+  } else {
+    items.push(
+      { label:'Open', icon:I.file, action:() => openFile(node.id) },
+      { sep:true },
+      { label:'Rename', icon:I.edit, short:'F2', action:() => startRename(node.id) },
+      { label:'Duplicate', icon:I.copy, action:() => duplicateNode(node.id) },
+      { label:'Delete', icon:I.trash, short:'Del', danger:true, action:() => deleteNode(node.id) },
+      { sep:true },
+      { label:'Copy Path', icon:I.copy, action:() => copyPath(node.id) }
+    );
+  }
+  showMenu(x, y, items);
+}
+
+function copyPath(id){
+  const p = pathOf(id).map(n => n.name).join('/');
+  navigator.clipboard?.writeText(p).catch(() => {});
+}
+
+/* =========================================================
+   CONFIRM DIALOG
+   ========================================================= */
+function showConfirm(title, body, onYes){
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <div class="dialog">
+      <h3></h3>
+      <p></p>
+      <div class="dialog-actions">
+        <button class="btn ghost" data-act="cancel">Cancel</button>
+        <button class="btn danger" data-act="ok">Delete</button>
+      </div>
+    </div>`;
+  overlay.querySelector('h3').textContent = title;
+  overlay.querySelector('p').textContent = body;
+
+  const close = () => overlay.remove();
+  overlay.addEventListener('click', e => { if(e.target === overlay) close(); });
+  overlay.querySelector('[data-act="cancel"]').addEventListener('click', close);
+  overlay.querySelector('[data-act="ok"]').addEventListener('click', () => { close(); onYes(); });
+
+  document.body.appendChild(overlay);
+  overlay.querySelector('[data-act="ok"]').focus();
+
+  const onKey = e => {
+    if(e.key === 'Escape'){ close(); document.removeEventListener('keydown', onKey); }
+  };
+  document.addEventListener('keydown', onKey);
+}
+
+/* =========================================================
+   GLOBAL EVENTS
+   ========================================================= */
+document.addEventListener('click', hideMenu);
+document.addEventListener('contextmenu', e => {
+  if(!e.target.closest('.row')) hideMenu();
+}, true);
+window.addEventListener('resize', hideMenu);
+
+/* empty area of the tree */
+treeEl.addEventListener('contextmenu', e => {
+  if(e.target.closest('.row')) return;
+  e.preventDefault();
+  selectNode(null);
+  showMenu(e.clientX, e.clientY, [
+    { label:'New File',   icon:I.file,   action:() => createNode('root', 'file') },
+    { label:'New Folder', icon:I.folder, action:() => createNode('root', 'folder') },
+    { sep:true },
+    { label:'Expand All', icon:I.expand, action:() => {
+        (function walk(n){ if(n.children){ if(n.id!=='root') state.expanded.add(n.id); n.children.forEach(walk); } })(root);
+        renderTree();
+      }},
+    { label:'Collapse All', icon:I.expand, action:() => { state.expanded.clear(); renderTree(); } }
+  ]);
+});
+treeEl.addEventListener('dragover', e => { if(dragId) e.preventDefault(); });
+treeEl.addEventListener('drop', e => {
+  if(dragId && !e.target.closest('.row')){ e.preventDefault(); moveNode(dragId, 'root'); }
+});
+
+/* header buttons */
+$('#btnNewFile').addEventListener('click', () => createNode(currentTarget(), 'file'));
+$('#btnNewFolder').addEventListener('click', () => createNode(currentTarget(), 'folder'));
+$('#btnCollapse').addEventListener('click', () => { state.expanded.clear(); renderTree(); });
+
+function currentTarget(){
+  const n = state.selected ? findNode(state.selected) : null;
+  if(!n) return 'root';
+  if(n.type === 'folder') return n.id;
+  const p = findParent(n.id);
+  return p ? p.id : 'root';
+}
+
+/* search */
+$('#search').addEventListener('input', e => {
+  state.query = e.target.value;
+  renderTree();
+});
+$('#search').addEventListener('keydown', e => e.stopPropagation());
+
+/* keyboard */
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){ hideMenu(); return; }
+  if(e.target.tagName === 'INPUT') return;
+  if(!state.selected) return;
+
+  if(e.key === 'F2'){ e.preventDefault(); startRename(state.selected); }
+  if(e.key === 'Delete' || e.key === 'Backspace'){ e.preventDefault(); deleteNode(state.selected); }
+  if(e.key === 'Enter'){
+    const n = findNode(state.selected);
+    if(n && n.type === 'folder') toggleFolder(n.id);
+    else if(n) openFile(n.id);
+  }
+});
+
+/* =========================================================
+   BOOT
+   ========================================================= */
+renderTree();
+renderTabs();
+renderEditor();
+</script>
+</body>
+</html>

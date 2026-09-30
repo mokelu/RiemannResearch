@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Semantic Field | docs.study</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#09090b;--surface:#141416;--surface2:#1c1c1f;--border:#27272a;--text:#fafafa;--text2:#a1a1aa;--muted:#52525b;--accent:#6366f1;--accent2:#818cf8;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;overflow:hidden;height:100vh;width:100vw;cursor:grab;}
+body.panning{cursor:grabbing;}
+
+/* Grid background */
+#viewport{position:fixed;inset:0;}
+#canvas{position:absolute;transform-origin:0 0;will-change:transform;}
+
+/* Group regions */
+.group-region{position:absolute;border-radius:24px;pointer-events:none;}
+.group-label{position:absolute;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);opacity:0.5;pointer-events:none;white-space:nowrap;}
+
+/* Edges SVG */
+#edges{position:absolute;top:0;left:0;overflow:visible;pointer-events:none;}
+#edges line{stroke:var(--border);stroke-width:1.5;opacity:0.5;}
+#edges line.active{stroke:var(--accent);opacity:0.8;stroke-width:2;}
+
+/* Nodes */
+.node{position:absolute;transform:translate(-50%,-50%);cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;}
+.node:hover{transform:translate(-50%,-50%) scale(1.06);z-index:10;}
+.node.selected{z-index:20;}
+.node-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 18px;min-width:130px;text-align:center;transition:border-color 0.15s,box-shadow 0.15s;}
+.node:hover .node-card{border-color:var(--text2);box-shadow:0 0 24px rgba(99,102,241,0.08);}
+.node.selected .node-card{border-color:var(--accent);box-shadow:0 0 32px rgba(99,102,241,0.2);}
+.node-name{font-size:13px;font-weight:700;letter-spacing:0.01em;margin-bottom:4px;}
+.node-count{font-size:10px;color:var(--muted);font-family:'Fira Code',monospace;}
+.node-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle;}
+
+/* Detail Panel */
+.panel{position:fixed;top:0;right:0;bottom:0;width:420px;background:var(--surface);border-left:1px solid var(--border);transform:translateX(100%);transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);z-index:100;display:flex;flex-direction:column;overflow:hidden;}
+.panel.open{transform:translateX(0);}
+.panel-header{padding:20px 24px 0;flex-shrink:0;}
+.panel-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:18px;transition:all 0.12s;}
+.panel-close:hover{border-color:var(--text2);color:var(--text);}
+.panel-title{font-size:1.3rem;font-weight:800;margin-bottom:2px;}
+.panel-sub{font-size:0.75rem;color:var(--muted);margin-bottom:16px;}
+.panel-props{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;}
+.prop-chip{padding:4px 10px;border-radius:6px;font-size:0.68rem;font-weight:600;font-family:'Fira Code',monospace;background:var(--surface2);border:1px solid var(--border);color:var(--text2);}
+
+.lens-tabs{display:flex;gap:2px;padding:0 24px;overflow-x:auto;flex-shrink:0;scrollbar-width:none;border-bottom:1px solid var(--border);}
+.lens-tabs::-webkit-scrollbar{display:none;}
+.lens-tab{padding:10px 12px;font-size:0.7rem;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.12s;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;}
+.lens-tab:hover{color:var(--text2);}
+.lens-tab.active{color:var(--accent2);border-bottom-color:var(--accent);}
+.lens-tab svg{width:14px;height:14px;vertical-align:-2px;margin-right:4px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+
+.lens-body{flex:1;overflow-y:auto;padding:20px 24px;font-size:0.85rem;line-height:1.75;color:var(--text2);}
+.lens-body::-webkit-scrollbar{width:4px;}
+.lens-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.lens-body strong{color:var(--accent2);font-weight:600;}
+.lens-body em{color:var(--text);font-style:italic;}
+
+/* HUD */
+.hud-logo{position:fixed;top:20px;left:24px;display:flex;align-items:center;gap:8px;z-index:50;pointer-events:none;}
+.hud-logo .mark{width:30px;height:30px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;}
+.hud-logo .mark svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.hud-logo .wordmark{font-size:0.85rem;font-weight:700;letter-spacing:-0.02em;}
+.hud-logo .wordmark span{color:var(--muted);font-weight:400;}
+
+.zoom-ctrl{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:4px;z-index:50;}
+.zoom-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.12s;font-family:inherit;}
+.zoom-btn:hover{border-color:var(--text2);color:var(--text);background:var(--surface2);}
+.zoom-level{font-size:0.6rem;text-align:center;color:var(--muted);font-family:'Fira Code',monospace;padding:2px 0;}
+
+.hint{position:fixed;bottom:24px;left:24px;font-size:0.65rem;color:var(--muted);z-index:50;pointer-events:none;}
+
+@media(max-width:768px){
+    .panel{width:100%;}
+    .zoom-ctrl{bottom:16px;right:16px;}
+}
+</style>
+</head>
+<body>
+
+<!-- Viewport -->
+<div id="viewport">
+    <div id="canvas">
+        <svg id="edges"></svg>
+    </div>
+</div>
+
+<!-- HUD -->
+<div class="hud-logo">
+    <div class="mark"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg></div>
+    <div class="wordmark">docs<span>.study</span></div>
+</div>
+
+<div class="zoom-ctrl">
+    <button class="zoom-btn" onclick="zoomTo(scale*1.3)">+</button>
+    <div class="zoom-level" id="zoomLvl">100%</div>
+    <button class="zoom-btn" onclick="zoomTo(scale/1.3)">−</button>
+    <button class="zoom-btn" onclick="resetView()" style="font-size:12px;margin-top:4px;">⌂</button>
+</div>
+
+<div class="hint">Scroll to zoom · Drag to pan · Click a concept</div>
+
+<!-- Detail Panel -->
+<div class="panel" id="panel">
+    <div class="panel-header">
+        <button class="panel-close" onclick="closePanel()">✕</button>
+        <div class="panel-title" id="panelTitle">SECURITY</div>
+        <div class="panel-sub" id="panelSub">Market · 4 properties</div>
+        <div class="panel-props" id="panelProps"></div>
+    </div>
+    <div class="lens-tabs" id="lensTabs"></div>
+    <div class="lens-body" id="lensBody"></div>
+</div>
+
+<script>
+/* ========== DATA ========== */
+const CONCEPTS = [
+    {id:'algorithm',label:'ALGORITHM',x:600,y:420,group:'core',color:'#6366f1',props:['TIME','TIME.HOUR','TIME.DAYOFWEEK','TIME.DATE','TIME.MONTH','PORTFOLIO']},
+    {id:'security',label:'SECURITY',x:320,y:340,group:'market',color:'#f59e0b',props:['PRICE','HOLDINGS','ISTRADABLE','EXCHANGE']},
+    {id:'symbol',label:'SYMBOL',x:160,y:240,group:'market',color:'#f59e0b',props:['NAME','VALUE']},
+    {id:'exchange',label:'EXCHANGE',x:300,y:520,group:'market',color:'#f59e0b',props:['IS_OPEN']},
+    {id:'handler',label:'HANDLER',x:460,y:200,group:'data',color:'#22d3ee',props:['BAR','BAR.CLOSE','BAR.HIGH','BAR.LOW','BAR.VOLUME']},
+    {id:'data_slice',label:'DATA_SLICE',x:700,y:220,group:'data',color:'#22d3ee',props:['CONTAINS']},
+    {id:'cash',label:'CASH',x:820,y:340,group:'state',color:'#22c55e',props:['AMOUNT']},
+    {id:'collection',label:'COLLECTION',x:880,y:460,group:'state',color:'#22c55e',props:['LENGTH','APPEND','REMOVE','CONTAINS','CLEAR']},
+    {id:'store',label:'STORE',x:820,y:560,group:'state',color:'#22c55e',props:['SAVE','LOAD']},
+    {id:'log',label:'LOG',x:520,y:600,group:'output',color:'#ec4899',props:['LOG','DEBUG','ERROR']},
+    {id:'notify',label:'NOTIFY',x:680,y:640,group:'output',color:'#ec4899',props:['EMAIL','SMS','POPUP']},
+    {id:'plot',label:'PLOT',x:400,y:620,group:'output',color:'#ec4899',props:['PLOT','SERIES']},
+    {id:'number',label:'NUMBER',x:240,y:100,group:'primitive',color:'#a1a1aa',props:[]},
+    {id:'string',label:'STRING',x:420,y:80,group:'primitive',color:'#a1a1aa',props:[]},
+    {id:'boolean',label:'BOOLEAN',x:600,y:80,group:'primitive',color:'#a1a1aa',props:[]},
+    {id:'datetime',label:'DATETIME',x:780,y:100,group:'primitive',color:'#a1a1aa',props:['DATE','HOUR','DAYOFWEEK','MONTH']},
+    {id:'comparators',label:'COMPARATORS',x:940,y:180,group:'primitive',color:'#a1a1aa',props:['>','<','==','!=','>=','<=']},
+];
+
+const EDGES = [
+    ['algorithm','security'],['algorithm','handler'],['algorithm','cash'],['algorithm','data_slice'],
+    ['algorithm','collection'],['algorithm','store'],['algorithm','log'],['algorithm','plot'],['algorithm','notify'],
+    ['security','symbol'],['security','exchange'],['handler','symbol'],
+    ['security','number'],['cash','number'],['log','string'],['handler','data_slice'],
+    ['plot','security'],['store','collection'],['collection','symbol'],
+];
+
+const GROUPS = {
+    core:{label:'Core',x:560,y:390},
+    market:{label:'Market',x:200,y:300},
+    data:{label:'Data',x:560,y:170},
+    state:{label:'State',x:850,y:420},
+    output:{label:'Output',x:530,y:610},
+    primitive:{label:'Primitives',x:590,y:60},
+};
+
+const KB = {
+    'SECURITY': {
+        direct:`<strong>SECURITY</strong> is a tradable asset in QuantConnect. It has four properties: PRICE, HOLDINGS, ISTRADABLE, and EXCHANGE. It is the object your algorithm reads to know what's happening with an asset.`,
+        analogical:`Think of a <strong>SECURITY</strong> like a <strong>dashboard gauge cluster in a car</strong>. The car is the asset itself — but the gauge cluster is what you look at. It has a speedometer (PRICE), a fuel gauge (HOLDINGS — how much you have), an engine light (ISTRADABLE — is it working?), and a GPS label (EXCHANGE — where are you?).`,
+        exemplary:`Concrete SECURITYs:<br><br>• <strong>BTCUSD</strong> — Bitcoin in USD. PRICE = 67,000. HOLDINGS = 0.5.<br>• <strong>AAPL</strong> — Apple stock. ISTRADABLE = true during NYSE hours.<br>• <strong>EURUSD</strong> — Forex pair. EXCHANGE is open nearly 24/7.<br><br>Different asset, same four gauges.`,
+        actional:`What do you <em>do</em> with a SECURITY?<br><br>• <strong>Read its price</strong> — to decide buy or sell<br>• <strong>Check holdings</strong> — am I already in a position?<br>• <strong>Check tradability</strong> — before placing an order<br>• <strong>Check exchange</strong> — when does the market open?<br><br>Every action is a <em>read</em>. You ask it questions, it answers.`,
+        contrastive:`What SECURITY is <strong>NOT</strong>:<br><br>• Not your account balance — that's <strong>CASH</strong><br>• Not a buy/sell instruction — that's an <strong>ORDER</strong><br>• Not a moment in time — that's <strong>ALGORITHM.TIME</strong><br>• Not a data feed — that's a <strong>HANDLER</strong><br><br>SECURITY is <em>the asset itself</em>.`,
+        compositional:`Where does SECURITY sit?<br><br>Your <strong>ALGORITHM</strong> is the brain.<br>It looks at <strong>SECURITY</strong>s — the assets.<br>It uses <strong>CASH</strong> — the money.<br>It sends <strong>ORDER</strong>s — the instructions.<br>It receives <strong>HANDLER</strong> events — the signals.<br><br>SECURITY is the <em>noun in the middle</em>.`,
+        visual:`<div style="font-family:'Fira Code',monospace;background:#1e1e2e;color:#cdd6f4;padding:16px;border-radius:8px;font-size:0.78rem;line-height:1.8;">┌──────────── SECURITY ───────────┐<br>│  PRICE       → 67,000  (NUMBER) │<br>│  HOLDINGS    → 0.5     (NUMBER) │<br>│  ISTRADABLE  → true    (BOOL)   │<br>│  EXCHANGE    → GDAX    (EXCH)   │<br>└─────────────────────────────────┘</div><br>Four gauges. Each returns a typed value.`
+    }
+};
+
+const LENSES = [
+    {id:'direct',label:'Direct',svg:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'},
+    {id:'analogical',label:'Analogical',svg:'<path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>'},
+    {id:'exemplary',label:'Exemplary',svg:'<path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>'},
+    {id:'actional',label:'Actional',svg:'<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>'},
+    {id:'contrastive',label:'Contrastive',svg:'<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'},
+    {id:'compositional',label:'Compositional',svg:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>'},
+    {id:'visual',label:'Visual',svg:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'},
+];
+
+/* ========== PAN / ZOOM ========== */
+let scale = 1, panX = 0, panY = 0;
+let isPanning = false, startMX, startMY, startPX, startPY;
+const canvas = document.getElementById('canvas');
+const viewport = document.getElementById('viewport');
+
+function applyTransform(){
+    canvas.style.transform = `translate(${panX}px,${panY}px) scale(${scale})`;
+    document.getElementById('zoomLvl').textContent = Math.round(scale*100)+'%';
+}
+
+viewport.addEventListener('mousedown', e => {
+    if(e.target.closest('.node')||e.target.closest('.panel')||e.target.closest('.zoom-ctrl')) return;
+    isPanning=true; startMX=e.clientX; startMY=e.clientY; startPX=panX; startPY=panY;
+    document.body.classList.add('panning');
+});
+window.addEventListener('mousemove', e => {
+    if(!isPanning)return;
+    panX=startPX+(e.clientX-startMX); panY=startPY+(e.clientY-startMY);
+    applyTransform();
+});
+window.addEventListener('mouseup', ()=>{ isPanning=false; document.body.classList.remove('panning'); });
+
+viewport.addEventListener('wheel', e => {
+    e.preventDefault();
+    const rect=viewport.getBoundingClientRect();
+    const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+    const factor=e.deltaY<0?1.12:1/1.12;
+    const ns=Math.min(Math.max(scale*factor,0.3),4);
+    panX=mx-(mx-panX)*(ns/scale); panY=my-(my-panY)*(ns/scale);
+    scale=ns; applyTransform();
+},{passive:false});
+
+function zoomTo(s){ const ns=Math.min(Math.max(s,0.3),4); const cx=window.innerWidth/2,cy=window.innerHeight/2; panX=cx-(cx-panX)*(ns/scale); panY=cy-(cy-panY)*(ns/scale); scale=ns; applyTransform(); }
+function resetView(){ scale=1; panX=window.innerWidth/2-550; panY=window.innerHeight/2-360; applyTransform(); closePanel(); }
+
+/* Touch support */
+let lastTouchDist=0;
+viewport.addEventListener('touchstart',e=>{if(e.touches.length===1){isPanning=true;startMX=e.touches[0].clientX;startMY=e.touches[0].clientY;startPX=panX;startPY=panY;}if(e.touches.length===2){lastTouchDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}},{passive:false});
+viewport.addEventListener('touchmove',e=>{e.preventDefault();if(e.touches.length===1&&isPanning){panX=startPX+(e.touches[0].clientX-startMX);panY=startPY+(e.touches[0].clientY-startMY);applyTransform();}if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);if(lastTouchDist){zoomTo(scale*(d/lastTouchDist));}lastTouchDist=d;}},{passive:false});
+viewport.addEventListener('touchend',()=>{isPanning=false;lastTouchDist=0;});
+
+/* ========== RENDER FIELD ========== */
+let selectedId=null;
+
+function renderField(){
+    const svg=document.getElementById('edges');
+    // Edges
+    svg.innerHTML=EDGES.map(([a,b])=>{
+        const na=CONCEPTS.find(c=>c.id===a), nb=CONCEPTS.find(c=>c.id===b);
+        return `<line x1="${na.x}" y1="${na.y}" x2="${nb.x}" y2="${nb.y}" data-from="${a}" data-to="${b}"/>`;
+    }).join('');
+
+    // Group labels
+    Object.entries(GROUPS).forEach(([id,g])=>{
+        const lbl=document.createElement('div');
+        lbl.className='group-label';
+        lbl.style.left=g.x+'px'; lbl.style.top=(g.y-40)+'px';
+        lbl.textContent=g.label;
+        canvas.appendChild(lbl);
+    });
+
+    // Nodes
+    CONCEPTS.forEach(c=>{
+        const el=document.createElement('div');
+        el.className='node'; el.dataset.id=c.id;
+        el.style.left=c.x+'px'; el.style.top=c.y+'px';
+        el.innerHTML=`<div class="node-card">
+            <div class="node-name"><span class="node-dot" style="background:${c.color}"></span>${c.label}</div>
+            ${c.props.length?`<div class="node-count">${c.props.length} properties</div>`:`<div class="node-count">primitive</div>`}
+        </div>`;
+        el.addEventListener('click',()=>selectNode(c.id));
+        canvas.appendChild(el);
+    });
+}
+
+function selectNode(id){
+    // Deselect previous
+    document.querySelectorAll('.node.selected').forEach(n=>n.classList.remove('selected'));
+    document.querySelectorAll('#edges line.active').forEach(l=>l.classList.remove('active'));
+    selectedId=id;
+    const nodeEl=document.querySelector(`.node[data-id="${id}"]`);
+    if(nodeEl) nodeEl.classList.add('selected');
+    // Highlight connected edges
+    document.querySelectorAll('#edges line').forEach(l=>{
+        if(l.dataset.from===id||l.dataset.to===id) l.classList.add('active');
+    });
+    showPanel(id);
+}
+
+/* ========== DETAIL PANEL ========== */
+let activeLens='direct';
+
+function showPanel(id){
+    const c=CONCEPTS.find(x=>x.id===id);
+    if(!c)return;
+    document.getElementById('panelTitle').textContent=c.label;
+    document.getElementById('panelSub').textContent=`${c.group} · ${c.props.length} properties`;
+    document.getElementById('panelProps').innerHTML=c.props.map(p=>`<span class="prop-chip">${p}</span>`).join('');
+
+    // Lens tabs
+    const tabs=document.getElementById('lensTabs');
+    tabs.innerHTML=LENSES.map(l=>`<button class="lens-tab${l.id===activeLens?' active':''}" data-lens="${l.id}"><svg viewBox="0 0 24 24">${l.svg}</svg>${l.label}</button>`).join('');
+    tabs.querySelectorAll('.lens-tab').forEach(t=>t.addEventListener('click',()=>{
+        activeLens=t.dataset.lens;
+        tabs.querySelectorAll('.lens-tab').forEach(x=>x.classList.remove('active'));
+        t.classList.add('active');
+        renderLens(c.label,activeLens);
+    }));
+
+    renderLens(c.label,activeLens);
+    document.getElementById('panel').classList.add('open');
+}
+
+function renderLens(label,lens){
+    const body=document.getElementById('lensBody');
+    if(KB[label]&&KB[label][lens]){
+        body.innerHTML=KB[label][lens];
+    } else {
+        body.innerHTML=`<div style="text-align:center;padding:40px 0;color:var(--muted);">
+            <div style="font-size:2rem;margin-bottom:12px;opacity:0.3;">🔮</div>
+            <div style="font-size:0.8rem;margin-bottom:16px;">No explanation yet for <strong style="color:var(--text)">${label}</strong> in <strong style="color:var(--accent2)">${lens}</strong> mode.</div>
+            <div style="font-size:0.7rem;padding:12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);text-align:left;font-family:'Fira Code',monospace;line-height:1.6;color:var(--text2);">
+                Prompt: Explain "${label}" using the ${lens} method.
+            </div>
+        </div>`;
+    }
+}
+
+function closePanel(){
+    document.getElementById('panel').classList.remove('open');
+    document.querySelectorAll('.node.selected').forEach(n=>n.classList.remove('selected'));
+    document.querySelectorAll('#edges line.active').forEach(l=>l.classList.remove('active'));
+    selectedId=null;
+}
+
+/* Esc to close */
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanel();});
+
+/* ========== INIT ========== */
+renderField();
+resetView();
+</script>
+</body>
+</html>

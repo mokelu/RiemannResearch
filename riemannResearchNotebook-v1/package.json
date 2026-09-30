@@ -7,6 +7,7 @@
     "demo": "node notebook/demo.js",
     "test": "vitest run",
     "test:watch": "vitest",
+    "check:model": "node .model/check.js",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"

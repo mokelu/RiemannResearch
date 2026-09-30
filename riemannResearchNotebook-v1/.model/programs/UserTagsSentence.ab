@@ -1,0 +1,22 @@
+# =====================================================================
+#  UserTagsSentence.ab
+# =====================================================================
+#  sentence   User Tag Sentence
+#  app        src/CellsView.jsx — CellRow tag-select (line 98-100).
+#             a tag is an in-memory flag flip (alphabet.ab, THE
+#             LINE), so `tag` declares `ok` only: there is nothing
+#             for a tagging to fail into.
+#  triggers   pick a value in the tag dropdown next to a sentence
+#  status     IMPLEMENTED
+
+program UserTagsSentence
+
+sentence  User Tag Sentence
+enter     sentence.tag.requested
+
+step system tag sentence
+  catch sentence.tag.ok goto system save workspace
+
+step system save workspace
+  catch workspace.save.ok     goto Redraw
+  catch workspace.save.failed goto ReportFailure

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riemann Research — Serious research, explorable answers</title>
+<meta name="description" content="Riemann Research is an interactive research environment. Ask a question about a defined body of data, inspect the evidence and assumptions behind the answer, change them, and watch the result recompute.">
+<meta property="og:title" content="Riemann Research — Serious research, explorable answers">
+<meta property="og:description" content="Answers you can open. Assumptions you can edit. Research you can walk into.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><rect x='3' y='30' width='6' height='12' rx='1.5' fill='%231A4D3E'/><rect x='12' y='18' width='6' height='24' rx='1.5' fill='%231A4D3E'/><rect x='21' y='4' width='6' height='38' rx='1.5' fill='%231A4D3E'/><rect x='30' y='18' width='6' height='24' rx='1.5' fill='%231A4D3E'/><rect x='39' y='30' width='6' height='12' rx='1.5' fill='%231A4D3E'/></svg>">
+<style>
+  :root{
+    --paper:#faf9f6; --paper-2:#f1efe9; --ink:#191c21; --muted:#5d6470;
+    --line:#e3e0d8;     --accent:#1A4D3E; --accent-soft:#EAF1ED; --amber:#b7791f;
+    --serif:Georgia,'Iowan Old Style','Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,'SF Mono','Cascadia Code',Menlo,Consolas,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.6;font-size:16px}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  .serif{font-family:var(--serif)}
+
+  /* NAV */
+  nav{position:sticky;top:0;background:rgba(250,249,246,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);z-index:50}
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;height:60px}
+  .logo{display:flex;align-items:center;gap:9px;font-family:var(--serif);font-size:19px;font-weight:700;color:var(--ink)}
+  .logo:hover{text-decoration:none}
+  .logo svg{display:block}
+  .nav-links{display:flex;gap:26px;align-items:center;font-size:14.5px;color:var(--muted)}
+  .nav-links a{color:var(--muted)}
+  .nav-links a:hover{color:var(--ink);text-decoration:none}
+  .btn{display:inline-block;border-radius:7px;padding:9px 18px;font-size:14.5px;font-weight:600;transition:all .15s}
+  .btn-primary{background:var(--accent);color:#fff!important}
+  .btn-primary:hover{background:#0b4a3d;text-decoration:none}
+  .btn-ghost{color:var(--ink)!important;border:1px solid var(--line)}
+  .btn-ghost:hover{border-color:var(--muted);text-decoration:none}
+
+  /* HERO */
+  .hero{padding:84px 0 40px;text-align:center}
+  .kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:18px}
+  h1{font-family:var(--serif);font-size:clamp(38px,6vw,62px);line-height:1.08;font-weight:700;letter-spacing:-.01em}
+  h1 em{font-style:italic;color:var(--accent)}
+  .hero p.lede{max-width:640px;margin:22px auto 0;font-size:18.5px;color:var(--muted)}
+  .hero .ctas{margin-top:32px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .hero .micro{margin-top:14px;font-size:13px;color:var(--muted)}
+
+  /* DEMO */
+  .demo-band{padding:56px 0 72px}
+  .demo{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 50px -24px rgba(25,28,33,.25);overflow:hidden}
+  .demo-bar{display:flex;align-items:center;gap:8px;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--paper-2)}
+  .dot{width:10px;height:10px;border-radius:50%;background:#d7d3c9}
+  .demo-bar .path{margin-left:10px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .demo-body{display:grid;grid-template-columns:1.15fr .85fr;gap:0}
+  @media(max-width:840px){.demo-body{grid-template-columns:1fr}}
+  .demo-q{padding:26px 28px 18px}
+  .question{font-family:var(--serif);font-size:22px;line-height:1.35}
+  .question .chip{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:5px;padding:0 6px;font-family:var(--mono);font-size:.72em;vertical-align:2px}
+  .assumptions{padding:6px 28px 26px}
+  .assumptions h4,.result h4{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+  .control{margin-bottom:16px}
+  .control label{display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px}
+  .control label .val{font-family:var(--mono);color:var(--accent);font-size:13px}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  .seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .seg button{flex:1;padding:7px 0;background:#fff;border:none;font-size:13px;cursor:pointer;color:var(--muted);border-right:1px solid var(--line)}
+  .seg button:last-child{border-right:none}
+  .seg button.on{background:var(--accent);color:#fff;font-weight:600}
+  .toggle{display:flex;align-items:center;gap:9px;font-size:14px;cursor:pointer;user-select:none}
+  .toggle input{accent-color:var(--accent);width:15px;height:15px}
+  .evidence{margin-top:20px}
+  .ev{display:flex;align-items:center;gap:9px;padding:7px 10px;border:1px solid var(--line);border-radius:7px;margin-bottom:6px;font-size:13.5px;cursor:pointer;background:#fff;transition:opacity .15s}
+  .ev:hover{border-color:var(--muted)}
+  .ev.off{opacity:.38;text-decoration:line-through}
+  .ev .w{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .demo-r{border-left:1px solid var(--line);background:var(--paper);padding:26px 28px;display:flex;flex-direction:column}
+  @media(max-width:840px){.demo-r{border-left:none;border-top:1px solid var(--line)}}
+  .big{font-family:var(--serif);font-size:52px;font-weight:700;line-height:1;letter-spacing:-.01em}
+  .big small{font-size:20px;color:var(--muted);font-weight:400}
+  .badge{display:inline-block;font-family:var(--mono);font-size:11px;background:var(--accent-soft);color:var(--accent);padding:3px 9px;border-radius:20px;opacity:0;transition:opacity .3s}
+  .badge.show{opacity:1}
+  .contrib{margin-top:22px}
+  .crow{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12.5px}
+  .crow .lbl{width:118px;color:var(--muted);flex-shrink:0}
+  .crow .bar{height:9px;border-radius:4px;background:var(--accent);transition:width .35s;min-width:2px}
+  .crow .bar.neg{background:var(--amber)}
+  .crow .num{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .recompute{margin-top:auto;padding-top:20px;font-size:13px;color:var(--muted)}
+  .recompute button{background:none;border:1px solid var(--line);border-radius:6px;padding:6px 13px;font-size:13px;cursor:pointer;color:var(--ink)}
+  .recompute button:hover{border-color:var(--muted)}
+
+  /* PIPELINE */
+  .section{padding:72px 0}
+  .section h2{font-family:var(--serif);font-size:clamp(28px,4vw,40px);line-height:1.15;letter-spacing:-.01em;max-width:640px}
+  .section .sub{max-width:620px;color:var(--muted);margin-top:14px;font-size:17px}
+  .pipe{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
+  @media(max-width:840px){.pipe{grid-template-columns:1fr}}
+  .pstep{background:#fff;border:1px solid var(--line);border-radius:12px;padding:26px}
+  .pstep .n{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.1em}
+  .pstep h3{font-family:var(--serif);font-size:20px;margin:10px 0 8px}
+  .pstep p{font-size:14.5px;color:var(--muted)}
+
+  /* CANVAS MOCK */
+  .canvas-band{background:var(--paper-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .canvas-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+  @media(max-width:900px){.canvas-grid{grid-template-columns:1fr}}
+  .node{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:13.5px;box-shadow:0 6px 16px -10px rgba(25,28,33,.2)}
+  .node .tag{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+  .node.ans{border-color:var(--accent);border-width:1.5px}
+  .node.ans .pct{font-family:var(--serif);font-size:30px;font-weight:700}
+  .cv-svg{width:100%;height:auto;display:block}
+
+  /* FEATURES */
+  .grid6{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
+  @media(max-width:900px){.grid6{grid-template-columns:1fr 1fr}}
+  @media(max-width:620px){.grid6{grid-template-columns:1fr}}
+  .feat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:24px}
+  .feat .ic{width:34px;height:34px;border-radius:8px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;margin-bottom:14px;color:var(--accent);font-family:var(--mono);font-size:15px}
+  .feat h3{font-size:16px;margin-bottom:6px}
+  .feat p{font-size:14px;color:var(--muted)}
+
+  /* USE CASES */
+  .cases{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
+  @media(max-width:900px){.cases{grid-template-columns:1fr}}
+  .case{border:1px solid var(--line);border-radius:12px;padding:26px;background:#fff;display:flex;flex-direction:column}
+  .case .status{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px}
+  .case .live{color:var(--accent)}
+  .case .soon{color:var(--amber)}
+  .case h3{font-family:var(--serif);font-size:21px;margin-bottom:8px}
+  .case p{font-size:14.5px;color:var(--muted);flex:1}
+
+  /* OPEN SOURCE */
+  .oss{background:var(--ink);color:#eef0ec;border-radius:16px;padding:52px;display:grid;grid-template-columns:1.2fr .8fr;gap:48px;align-items:center}
+  @media(max-width:900px){.oss{grid-template-columns:1fr;padding:36px}}
+  .oss h2{font-family:var(--serif);font-size:clamp(26px,3.5vw,36px);color:#fff;letter-spacing:-.01em}
+  .oss p{color:#b9c0bb;margin-top:14px;font-size:15.5px}
+  .oss .btn-primary{background:#eef0ec;color:var(--ink)!important}
+  .oss code{font-family:var(--mono);font-size:13px;background:#2a2e33;padding:3px 8px;border-radius:5px;color:#cfe8df}
+  .oss-points{list-style:none;font-size:14.5px;color:#d5dad4}
+  .oss-points li{padding:9px 0;border-bottom:1px solid #2c3136}
+  .oss-points li:last-child{border-bottom:none}
+
+  /* CTA */
+  .cta{text-align:center;padding:88px 0}
+  .cta h2{font-family:var(--serif);font-size:clamp(30px,4.5vw,46px);letter-spacing:-.01em}
+  .cta p{color:var(--muted);margin:16px auto 30px;max-width:520px}
+
+  footer{border-top:1px solid var(--line);padding:44px 0 60px;font-size:13.5px;color:var(--muted)}
+  .f-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:32px}
+  @media(max-width:800px){.f-grid{grid-template-columns:1fr 1fr}}
+  .f-grid h5{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);margin-bottom:12px}
+  .f-grid a{display:block;color:var(--muted);padding:3px 0}
+  .f-grid a:hover{color:var(--ink)}
+  .f-bottom{margin-top:40px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:20px}
+</style>
+</head>
+<body>
+
+<!-- ======== NAV ======== -->
+<nav>
+  <div class="wrap nav-inner">
+    <a class="logo" href="#">
+      <svg width="24" height="24" viewBox="0 0 48 48" fill="#1A4D3E" aria-hidden="true"><rect x="3" y="30" width="6" height="12" rx="1.5"/><rect x="12" y="18" width="6" height="24" rx="1.5"/><rect x="21" y="4" width="6" height="38" rx="1.5"/><rect x="30" y="18" width="6" height="24" rx="1.5"/><rect x="39" y="30" width="6" height="12" rx="1.5"/></svg>
+      Riemann Research
+    </a>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#research">Research</a>
+      <a href="#open">Open source</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#" class="btn btn-ghost">Sign in</a>
+      <a href="#" class="btn btn-primary">Start a notebook</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ======== HERO ======== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">An interactive research environment</div>
+    <h1>Answers you can <em>open.</em><br>Assumptions you can change.</h1>
+    <p class="lede">Riemann Research is a serious research environment. Ask a question about a defined body of data and receive a living answer — every piece of evidence, every assumption, every relationship laid out on a canvas you can inspect and edit. Change something. Watch the answer recompute.</p>
+    <div class="ctas">
+      <a href="#" class="btn btn-primary">Start a notebook — free</a>
+      <a href="#demo" class="btn btn-ghost">Try the live demo</a>
+    </div>
+    <div class="micro">No install. Your data stays in your defined environment. The notebook shell is open source.</div>
+  </div>
+</header>
+
+<!-- ======== LIVE DEMO ======== -->
+<section class="demo-band" id="demo">
+  <div class="wrap">
+    <div class="demo">
+      <div class="demo-bar">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="path">league-2027.riemann — notebook</span>
+      </div>
+      <div class="demo-body">
+        <div class="demo-q">
+          <div class="question">
+            <span class="chip">QUESTION</span>
+            “Will D. Okafor outscore S. Mensah in fantasy points over the next four weeks?”
+          </div>
+          <div class="assumptions">
+            <h4>Assumptions — edit and recompute</h4>
+            <div class="control">
+              <label>Okafor's usage holds <span class="val" id="usageVal">85%</span></label>
+              <input type="range" id="usage" min="40" max="100" value="85">
+            </div>
+            <div class="control">
+              <label>Opponent defensive strength</label>
+              <div class="seg" id="defSeg">
+                <button data-v="-3.2">Weak</button>
+                <button data-v="0" class="on">Average</button>
+                <button data-v="3.4">Strong</button>
+              </div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="injury"> Apply conservative injury adjustment</label>
+            <div class="evidence" id="evList">
+              <h4>Evidence — click to include / remove</h4>
+              <!-- rows injected -->
+            </div>
+          </div>
+        </div>
+        <div class="demo-r">
+          <h4>Answer — a composition, not a paragraph</h4>
+          <div>
+            <span class="badge" id="badge">recomputed ✓</span>
+          </div>
+          <div class="big"><span id="margin">+4.2</span> <small>pts</small></div>
+          <div style="font-size:13.5px;color:var(--muted);margin-top:6px">projected margin, Okafor over Mensah, next 4 weeks</div>
+          <div class="contrib">
+            <h4 style="margin-top:8px">What the margin is made of</h4>
+            <div id="contribRows"></div>
+          </div>
+          <div class="recompute">
+            <button id="reset">Reset assumptions</button>
+            <span style="margin-left:10px">Every change above rewrote this answer.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== HOW IT WORKS ======== -->
+<section class="section" id="how">
+  <div class="wrap">
+    <h2>Stop reading answers.<br>Start exploring them.</h2>
+    <p class="sub">A wall of text asks for your trust. A Riemann answer shows its work. Three steps, the same every time.</p>
+    <div class="pipe">
+      <div class="pstep">
+        <div class="n">01 — CONNECT</div>
+        <h3>Define a body of data</h3>
+        <p>A league, a market, a season, a document set. Riemann Research works inside a defined body of data — contained, inspectable, yours.</p>
+      </div>
+      <div class="pstep">
+        <div class="n">02 — ASK</div>
+        <h3>Ask in plain language</h3>
+        <p>Questions, not queries. The answer arrives structured: predictions separated from facts, assumptions separated from evidence.</p>
+      </div>
+      <div class="pstep">
+        <div class="n">03 — EXPLORE</div>
+        <h3>Open the answer</h3>
+        <p>Every number has an inside. Ask “why?”, walk into the composition, edit an assumption, and the whole result recomputes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== CANVAS / WHY ======== -->
+<section class="section canvas-band" id="research">
+  <div class="wrap canvas-grid">
+    <div>
+      <h2>Every answer is a structure you can walk into.</h2>
+      <p class="sub">Underneath each answer sits a composition of states, events, relationships, and assumptions. Open a point on a chart and the state behind it opens. Remove a piece of evidence and watch the conclusion move. Compare two players, two quarters, two scenarios — side by side, through time.</p>
+      <p class="sub">The chart is not the point. The configuration <em>is</em> the computation.</p>
+    </div>
+    <div>
+      <svg class="cv-svg" viewBox="0 0 480 300" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="A question decomposed into evidence and assumptions producing an explorable answer">
+        <line x1="120" y1="60" x2="240" y2="120" stroke="#c9c4b8"/>
+        <line x1="240" y1="60" x2="240" y2="118" stroke="#c9c4b8"/>
+        <line x1="360" y1="60" x2="240" y2="120" stroke="#c9c4b8"/>
+        <line x1="240" y1="170" x2="240" y2="215" stroke="#1A4D3E" stroke-width="1.6"/>
+        <g>
+          <rect x="60" y="30" width="120" height="34" rx="8" fill="#fff" stroke="#e3e0d8"/>
+          <text x="72" y="44" font-family="monospace" font-size="8" fill="#1A4D3E" letter-spacing="1">EVIDENCE</text>
+          <text x="72" y="57" font-size="10.5" fill="#191c21">Usage last 6 wks ↑</text>
+        </g>
+        <g>
+          <rect x="180" y="30" width="120" height="34" rx="8" fill="#fff" stroke="#e3e0d8"/>
+          <text x="192" y="44" font-family="monospace" font-size="8" fill="#1A4D3E" letter-spacing="1">ASSUMPTION</text>
+          <text x="192" y="57" font-size="10.5" fill="#191c21">Role change sticks</text>
+        </g>
+        <g>
+          <rect x="300" y="30" width="120" height="34" rx="8" fill="#fff" stroke="#e3e0d8"/>
+          <text x="312" y="44" font-family="monospace" font-size="8" fill="#1A4D3E" letter-spacing="1">EVENT</text>
+          <text x="312" y="57" font-size="10.5" fill="#191c21">Opponent DE out</text>
+        </g>
+        <g>
+          <rect x="150" y="120" width="180" height="50" rx="8" fill="#fff" stroke="#1A4D3E" stroke-width="1.4"/>
+          <text x="163" y="140" font-family="monospace" font-size="8" fill="#1A4D3E" letter-spacing="1">ANSWER — OPENED</text>
+          <text x="163" y="159" font-size="15" fill="#191c21" font-family="Georgia" font-weight="bold">73% — and here is why</text>
+        </g>
+        <g>
+          <rect x="90" y="215" width="130" height="34" rx="8" fill="#faf9f6" stroke="#e3e0d8"/>
+          <text x="102" y="236" font-size="10.5" fill="#5d6470">change → 68%</text>
+        </g>
+        <g>
+          <rect x="260" y="215" width="130" height="34" rx="8" fill="#faf9f6" stroke="#e3e0d8"/>
+          <text x="272" y="236" font-size="10.5" fill="#5d6470">change → 81%</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ======== FEATURES ======== -->
+<section class="section">
+  <div class="wrap">
+    <h2>Built for work that has to hold up.</h2>
+    <p class="sub">The tooling of a research desk, in one notebook.</p>
+    <div class="grid6">
+      <div class="feat"><div class="ic">▣</div><h3>Contained environments</h3><p>Research happens inside a defined body of data. Nothing bleeds between notebooks; every claim traces to its source.</p></div>
+      <div class="feat"><div class="ic">◇</div><h3>Openable answers</h3><p>Facts, predictions, assumptions, and conclusions are distinct objects — labeled, inspectable, and editable. No black boxes.</p></div>
+      <div class="feat"><div class="ic">⟲</div><h3>Live recomputation</h3><p>Edit a value, a condition, or a time range and every dependent result updates. The configuration is the computation.</p></div>
+      <div class="feat"><div class="ic">⇄</div><h3>Scenarios & comparison</h3><p>Run the same question under different assumptions. Compare states side by side, across time.</p></div>
+      <div class="feat"><div class="ic">⋯</div><h3>Timelines & event history</h3><p>Sequence what happened, in what order, and ask the system to find every historical instance of the pattern.</p></div>
+      <div class="feat"><div class="ic">↧</div><h3>Reports & audit trails</h3><p>Export a notebook as a report, with the full reasoning trail intact. Defensible conclusions, not screenshots.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== USE CASES ======== -->
+<section class="section" style="padding-top:0">
+  <div class="wrap">
+    <h2>Research environments for defined domains.</h2>
+    <p class="sub">The same notebook, pointed at a specific body of data. One domain at a time, done seriously.</p>
+    <div class="cases">
+      <div class="case">
+        <div class="status live">● Live now</div>
+        <h3>Fantasy & sports research</h3>
+        <p>Usage trends, matchup scenarios, injury adjustments, "what changed?" across seasons. The research desk your league deserves.</p>
+        <a href="#">Open a sports notebook →</a>
+      </div>
+      <div class="case">
+        <div class="status soon">◐ Early access</div>
+        <h3>Market & trading research</h3>
+        <p>Chart states you can open. Backtests whose assumptions are on the canvas, not in a config file. Scenario comparison for strategies.</p>
+        <a href="#">Join the early-access list →</a>
+      </div>
+      <div class="case">
+        <div class="status soon">◐ In development</div>
+        <h3>Business & evidence review</h3>
+        <p>Point a notebook at your own data. Ask questions of a quarter, a cohort, an investigation — with every assumption inspectable.</p>
+        <a href="#">Read the roadmap →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== OPEN SOURCE ======== -->
+<section class="section" id="open">
+  <div class="wrap">
+    <div class="oss">
+      <div>
+        <h2>The notebook is open source.</h2>
+        <p>Self-host it, audit it, extend it. The shell, the canvas, the file formats, and the connectors are open under a copyleft license — because serious research tooling should be inspectable by the people who rely on it.</p>
+        <p style="margin-top:22px"><code>git clone riemann-research/notebook</code></p>
+        <p style="margin-top:26px"><a href="#" class="btn btn-primary">View on GitHub</a></p>
+      </div>
+      <ul class="oss-points">
+        <li>Self-host the full notebook shell</li>
+        <li>Auditable file formats and exports</li>
+        <li>Connector SDK for your own data sources</li>
+        <li>Riemann Research Cloud adds hosted compute, collaboration, and history</li>
+        <li>No third-party trackers — on this site or in the shell</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ======== PRICING ======== -->
+<section class="section" id="pricing" style="padding-top:24px">
+  <div class="wrap">
+    <h2>Simple pricing.</h2>
+    <p class="sub">Free to start. Pay when your research gets serious.</p>
+    <div class="grid6">
+      <div class="case"><h3>Free</h3><p style="margin:6px 0 16px">$0 — one notebook, one defined environment, community support. Open-source shell, forever.</p><a href="#">Start free →</a></div>
+      <div class="case"><h3>Mini</h3><p style="margin:6px 0 16px">$0.99/mo — more notebooks, more data, more compute.</p><a href="#">Go Mini →</a></div>
+      <div class="case"><h3>Mini+</h3><p style="margin:6px 0 16px">$5/mo — everything in Mini, plus priority compute and exports.</p><a href="#">Go Mini+ →</a></div>
+      <div class="case" style="border-color:#1A4D3E"><h3>Pro</h3><p style="margin:6px 0 16px">$9.99/mo — unlimited notebooks, hosted compute, scenario runs.</p><a href="#">Go Pro →</a></div>
+      <div class="case" style="border-color:#1A4D3E"><h3>Pro+</h3><p style="margin:6px 0 16px">$20/mo — everything in Pro, plus collaboration and priority support.</p><a href="#">Go Pro+ →</a></div>
+      <div class="case"><h3>Max</h3><p style="margin:6px 0 16px">$40.99/mo — full platform, shared environments, audit trails.</p><a href="#">Go Max →</a></div>
+      <div class="case"><h3>Max+</h3><p style="margin:6px 0 16px">$100/mo — everything in Max, plus dedicated compute and SLA.</p><a href="#">Go Max+ →</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======== CTA ======== -->
+<section class="cta">
+  <div class="wrap">
+    <h2 class="serif">Your next answer should open.</h2>
+    <p>Join the researchers, analysts, and league players who stopped reading walls of text.</p>
+    <a href="#" class="btn btn-primary" style="padding:12px 26px;font-size:15.5px">Start a notebook — free</a>
+  </div>
+</section>
+
+<!-- ======== FOOTER ======== -->
+<footer>
+  <div class="wrap">
+    <div class="f-grid">
+      <div>
+        <a class="logo" href="#" style="font-size:17px">
+          <svg width="20" height="20" viewBox="0 0 48 48" fill="#1A4D3E" aria-hidden="true"><rect x="3" y="30" width="6" height="12" rx="1.5"/><rect x="12" y="18" width="6" height="24" rx="1.5"/><rect x="21" y="4" width="6" height="38" rx="1.5"/><rect x="30" y="18" width="6" height="24" rx="1.5"/><rect x="39" y="30" width="6" height="12" rx="1.5"/></svg>
+          Riemann Research
+        </a>
+        <p style="margin-top:12px;max-width:280px">An interactive research environment for questions about defined bodies of data.</p>
+      </div>
+      <div>
+        <h5>Product</h5>
+        <a href="#demo">Live demo</a>
+        <a href="#how">How it works</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#">Changelog</a>
+      </div>
+      <div>
+        <h5>Research</h5>
+        <a href="#">Docs</a>
+        <a href="#">Blog</a>
+        <a href="#">Connector SDK</a>
+        <a href="#">Roadmap</a>
+      </div>
+      <div>
+        <h5>Company</h5>
+        <a href="#">GitHub</a>
+        <a href="#">Security</a>
+        <a href="#">Privacy</a>
+        <a href="#">Contact</a>
+      </div>
+    </div>
+    <div class="f-bottom">
+      <span>© 2027 Riemann Research. All rights reserved.</span>
+      <span>No third-party analytics or trackers on this site.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ---- Live demo: the page itself demonstrates "change an assumption, the answer recomputes."
+  const state = {
+    usage: 85,
+    def: 0,
+    injury: false,
+    evidence: {
+      usage6w: { label:"Usage trend, last 6 weeks", base: 3.1, weight:"× 1.0", on: true },
+      role:    { label:"Role change after week 7",  base: 2.4, weight:"× 0.9", on: true },
+      oppDE:   { label:"Opponent edge rusher ruled out", base: 1.9, weight:"× 0.8", on: true },
+      sched:   { label:"Schedule strength, next 4 games", base: -1.2, weight:"× 0.7", on: true },
+      weather: { label:"One outdoor game, wind risk", base: -0.8, weight:"× 0.5", on: true }
+    }
+  };
+  const fmt = v => (v>=0?"+":"−") + Math.abs(v).toFixed(1);
+  const el = id => document.getElementById(id);
+
+  function render(){
+    let margin = (state.usage - 50) / 50 * 2.6 + state.def + (state.injury ? -2.5 : 0);
+    const rows = [];
+    for (const k in state.evidence){
+      const e = state.evidence[k];
+      if (e.on) margin += e.base * parseFloat(e.weight.slice(2));
+    }
+    for (const k in state.evidence){
+      const e = state.evidence[k];
+      const c = e.on ? e.base * parseFloat(e.weight.slice(2)) : 0;
+      rows.push({ label:e.label, c });
+    }
+    rows.push({ label:"Assumptions", c:(state.usage-50)/50*2.6 + state.def + (state.injury?-2.5:0) });
+    el("margin").textContent = fmt(margin);
+    el("margin").style.color = margin >= 0 ? "var(--accent)" : "var(--amber)";
+    const max = Math.max(...rows.map(r=>Math.abs(r.c)), 1);
+    el("contribRows").innerHTML = rows.map(r => {
+      const w = Math.abs(r.c)/max*100;
+      return `<div class="crow"><span class="lbl">${r.label}</span><div style="flex:1"><div class="bar ${r.c<0?'neg':''}" style="width:${w}%"></div></div><span class="num">${fmt(r.c)}</span></div>`;
+    }).join("");
+    const b = el("badge"); b.classList.add("show");
+    clearTimeout(render._t); render._t = setTimeout(()=>b.classList.remove("show"), 900);
+  }
+
+  el("usage").addEventListener("input", e => { state.usage = +e.target.value; el("usageVal").textContent = e.target.value + "%"; render(); });
+  el("defSeg").addEventListener("click", e => {
+    if (e.target.tagName !== "BUTTON") return;
+    [...el("defSeg").children].forEach(b=>b.classList.remove("on"));
+    e.target.classList.add("on"); state.def = +e.target.dataset.v; render();
+  });
+  el("injury").addEventListener("change", e => { state.injury = e.target.checked; render(); });
+  const evList = el("evList");
+  for (const k in state.evidence){
+    const e = state.evidence[k];
+    const d = document.createElement("div");
+    d.className = "ev";
+    d.innerHTML = `<span>${e.label}</span><span class="w">${e.weight}</span>`;
+    d.addEventListener("click", () => { e.on = !e.on; d.classList.toggle("off", !e.on); render(); });
+    evList.appendChild(d);
+  }
+  el("reset").addEventListener("click", () => {
+    state.usage = 85; state.def = 0; state.injury = false;
+    el("usage").value = 85; el("usageVal").textContent = "85%";
+    [...el("defSeg").children].forEach(b=>b.classList.toggle("on", b.dataset.v==="0"));
+    el("injury").checked = false;
+    for (const k in state.evidence) state.evidence[k].on = true;
+    [...evList.querySelectorAll(".ev")].forEach(d=>d.classList.remove("off"));
+    render();
+  });
+  render();
+</script>
+</body>
+</html>

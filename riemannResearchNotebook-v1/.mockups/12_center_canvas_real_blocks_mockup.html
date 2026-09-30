@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riemann Research — Blocks on Canvas · Real Lenses, No Hardcoded Data</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- CDN only: React 18 + React Flow v11 + Chart.js + marked. No build step, no npm. -->
+<link rel="stylesheet" href="https://unpkg.com/reactflow@11.11.4/dist/style.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/reactflow@11.11.4/dist/umd/index.js"></script>
+<script src="https://unpkg.com/chart.js@4.4.7/dist/chart.umd.js"></script>
+<script src="https://unpkg.com/marked@15.0.4/marked.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
+<style>
+  :root{
+    --bg:#0C0B09; --panel:#12110E; --panel2:#17150F; --panel3:#1C1913;
+    --line:#262319; --line2:#332E22;
+    --text:#EDEAE0; --mut:#9A937F; --mut2:#6E6857;
+    --amber:#F2A93B; --amber-dim:rgba(242,169,59,.14);
+    --up:#4CC38A; --dn:#E5484D;
+    --sans:"Space Grotesk",sans-serif; --mono:"IBM Plex Mono",monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  ::selection{background:rgba(242,169,59,.28);color:var(--text)}
+  html,body,#root{height:100%}
+  #root{display:flex;flex-direction:column}
+  body{background:var(--panel);color:var(--text);font-family:var(--sans);overflow:hidden;display:flex;flex-direction:column}
+  button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  input,textarea,select{font-family:var(--mono);color:var(--text);background:var(--bg);border:1px solid var(--line2);
+    border-radius:6px;outline:none;font-size:11px}
+  input:focus,textarea:focus,select:focus{border-color:var(--amber)}
+  textarea{resize:vertical;caret-color:var(--amber)}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#292419;border-radius:6px;border:2px solid var(--bg)}
+
+  /* top bar */
+  .cTop{height:46px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:6px;padding:0 14px;flex:none;background:var(--bg);overflow-x:auto}
+  .cTitle{font-size:13px;font-weight:600;margin-right:8px;white-space:nowrap}
+  .addBtn{font-size:11px;padding:5px 10px;border:1px solid var(--line2);border-radius:7px;color:var(--mut);white-space:nowrap;transition:all .12s}
+  .addBtn:hover{color:var(--amber);border-color:var(--amber);background:var(--amber-dim)}
+  .cHint{margin-left:auto;font-size:10.5px;color:var(--mut2);white-space:nowrap;padding-left:12px}
+
+  #flow{flex:1;position:relative}
+  .react-flow{background:var(--panel)}
+  .react-flow__attribution{display:none}
+  .react-flow__handle{opacity:0;width:4px;height:4px;border:none}
+  .react-flow__node{cursor:grab}
+  .react-flow__node.dragging{cursor:grabbing}
+  .react-flow__resize-control.handle{background:var(--amber);border-color:var(--bg)}
+  .react-flow__controls{box-shadow:none;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .react-flow__controls-button{background:var(--panel2);border-bottom:1px solid var(--line);color:var(--mut);fill:var(--mut)}
+  .react-flow__controls-button:hover{background:var(--panel3)}
+
+  /* block chrome */
+  .blk{width:100%;height:100%;background:var(--panel2);border:1px solid var(--line2);border-radius:12px;
+    display:flex;flex-direction:column;overflow:hidden;transition:border-color .15s,box-shadow .15s}
+  .blk:hover{border-color:#4A422E}
+  .react-flow__node.selected .blk{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
+  .bHead{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line);flex:none;background:var(--panel3)}
+  .bType{font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:#171204;
+    background:var(--amber);border-radius:4px;padding:1.5px 6px;font-weight:600}
+  .bName{font-size:12px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bCtl{display:flex;gap:2px}
+  .bCtl button{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;
+    color:var(--mut2);font-size:12px;font-family:var(--mono)}
+  .bCtl button:hover{color:var(--text);background:var(--line2)}
+  .bBody{flex:1;overflow:auto;padding:10px;min-height:0}
+  .blk.min .bBody{display:none}
+  .empty{border:1.5px dashed var(--line2);border-radius:9px;padding:16px 12px;text-align:center;
+    color:var(--mut2);font-size:11px;line-height:1.6}
+  .empty b{color:var(--mut)}
+  .row{display:flex;gap:6px;align-items:center;margin-bottom:7px;flex-wrap:wrap}
+  .row label{font-family:var(--mono);font-size:9px;color:var(--mut2);text-transform:uppercase;letter-spacing:.08em}
+  .miniBtn{font-size:10px;padding:4px 9px;border:1px solid var(--line2);border-radius:6px;color:var(--mut)}
+  .miniBtn:hover{color:var(--amber);border-color:var(--amber)}
+  .miniBtn.warn:hover{color:var(--dn);border-color:var(--dn)}
+
+  /* note / code */
+  .taFull{width:100%;min-height:110px;background:var(--bg);border:1px solid var(--line);border-radius:8px;
+    padding:9px 11px;font-size:11.5px;line-height:1.6;color:var(--text);font-family:var(--sans)}
+  .taMono{font-family:var(--mono);font-size:10.5px;line-height:1.7}
+
+  /* sheet */
+  table.v{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px}
+  table.v th{color:var(--mut2);font-weight:500;text-align:left;padding:3px 7px;border-bottom:1px solid var(--line2);
+    position:sticky;top:0;background:var(--panel2);letter-spacing:.05em}
+  table.v td{padding:3px 7px;border-bottom:1px solid var(--line);color:var(--text);white-space:nowrap}
+  .csvInput{width:100%;min-height:60px;background:var(--bg);border:1px solid var(--line);border-radius:8px;
+    padding:8px 10px;font-size:10px;color:var(--text)}
+
+  /* markdown */
+  .mdPrev{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.65;min-height:60px;margin-top:7px}
+  .mdPrev h1,.mdPrev h2,.mdPrev h3{margin:.5em 0 .3em;font-size:1.05em}
+  .mdPrev p{margin:.4em 0}
+  .mdPrev code{font-family:var(--mono);font-size:.9em;color:var(--amber)}
+  .mdPrev ul{margin:.4em 0 .4em 1.2em}
+
+  /* calendar */
+  .cal{width:100%;border-collapse:collapse;table-layout:fixed}
+  .cal th{font-family:var(--mono);font-size:8.5px;color:var(--mut2);padding:4px 0;text-transform:uppercase}
+  .cal td{border:1px solid var(--line);height:34px;vertical-align:top;padding:2px 4px;font-family:var(--mono);font-size:9px;color:var(--mut)}
+  .cal td.today{border-color:var(--amber);color:var(--amber)}
+
+  /* board */
+  .col{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px;margin-bottom:7px}
+  .colHead{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);margin-bottom:6px}
+  .cardItem{display:flex;gap:6px;align-items:center;background:var(--panel3);border:1px solid var(--line2);
+    border-radius:6px;padding:5px 8px;font-size:11px;color:var(--text);margin-bottom:4px}
+  .cardItem button{margin-left:auto;color:var(--mut2);font-family:var(--mono);font-size:10px}
+  .cardItem button:hover{color:var(--dn)}
+  .addCard{width:100%;background:none;border:1px dashed var(--line2);border-radius:6px;padding:4px 8px;font-size:10px;color:var(--mut2)}
+  .addCard:focus{border-color:var(--amber);color:var(--text)}
+
+  /* accordion */
+  .accItem{border:1px solid var(--line2);border-radius:8px;margin-bottom:6px;overflow:hidden}
+  .accHead{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);font-size:11.5px;cursor:pointer}
+  .accHead:hover{color:var(--amber)}
+  .accHead .car{margin-left:auto;font-family:var(--mono);color:var(--mut2)}
+  .accBody{padding:8px 10px;font-size:11px;color:var(--mut);line-height:1.6;border-top:1px solid var(--line);background:var(--panel2)}
+
+  /* slider */
+  input[type=range]{width:100%;accent-color:var(--amber);background:none;border:none}
+  .slVal{font-family:var(--mono);font-size:14px;color:var(--amber);text-align:center;padding:8px 0}
+
+  /* chart */
+  .chartBox{position:relative;height:170px}
+
+  /* maximized block — portal to body so it fills the whole center */
+  .maxOverlay{position:fixed;inset:56px 12px 12px;background:rgba(8,7,5,.92);z-index:1000;display:flex;align-items:center;justify-content:center}
+  .maxPanel{width:100%;height:100%;background:var(--panel2);border:1px solid var(--amber);border-radius:14px;
+    display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.7)}
+  .maxPanel .bBody{padding:16px}
+  .maxPanel .taFull,.maxPanel .csvInput{min-height:40vh}
+  .maxPanel .chartBox{height:100%;min-height:340px}
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useRef, useEffect, useCallback } = React;
+const { ReactFlow, Background, Controls, Handle, Position, useNodesState } = window.ReactFlow;
+
+/* ════════════════════════════════════════════════════════
+   THE MODEL THIS FILE DEMONSTRATES
+   · A block is a LENS ON DATA — it ships with NO content.
+     Every block starts as an honest empty state.
+   · Data ENTERS for real: the Sheet loads a CSV (file or
+     paste), the Note/Code/Markdown blocks take your typing,
+     and the Chart renders actual loaded tables via Chart.js.
+   · No edges. No tag chips. No invented sample rows.
+   · Every block DRAGS (useNodesState + onNodesChange — the
+     thing the last file forgot), RESIZES, MINIMIZES, and
+     MAXIMIZES to fill the center panel (portal overlay).
+   ════════════════════════════════════════════════════════ */
+
+/* ── CSV parsing (real, minimal, quotes-tolerant) ── */
+function parseCSV(text) {
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+      else if (c === '"') q = false;
+      else cell += c;
+    } else if (c === '"') q = true;
+    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(cell); cell = "";
+      if (row.some(v => v !== "")) rows.push(row);
+      row = [];
+    } else cell += c;
+  }
+  row.push(cell);
+  if (row.some(v => v !== "")) rows.push(row);
+  if (!rows.length) return null;
+  const cols = rows[0].map(s => s.trim());
+  return { cols, rows: rows.slice(1) };
+}
+
+/* ── block bodies: each is the lens itself, empty until fed ── */
+
+function NoteBody({ d }) {
+  const c = d.content;
+  return (
+    <>
+      <textarea className="taFull" style={{ minHeight: 120 }} placeholder="Type a note… (the block holds what you type — nothing before)"
+        value={c.text || ""} onChange={e => d.patch({ text: e.target.value })} />
+      {c.text
+        ? <div style={{ marginTop: 6, fontFamily: "var(--mono)", fontSize: 9, color: "var(--mut2)" }}>{c.text.length} chars · held in block state</div>
+        : null}
+    </>
+  );
+}
+
+function CodeBody({ d }) {
+  const c = d.content;
+  return (
+    <div className="row" style={{ flexDirection: "column", alignItems: "stretch", flexWrap: "nowrap", height: "100%" }}>
+      <div className="row">
+        <label>language</label>
+        <select value={c.lang || "rust"} onChange={e => d.patch({ lang: e.target.value })}>
+          {["rust", "typescript", "python", "go"].map(l => <option key={l}>{l}</option>)}
+        </select>
+      </div>
+      <textarea className="taFull taMono" style={{ flex: 1, minHeight: 90 }}
+        placeholder={"// empty — code is data this lens renders, not data it ships with\nfn main() { }"}
+        value={c.text || ""} onChange={e => d.patch({ text: e.target.value })} />
+    </div>
+  );
+}
+
+function MarkdownBody({ d }) {
+  const c = d.content;
+  return (
+    <>
+      <textarea className="taFull taMono" placeholder={"# Empty until you write it\nType **markdown** — rendered preview below."}
+        value={c.src || ""} onChange={e => d.patch({ src: e.target.value })} />
+      <div className="mdPrev"
+        dangerouslySetInnerHTML={{ __html: c.src ? window.marked.parse(c.src) : "<span style='color:var(--mut2);font-style:italic'>no source yet — the preview is a lens on what you type above</span>" }} />
+    </>
+  );
+}
+
+function SheetBody({ d }) {
+  const c = d.content;
+  const fileRef = useRef(null);
+  const onLoadText = (text, name) => {
+    const parsed = parseCSV(text);
+    if (!parsed) { d.patch({ error: "could not parse — nothing recognizable in that input" }); return; }
+    d.patch({ name, ...parsed, error: null });
+    d.publishTable(name, parsed);   // becomes visible to the Chart lens
+  };
+  if (!c.cols) {
+    return (
+      <div className="empty">
+        <b>no data loaded</b><br />
+        this sheet is a lens, not a spreadsheet with secrets<br />
+        <div className="row" style={{ justifyContent: "center", marginTop: 9 }}>
+          <button className="miniBtn" onClick={() => fileRef.current && fileRef.current.click()}>load .csv file</button>
+          <button className="miniBtn" onClick={() => d.patch({ paste: !c.paste })}>paste CSV</button>
+        </div>
+        <input ref={fileRef} type="file" accept=".csv,.txt" style={{ display: "none" }}
+          onChange={e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => onLoadText(r.result, f.name); r.readAsText(f); }} />
+        {c.paste ? <textarea className="csvInput" placeholder="a,b,c&#10;1,2,3" value={c.buf || ""} style={{ marginTop: 8 }}
+          onChange={e => d.patch({ buf: e.target.value })}
+          onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) onLoadText(c.buf || "", "pasted.csv"); }} /> : null}
+        {c.paste ? <div style={{ marginTop: 6 }}><button className="miniBtn" onClick={() => onLoadText(c.buf || "", "pasted.csv")}>parse</button>
+          <span style={{ fontSize: 9, color: "var(--mut2)", marginLeft: 8 }}>or Ctrl+Enter</span></div> : null}
+        {c.error ? <div style={{ color: "var(--dn)", marginTop: 8, fontFamily: "var(--mono)", fontSize: 9.5 }}>{c.error}</div> : null}
+      </div>
+    );
+  }
+  return (
+    <>
+      <div className="row">
+        <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--up)" }}>✓ {c.name}</span>
+        <span style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--mut2)" }}>{c.rows.length} rows × {c.cols.length} cols · published to data pool</span>
+        <button className="miniBtn warn" style={{ marginLeft: "auto" }} onClick={() => d.unpublishTable(c.tblId)}>clear</button>
+      </div>
+      <div style={{ overflow: "auto", maxHeight: 260 }}>
+        <table className="v">
+          <thead><tr>{c.cols.map((h, i) => <th key={i}>{h}</th>)}</tr></thead>
+          <tbody>{c.rows.map((r, i) => <tr key={i}>{c.cols.map((_, j) => <td key={j}>{r[j] ?? ""}</td>)}</tr>)}</tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
+function ChartBody({ d }) {
+  const c = d.content;
+  const cRef = useRef(null), instRef = useRef(null);
+  const tables = Object.entries(d.tables);
+  const active = c.tableId && d.tables[c.tableId] ? d.tables[c.tableId] : (tables.length ? d.tables[tables[tables.length - 1][0]] : null);
+  const xCol = c.xCol && active && active.cols.includes(c.xCol) ? c.xCol : (active ? active.cols[0] : null);
+  const yCol = c.yCol && active && active.cols.includes(c.yCol) ? c.yCol : (active ? (active.cols.find(k => k !== xCol) || active.cols[1]) : null);
+  const type = c.ctype || "bar";
+
+  useEffect(() => {
+    if (!active || !cRef.current) return;
+    const xs = active.rows.map(r => r[active.cols.indexOf(xCol)]);
+    const ys = active.rows.map(r => { const n = parseFloat(r[active.cols.indexOf(yCol)]); return isNaN(n) ? 0 : n; });
+    if (instRef.current) instRef.current.destroy();
+    instRef.current = new window.Chart(cRef.current, {
+      type,
+      data: { labels: xs, datasets: [{ label: yCol, data: ys,
+        backgroundColor: ys.map(v => v >= 0 ? "rgba(76,195,138,.75)" : "rgba(229,72,77,.75)"),
+        borderColor: "#F2A93B", borderWidth: type === "line" ? 2 : 0 }] },
+      options: { responsive: true, maintainAspectRatio: false, animation: { duration: 250 },
+        plugins: { legend: { labels: { color: "#9A937F", font: { family: "IBM Plex Mono", size: 9 } } } },
+        scales: { x: { ticks: { color: "#6E6857", font: { size: 9 } }, grid: { color: "#262319" } },
+                  y: { ticks: { color: "#6E6857", font: { size: 9 } }, grid: { color: "#262319" } } } },
+    });
+    return () => { /* keep instance until next render replaces it */ };
+  }, [active, xCol, yCol, type]);
+
+  if (!tables.length) {
+    return (
+      <div className="empty">
+        <b>nothing to render — no table has been loaded</b><br />
+        add a <b>Sheet</b> block and load a CSV; this chart is a lens on that data,<br />
+        it does not carry its own
+      </div>
+    );
+  }
+  return (
+    <>
+      <div className="row">
+        <label>table</label>
+        <select value={active && tables.length ? tables.find(([id, t]) => t === active)[0] : ""} onChange={e => d.patch({ tableId: e.target.value, xCol: null, yCol: null })}>
+          {tables.map(([id, t]) => <option key={id} value={id}>{t.name}</option>)}
+        </select>
+        <select value={type} onChange={e => d.patch({ ctype: e.target.value })}>
+          {["bar", "line", "pie", "doughnut"].map(t => <option key={t}>{t}</option>)}
+        </select>
+      </div>
+      <div className="row">
+        <label>x</label>
+        <select value={xCol || ""} onChange={e => d.patch({ xCol: e.target.value })}>
+          {active.cols.map(cc => <option key={cc}>{cc}</option>)}
+        </select>
+        <label>y</label>
+        <select value={yCol || ""} onChange={e => d.patch({ yCol: e.target.value })}>
+          {active.cols.map(cc => <option key={cc}>{cc}</option>)}
+        </select>
+      </div>
+      <div className="chartBox"><canvas ref={cRef} /></div>
+    </>
+  );
+}
+
+function CalendarBody({ d }) {
+  const today = new Date();
+  const y = today.getFullYear(), m = today.getMonth();
+  const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < first; i++) cells.push(null);
+  for (let dd = 1; dd <= days; dd++) cells.push(dd);
+  while (cells.length % 7) cells.push(null);
+  const c = d.content;
+  const marked = c.marks || {};
+  return (
+    <>
+      <div className="row">
+        <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--amber)" }}>
+          {today.toLocaleString("en", { month: "long", year: "numeric" })}
+        </span>
+        <span style={{ fontSize: 9, color: "var(--mut2)", marginLeft: "auto" }}>click a day to mark it</span>
+      </div>
+      <table className="cal">
+        <thead><tr>{["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(x => <th key={x}>{x}</th>)}</tr></thead>
+        <tbody>
+          {Array.from({ length: cells.length / 7 }, (_, w) => (
+            <tr key={w}>{cells.slice(w * 7, w * 7 + 7).map((dd, i) => (
+              <CalDay key={i} d={d} dd={dd} today={today} marked={marked} />
+            ))}</tr>
+          ))}
+        </tbody>
+      </table>
+    </>
+  );
+}
+
+/* the calendar day cell (kept out of the loop for clarity) */
+function CalDay({ d, dd, today, marked }) {
+  if (dd === null) return <td style={{ opacity: .25 }} />;
+  const isToday = dd === today.getDate() && !marked[dd];
+  return (
+    <td className={isToday ? "today" : ""} style={marked[dd] ? { borderColor: "var(--amber)", color: "var(--amber)" } : {}}
+      onClick={() => { const mk = { ...marked }; if (mk[dd]) delete mk[dd]; else mk[dd] = true; d.patch({ marks: mk }); }}>
+      {dd}{marked[dd] ? " •" : ""}
+    </td>
+  );
+}
+
+function BoardBody({ d }) {
+  const c = d.content;
+  const cols = c.cols || ["Todo", "Doing", "Done"];
+  const cards = c.cards || {};
+  const add = (col, txt) => { if (!txt.trim()) return; d.patch({ cards: { ...cards, [col]: [...(cards[col] || []), txt.trim()] } }); };
+  const del = (col, i) => d.patch({ cards: { ...cards, [col]: cards[col].filter((_, j) => j !== i) } });
+  return (
+    <>
+      {cols.map(col => (
+        <div className="col" key={col}>
+          <div className="colHead">{col} · {(cards[col] || []).length}</div>
+          {(cards[col] || []).map((t, i) => <div className="cardItem" key={i}>{t}<button onClick={() => del(col, i)}>×</button></div>)}
+          <input className="addCard" placeholder="+ enter to add a card"
+            onKeyDown={e => { if (e.key === "Enter") { add(col, e.target.value); e.target.value = ""; } }} />
+        </div>
+      ))}
+    </>
+  );
+}
+
+function AccordionBody({ d }) {
+  const c = d.content;
+  const items = c.items || [];
+  const set = (next) => d.patch({ items: next });
+  return (
+    <>
+      {items.map((it, i) => (
+        <div className="accItem" key={i}>
+          <div className="accHead" onClick={() => set(items.map((x, j) => j === i ? { ...x, open: !x.open } : x))}>
+            {it.title || "(untitled)"}<span className="car">{it.open ? "−" : "+"}</span>
+          </div>
+          {it.open ? <div className="accBody">{it.body || <i style={{ color: "var(--mut2)" }}>empty — click to type…
+            <input autoFocus style={{ width: "100%", marginTop: 6, background: "none", border: "none", borderBottom: "1px solid var(--line2)" }}
+              onKeyDown={e => { if (e.key === "Enter" && e.target.value) set(items.map((x, j) => j === i ? { ...x, body: e.target.value } : x)); }} /></i>}</div> : null}
+        </div>
+      ))}
+      <div className="row">
+        <button className="miniBtn" onClick={() => set([...items, { title: "Section " + (items.length + 1), open: false }])}>+ section</button>
+      </div>
+    </>
+  );
+}
+
+function SliderBody({ d }) {
+  const c = d.content;
+  const v = c.value ?? 50, lo = c.min ?? 0, hi = c.max ?? 100;
+  return (
+    <>
+      <div className="slVal">{v}</div>
+      <input type="range" min={lo} max={hi} value={v} onChange={e => d.patch({ value: +e.target.value })} />
+      <div className="row" style={{ marginTop: 8 }}>
+        <label>min</label><input type="number" value={lo} style={{ width: 56 }} onChange={e => d.patch({ min: +e.target.value })} />
+        <label>max</label><input type="number" value={hi} style={{ width: 56 }} onChange={e => d.patch({ max: +e.target.value })} />
+      </div>
+    </>
+  );
+}
+
+/* ── block registry ── */
+const TYPES = {
+  note:      { label: "Note",      Body: NoteBody,      w: 280, h: 190 },
+  markdown:  { label: "Markdown",  Body: MarkdownBody,  w: 320, h: 260 },
+  code:      { label: "Code",      Body: CodeBody,      w: 340, h: 250 },
+  sheet:     { label: "Sheet",     Body: SheetBody,     w: 340, h: 250 },
+  chart:     { label: "Chart",     Body: ChartBody,     w: 360, h: 320 },
+  calendar:  { label: "Calendar",  Body: CalendarBody,  w: 300, h: 280 },
+  board:     { label: "Board",     Body: BoardBody,     w: 300, h: 320 },
+  accordion: { label: "Accordion", Body: AccordionBody, w: 300, h: 240 },
+  slider:    { label: "Slider",    Body: SliderBody,    w: 260, h: 160 },
+};
+
+/* ── the block node (chrome: title, min, max, close) ── */
+function BlockNode({ data, selected }) {
+  const T = TYPES[data.btype];
+  const Body = T.Body;
+  return (
+    <div className={"blk" + (data.minimized ? " min" : "")} style={{ height: "100%" }}>
+      <Handle type="source" position={Position.Bottom} id="x" style={{ display: "none" }} />
+      <div className="bHead">
+        <span className="bType">{T.label}</span>
+        <input className="bName" value={data.name} style={{ background: "none", border: "none", flex: 1, color: "var(--text)", fontFamily: "var(--sans)", fontSize: 12, fontWeight: 600 }}
+          onChange={e => data.rename(e.target.value)} />
+        <div className="bCtl">
+          <button title={data.minimized ? "restore" : "minimize"} onClick={() => data.patch({ minimized: !data.minimized })}>{data.minimized ? "▢" : "–"}</button>
+          <button title="maximize — fills the center" onClick={() => data.maximize()}>⤢</button>
+          <button title="remove" onClick={() => data.remove()}>×</button>
+        </div>
+      </div>
+      <div className="bBody" hidden={!!data.minimized}>
+        <Body d={data} />
+      </div>
+    </div>
+  );
+}
+const nodeTypes = Object.fromEntries(Object.keys(TYPES).map(t => [t, BlockNode]));
+
+/* ── main ── */
+function Main() {
+  const ref = useRef(null);
+  return (
+    <>
+      <div className="cTop">
+        <span className="cTitle">blocks · add one, drag it, feed it data</span>
+        {Object.entries(TYPES).map(([k, T]) => (
+          <button key={k} className="addBtn" onClick={() => ref.current && ref.current.add(k)}>+ {T.label}</button>
+        ))}
+        <span className="cHint">no edges · no sample data · every block empty until you load something</span>
+      </div>
+      <div id="flow"><CanvasApp reg={ref} /></div>
+    </>
+  );
+}
+
+function CanvasApp({ reg }) {
+  const [rawNodes, setNodes, onNodesChange] = useNodesState([]);
+  const [content, setContent] = useState({});
+  const [tables, setTables] = useState({});
+  const [maxId, setMaxId] = useState(null);
+  const counter = useRef(0);
+
+  const add = useCallback((btype) => {
+    const id = btype + "-" + (++counter.current);
+    const T = TYPES[btype];
+    setNodes(ns => [...ns, {
+      id, type: btype,
+      position: { x: 80 + (counter.current % 5) * 46, y: 70 + (counter.current % 4) * 50 },
+      width: T.w, height: T.h, resizable: true, data: {},
+    }]);
+  }, []);
+  useEffect(() => { reg.current = { add }; }, [add]);
+
+  const patchContent = (id, p) => setContent(cs => ({ ...cs, [id]: { ...cs[id], ...p } }));
+  const publishTable = (id, name, parsed) => {
+    const tid = id + ":" + name;
+    setTables(ts => ({ ...ts, [tid]: { name, cols: parsed.cols, rows: parsed.rows } }));
+    patchContent(id, { tblId: tid });
+  };
+  const unpublishTable = (id) => {
+    setTables(ts => {
+      const cur = content[id] && content[id].tblId;
+      const n = { ...ts }; if (cur) delete n[cur]; return n;
+    });
+    patchContent(id, { tblId: null, cols: null, rows: null, name: null });
+  };
+
+  const nodes = rawNodes.map(n => {
+    const data = {
+      btype: n.type,
+      name: n.data.name || TYPES[n.type].label,
+      minimized: !!n.data.minimized,
+      content: content[n.id] || {},
+      tables,
+      patch: (p) => {
+        if (p.minimized !== undefined)
+          setNodes(ns => ns.map(x => x.id === n.id ? { ...x, data: { ...x.data, minimized: p.minimized } } : x));
+        patchContent(n.id, p);
+      },
+      rename: (v) => setNodes(ns => ns.map(x => x.id === n.id ? { ...x, data: { ...x.data, name: v } } : x)),
+      maximize: () => setMaxId(n.id),
+      remove: () => { setNodes(ns => ns.filter(x => x.id !== n.id)); if (maxId === n.id) setMaxId(null); },
+      publishTable: (name, parsed) => publishTable(n.id, name, parsed),
+      unpublishTable: () => unpublishTable(n.id),
+    };
+    return { ...n, data };
+  });
+
+  const maxNode = maxId ? nodes.find(n => n.id === maxId) : null;
+  const BodyM = maxNode && TYPES[maxNode.data.btype].Body;
+
+  return (
+    <div style={{ height: "100%", position: "relative" }}>
+      <ReactFlow nodes={nodes} edges={[]} nodeTypes={nodeTypes} onNodesChange={onNodesChange}
+        nodesConnectable={false} minZoom={.25} proOptions={{ hideAttribution: true }}>
+        <Background gap={22} size={1} color="#262319" />
+        <Controls showInteractive={false} />
+      </ReactFlow>
+      {maxNode && (
+        <div className="maxOverlay" onClick={e => { if (e.target === e.currentTarget) setMaxId(null); }}>
+          <div className="maxPanel">
+            <div className="bHead">
+              <span className="bType">{TYPES[maxNode.data.btype].label} · maximized</span>
+              <span className="bName">{maxNode.data.name}</span>
+              <div className="bCtl"><button onClick={() => setMaxId(null)} style={{ width: "auto", padding: "0 8px", fontSize: 11 }}>✕ close (esc)</button></div>
+            </div>
+            <div className="bBody"><BodyM d={maxNode.data} /></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<Main />);
+</script>
+</body>
+</html>

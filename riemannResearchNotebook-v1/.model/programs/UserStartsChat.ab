@@ -1,0 +1,20 @@
+# =====================================================================
+#  UserStartsChat.ab
+# =====================================================================
+#  sentence   User Start Chat
+#  app        src/ChatPanel.jsx — newChat() (line 101), the
+#             "New chat" button (line 112)
+#  triggers   the "New chat" button
+#  status     IMPLEMENTED
+#
+#  a fresh thread clears state and pushes the greeting — an
+#  in-memory flip, so `start` declares `ok` only.  no save: the
+#  thread is not part of the workspace.
+
+program UserStartsChat
+
+sentence  User Start Chat
+enter     chat.start.requested
+
+step system start chat
+  catch chat.start.ok goto Redraw

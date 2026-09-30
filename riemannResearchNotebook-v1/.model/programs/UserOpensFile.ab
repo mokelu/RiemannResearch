@@ -1,0 +1,20 @@
+#  UserOpensFile.ab
+
+program   UserOpensFile
+sentence  User Open File
+enter     file.open.requested (v20454)
+
+step system validate file (v20450)
+  catch file.validate.ok            -> v20439  goto system load file
+  catch file.validate.invalid       -> v20441  goto ReportFailure
+
+step system load file (v20451)
+  catch file.load.ok                 -> v20442  goto system update editor
+  catch file.load.failed             -> v20443  goto ReportFailure
+
+step system update editor (v20452)
+  catch editor.update.ok             -> v20444  goto system focus editor
+
+step system focus editor (v20453)
+  catch editor.focus.ok              -> v20446  goto Redraw
+  catch editor.focus.failed          -> v20447  goto ReportFailure

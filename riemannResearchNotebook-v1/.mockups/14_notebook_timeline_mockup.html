@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Riemann Research — Timeline · One Block at the Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- CDN only: React 18 + Chart.js + marked. No build step. No React Flow needed — there is no canvas here, only a focus stage and a scrub strip. -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/chart.js@4.4.7/dist/chart.umd.js"></script>
+<script src="https://unpkg.com/marked@15.0.4/marked.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
+<style>
+  :root{
+    --bg:#0C0B09; --panel:#12110E; --panel2:#17150F; --panel3:#1C1913;
+    --line:#262319; --line2:#332E22;
+    --text:#EDEAE0; --mut:#9A937F; --mut2:#6E6857;
+    --amber:#F2A93B; --amber-dim:rgba(242,169,59,.14);
+    --up:#4CC38A; --dn:#E5484D; --blue:#6FA8DC; --violet:#A78BFA;
+    --sans:"Space Grotesk",sans-serif; --mono:"IBM Plex Mono",monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  ::selection{background:rgba(242,169,59,.28);color:var(--text)}
+  html,body,#root{height:100%}
+  #root{display:flex;flex-direction:column}
+  body{background:var(--panel);color:var(--text);font-family:var(--sans);overflow:hidden;caret-color:var(--amber)}
+  button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  input,textarea,select{font-family:var(--mono);color:var(--text);background:var(--bg);border:1px solid var(--line2);border-radius:6px;outline:none;font-size:11px}
+  input:focus,textarea:focus,select:focus{border-color:var(--amber)}
+  textarea{resize:vertical}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#292419;border-radius:6px;border:2px solid var(--bg)}
+
+  /* ── top bar ── */
+  .nTop{flex:none;background:var(--bg);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:11px 14px;flex-wrap:nowrap;overflow-x:auto}
+  .nName{font-size:14px;font-weight:700;white-space:nowrap}
+  .viewPill{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);border:1px solid var(--line2);border-radius:99px;padding:2px 10px;white-space:nowrap}
+  .nMeta{font-family:var(--mono);font-size:9.5px;color:var(--mut2);white-space:nowrap}
+  .addBtn{font-size:11px;padding:4px 10px;border:1px solid var(--line2);border-radius:7px;color:var(--mut);white-space:nowrap;flex:none}
+  .addBtn:hover{color:var(--amber);border-color:var(--amber);background:var(--amber-dim)}
+  .seedBtn{font-size:11px;padding:4px 12px;border-radius:7px;background:var(--amber);color:#171204;font-weight:600;white-space:nowrap;flex:none}
+  .seedBtn:hover{filter:brightness(1.08)}
+  .nav{margin-left:auto;display:flex;gap:4px;align-items:center;flex:none}
+  .nav button{width:28px;height:28px;border:1px solid var(--line2);border-radius:7px;color:var(--mut);font-family:var(--mono);font-size:13px;display:flex;align-items:center;justify-content:center}
+  .nav button:hover{color:var(--amber);border-color:var(--amber)}
+  .pos{font-family:var(--mono);font-size:9.5px;color:var(--mut2);padding:0 6px;white-space:nowrap}
+
+  /* ── the stage: ONE block owns the center ── */
+  #stage{flex:1;min-height:0;display:flex;align-items:stretch;justify-content:center;padding:18px 18px 10px}
+  #stage .blk{max-width:940px;animation:blockIn .22s ease}
+  @keyframes blockIn{from{opacity:0;transform:translateY(8px) scale(.995)}}
+
+  /* ── the strip: the collection seen from the side ── */
+  .stripWrap{flex:none;border-top:1px solid var(--line);background:var(--bg)}
+  .stripHead{display:flex;align-items:center;gap:10px;padding:6px 14px 2px;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut2)}
+  .sortTog{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .sortTog button{padding:2px 9px;font-size:9px;letter-spacing:.08em;color:var(--mut2)}
+  .sortTog button.on{background:var(--amber-dim);color:var(--amber)}
+  .stripHint{margin-left:auto;text-transform:none;letter-spacing:0;font-size:9.5px;opacity:.8}
+  #strip{display:flex;gap:8px;align-items:center;padding:6px 14px 12px;overflow-x:auto;scroll-behavior:smooth;cursor:grab;user-select:none}
+  #strip.drag{cursor:grabbing;scroll-behavior:auto}
+  .scard{flex:none;width:158px;background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:7px 9px;cursor:pointer;transition:all .14s;position:relative}
+  .scard:hover{border-color:#4A422E;transform:translateY(-2px)}
+  .scard.on{border-color:var(--amber);background:#211B0E;box-shadow:0 0 0 1px var(--amber),0 6px 18px rgba(0,0,0,.45);transform:translateY(-3px)}
+  .scard .stype{font-family:var(--mono);font-size:7.5px;letter-spacing:.12em;text-transform:uppercase;color:#171204;background:var(--amber);border-radius:3px;padding:1px 5px;font-weight:600}
+  .scard .sname{font-size:11px;font-weight:600;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .scard .stime{font-family:var(--mono);font-size:8.5px;color:var(--mut2);margin-top:2px}
+  .scard .ssum{font-size:9px;color:var(--mut2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .scard::after{content:"";position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);width:0;height:0;border:5px solid transparent;opacity:0}
+  .scard.on::after{opacity:1;border-bottom-color:var(--amber)}
+  .sadd{flex:none;width:40px;height:58px;border:1.5px dashed var(--line2);border-radius:9px;color:var(--mut2);font-size:18px;display:flex;align-items:center;justify-content:center}
+  .sadd:hover{color:var(--amber);border-color:var(--amber)}
+
+  /* ── zero state ── */
+  .zero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--mut2);font-size:12.5px}
+  .zero .big{font-size:16px;color:var(--mut);font-weight:600}
+
+  /* ── block lens (shared bodies) ── */
+  .blk{background:var(--panel2);border:1px solid var(--line2);border-radius:13px;display:flex;flex-direction:column;overflow:hidden;width:100%}
+  .bHead{display:flex;align-items:center;gap:9px;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--panel3);flex:none}
+  .bType{font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:#171204;background:var(--amber);border-radius:4px;padding:1.5px 6px;font-weight:600}
+  .bName{font-size:12.5px;font-weight:600;flex:1;min-width:0;background:none;border:none;color:var(--text);font-family:var(--sans)}
+  .bStamp{font-family:var(--mono);font-size:8.5px;color:var(--mut2);white-space:nowrap}
+  .bCtl button{width:20px;height:20px;border-radius:5px;color:var(--mut2);font-family:var(--mono);font-size:12px}
+  .bCtl button:hover{color:var(--dn);background:var(--line2)}
+  .bBody{flex:1;overflow:auto;padding:13px;min-height:0}
+  .empty{border:1.5px dashed var(--line2);border-radius:9px;padding:16px 12px;text-align:center;color:var(--mut2);font-size:11px;line-height:1.6}
+  .empty b{color:var(--mut)}
+  .row{display:flex;gap:6px;align-items:center;margin-bottom:7px;flex-wrap:wrap}
+  .row label{font-family:var(--mono);font-size:9px;color:var(--mut2);text-transform:uppercase;letter-spacing:.08em}
+  .miniBtn{font-size:10px;padding:4px 9px;border:1px solid var(--line2);border-radius:6px;color:var(--mut)}
+  .miniBtn:hover{color:var(--amber);border-color:var(--amber)}
+  .miniBtn.warn:hover{color:var(--dn);border-color:var(--dn)}
+
+  .taFull{width:100%;min-height:120px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:11px 13px;font-size:13px;line-height:1.7;color:var(--text);font-family:var(--sans)}
+  .taMono{font-family:var(--mono);font-size:11px;line-height:1.7}
+  .mdPrev{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.65;min-height:50px;margin-top:8px}
+  .mdPrev h1,.mdPrev h2,.mdPrev h3{margin:.5em 0 .3em;font-size:1.1em}
+  .mdPrev p{margin:.45em 0}.mdPrev code{font-family:var(--mono);font-size:.9em;color:var(--amber)}
+  .mdPrev ul{margin:.4em 0 .4em 1.2em}
+
+  table.v{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10.5px}
+  table.v th{color:var(--mut2);font-weight:500;text-align:left;padding:4px 8px;border-bottom:1px solid var(--line2);position:sticky;top:0;background:var(--panel2);letter-spacing:.05em}
+  table.v td{padding:4px 8px;border-bottom:1px solid var(--line);color:var(--text);white-space:nowrap}
+  .csvInput{width:100%;min-height:70px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:10.5px;color:var(--text)}
+  .chartBox{position:relative;height:280px}
+
+  .cal{width:100%;border-collapse:collapse;table-layout:fixed}
+  .cal th{font-family:var(--mono);font-size:9px;color:var(--mut2);padding:4px 0;text-transform:uppercase}
+  .cal td{border:1px solid var(--line);height:44px;padding:3px 6px;font-family:var(--mono);font-size:10px;color:var(--mut);cursor:pointer}
+  .cal td.today{border-color:var(--amber);color:var(--amber)}
+
+  .col{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;margin-bottom:7px}
+  .colHead{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut2);margin-bottom:5px}
+  .cardItem{display:flex;gap:6px;background:var(--panel3);border:1px solid var(--line2);border-radius:6px;padding:5px 9px;font-size:11.5px;margin-bottom:4px}
+  .cardItem button{margin-left:auto;color:var(--mut2);font-family:var(--mono)}
+  .cardItem button:hover{color:var(--dn)}
+  .addCard{width:100%;background:none;border:1px dashed var(--line2);border-radius:6px;padding:5px 9px;font-size:10.5px;color:var(--mut2)}
+
+  .accItem{border:1px solid var(--line2);border-radius:8px;margin-bottom:6px;overflow:hidden}
+  .accHead{display:flex;gap:8px;padding:8px 11px;background:var(--bg);font-size:12px;cursor:pointer}
+  .accHead .car{margin-left:auto;font-family:var(--mono);color:var(--mut2)}
+  .accBody{padding:9px 12px;font-size:11.5px;color:var(--mut);border-top:1px solid var(--line)}
+
+  input[type=range]{width:100%;accent-color:var(--amber);background:none;border:none}
+  .slVal{font-family:var(--mono);font-size:18px;color:var(--amber);text-align:center;padding:10px 0}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useRef, useEffect, useMemo, useCallback } = React;
+
+/* ══════════════════════════════════════════════════════════════════
+   TIMELINE — the eighth projection, named.
+   · ONE block owns the center. Nothing else is on the stage.
+   · The strip at the bottom IS the notebook — the same collection,
+     seen from the side, growing horizontally as you add blocks.
+   · Sorted by ARRIVAL TIME (that's why this is a Timeline, not a
+     gallery). Toggle: the strip re-lays itself; the blocks never
+     changed. Sort is the view's opinion, not the block's content.
+   · ← → scrub. Wheel scrolls the strip. Click a card, the center
+     swaps. Edits touch lastTouched (visible under each card).
+   · No hardcoded data: the notebook starts empty; the sample only
+     enters through an explicit button and flows through the same
+     CSV parser a real load uses.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── utils ── */
+function parseCSV(text) {
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"' && text[i+1] === '"') { cell += '"'; i++; } else if (c === '"') q = false; else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i+1] === "\n") i++;
+      row.push(cell); cell = "";
+      if (row.some(v => v !== "")) rows.push(row); row = [];
+    } else cell += c;
+  }
+  row.push(cell); if (row.some(v => v !== "")) rows.push(row);
+  if (!rows.length) return null;
+  return { cols: rows[0].map(s => s.trim()), rows: rows.slice(1) };
+}
+const timeAgo = (ts) => {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return s + "s ago"; if (s < 3600) return Math.floor(s/60) + "m ago";
+  if (s < 86400) return Math.floor(s/3600) + "h ago"; return Math.floor(s/86400) + "d ago";
+};
+const fmtTime = (ts) => new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+/* ── block bodies (identical lenses to the seven-views file) ── */
+
+function NoteBody({ d }) {
+  return <textarea className="taFull" style={{ height: "100%", minHeight: 160 }} placeholder="Type a note…" value={d.content.text || ""} onChange={e => d.patch({ text: e.target.value })} />;
+}
+function CodeBlockBody({ d }) {
+  return (
+    <div>
+      <div className="row"><label>language</label>
+        <select value={d.content.lang || "rust"} onChange={e => d.patch({ lang: e.target.value })}>
+          {["rust","typescript","python","go"].map(l => <option key={l}>{l}</option>)}
+        </select></div>
+      <textarea className="taFull taMono" style={{ minHeight: 200 }} placeholder="// empty until you type" value={d.content.text || ""} onChange={e => d.patch({ text: e.target.value })} />
+    </div>
+  );
+}
+function MarkdownBody({ d }) {
+  return (
+    <div>
+      <textarea className="taFull taMono" placeholder="# source" value={d.content.src || ""} onChange={e => d.patch({ src: e.target.value })} />
+      <div className="mdPrev" dangerouslySetInnerHTML={{ __html: d.content.src ? window.marked.parse(d.content.src) : "<i style='color:var(--mut2)'>preview — lens on the source above</i>" }} />
+    </div>
+  );
+}
+function SheetBody({ d }) {
+  const c = d.content, fileRef = useRef(null);
+  const load = (text, name) => {
+    const p = parseCSV(text);
+    if (!p) { d.patch({ error: "could not parse" }); return; }
+    d.patch({ name, cols: p.cols, rows: p.rows, error: null });
+  };
+  if (!c.cols) return (
+    <div className="empty"><b>no data loaded</b><br />this sheet is a lens, not a spreadsheet with secrets
+      <div className="row" style={{ justifyContent: "center", marginTop: 9 }}>
+        <button className="miniBtn" onClick={() => fileRef.current && fileRef.current.click()}>load .csv file</button>
+        <button className="miniBtn" onClick={() => d.patch({ paste: !c.paste })}>paste CSV</button>
+      </div>
+      <input ref={fileRef} type="file" accept=".csv,.txt" style={{ display: "none" }}
+        onChange={e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => load(r.result, f.name); r.readAsText(f); }} />
+      {c.paste ? <textarea className="csvInput" style={{ marginTop: 8 }} placeholder={"a,b,c\n1,2,3"} value={c.buf || ""} onChange={e => d.patch({ buf: e.target.value })} /> : null}
+      {c.paste ? <div style={{ marginTop: 6 }}><button className="miniBtn" onClick={() => load(c.buf || "", "pasted.csv")}>parse</button></div> : null}
+      {c.error ? <div style={{ color: "var(--dn)", marginTop: 7, fontFamily: "var(--mono)", fontSize: 9 }}>{c.error}</div> : null}
+    </div>
+  );
+  return (
+    <div>
+      <div className="row">
+        <span style={{ fontFamily: "var(--mono)", fontSize: 10, color: "var(--up)" }}>✓ {c.name}</span>
+        <span style={{ fontFamily: "var(--mono)", fontSize: 9, color: "var(--mut2)", marginLeft: "auto" }}>{c.rows.length}×{c.cols.length} · feeds the Chart lens</span>
+        <button className="miniBtn warn" onClick={() => d.patch({ cols: null, rows: null, name: null })}>clear</button>
+      </div>
+      <div style={{ overflow: "auto", maxHeight: 380 }}>
+        <table className="v"><thead><tr>{c.cols.map(h => <th key={h}>{h}</th>)}</tr></thead>
+          <tbody>{c.rows.map((r, i) => <tr key={i}>{c.cols.map((_, j) => <td key={j}>{r[j] ?? ""}</td>)}</tr>)}</tbody></table>
+      </div>
+    </div>
+  );
+}
+function ChartBody({ d }) {
+  const c = d.content, cRef = useRef(null), inst = useRef(null);
+  const tables = d.tables;
+  const active = tables.find(t => t.id === c.tableId) || tables[0] || null;
+  const xCol = active && (c.xCol && active.cols.includes(c.xCol) ? c.xCol : active.cols[0]);
+  const yCol = active && (c.yCol && active.cols.includes(c.yCol) ? c.yCol : active.cols.find(k => k !== xCol));
+  const type = c.ctype || "bar";
+  useEffect(() => {
+    if (!active || !cRef.current) return;
+    const xi = active.cols.indexOf(xCol), yi = active.cols.indexOf(yCol);
+    const ys = active.rows.map(r => { const n = parseFloat(r[yi]); return isNaN(n) ? 0 : n; });
+    inst.current = new window.Chart(cRef.current, {
+      type, data: { labels: active.rows.map(r => r[xi]),
+        datasets: [{ label: yCol, data: ys, backgroundColor: ys.map(v => v >= 0 ? "rgba(76,195,138,.75)" : "rgba(229,72,77,.75)"), borderColor: "#F2A93B", borderWidth: type === "line" ? 2 : 0 }] },
+      options: { responsive: true, maintainAspectRatio: false, animation: { duration: 200 },
+        plugins: { legend: { labels: { color: "#9A937F", font: { family: "IBM Plex Mono", size: 9 } } } },
+        scales: (type === "pie" || type === "doughnut") ? {} :
+          { x: { ticks: { color: "#6E6857", font: { size: 9 } }, grid: { color: "#262319" } }, y: { ticks: { color: "#6E6857", font: { size: 9 } }, grid: { color: "#262319" } } } },
+    });
+    return () => { inst.current && inst.current.destroy(); };
+  }, [active && active.id, xCol, yCol, type, d.rev]);
+  if (!tables.length) return <div className="empty"><b>nothing to render</b><br />go back in the strip to a Sheet and load a CSV — this lens carries no data of its own</div>;
+  return (
+    <div>
+      <div className="row">
+        <label>table</label>
+        <select value={active.id} onChange={e => d.patch({ tableId: e.target.value, xCol: null, yCol: null })}>
+          {tables.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+        <select value={type} onChange={e => d.patch({ ctype: e.target.value })}>
+          {["bar","line","pie","doughnut"].map(t => <option key={t}>{t}</option>)}
+        </select>
+      </div>
+      <div className="row"><label>x</label>
+        <select value={xCol} onChange={e => d.patch({ xCol: e.target.value })}>{active.cols.map(cc => <option key={cc}>{cc}</option>)}</select>
+        <label>y</label>
+        <select value={yCol || ""} onChange={e => d.patch({ yCol: e.target.value })}><option value="">(pick y)</option>{active.cols.map(cc => <option key={cc}>{cc}</option>)}</select>
+      </div>
+      <div className="chartBox"><canvas ref={cRef} /></div>
+    </div>
+  );
+}
+function CalendarBody({ d }) {
+  const c = d.content, today = new Date();
+  const first = new Date(today.getFullYear(), today.getMonth(), 1).getDay();
+  const days = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const cells = []; for (let i = 0; i < first; i++) cells.push(null); for (let x = 1; x <= days; x++) cells.push(x);
+  while (cells.length % 7) cells.push(null);
+  const marked = c.marks || {};
+  return (
+    <table className="cal"><thead><tr>{["Su","Mo","Tu","We","Th","Fr","Sa"].map(x => <th key={x}>{x}</th>)}</tr></thead>
+      <tbody>{Array.from({ length: cells.length / 7 }, (_, w) => (
+        <tr key={w}>{cells.slice(w * 7, w * 7 + 7).map((dd, i) => dd === null
+          ? <td key={i} style={{ opacity: .25 }} />
+          : <td key={i} className={dd === today.getDate() && !marked[dd] ? "today" : ""} style={marked[dd] ? { borderColor: "var(--amber)", color: "var(--amber)" } : {}}
+              onClick={() => { const mk = { ...marked }; if (mk[dd]) delete mk[dd]; else mk[dd] = true; d.patch({ marks: mk }); }}>{dd}{marked[dd] ? " •" : ""}</td>)}</tr>))}</tbody></table>
+  );
+}
+function BoardBody({ d }) {
+  const c = d.content, cols = ["Todo","Doing","Done"], cards = c.cards || {};
+  return (
+    <div>{cols.map(col => (
+      <div className="col" key={col}>
+        <div className="colHead">{col} · {(cards[col] || []).length}</div>
+        {(cards[col] || []).map((t, i) => <div className="cardItem" key={i}>{t}<button onClick={() => d.patch({ cards: { ...cards, [col]: cards[col].filter((_, j) => j !== i) } })}>×</button></div>)}
+        <input className="addCard" placeholder="+ enter to add" onKeyDown={e => { if (e.key === "Enter" && e.target.value.trim()) { d.patch({ cards: { ...cards, [col]: [...(cards[col] || []), e.target.value.trim()] } }); e.target.value = ""; } }} />
+      </div>))}</div>
+  );
+}
+function AccordionBody({ d }) {
+  const c = d.content, items = c.items || [];
+  return (
+    <div>{items.map((it, i) => (
+      <div className="accItem" key={i}>
+        <div className="accHead" onClick={() => d.patch({ items: items.map((x, j) => j === i ? { ...x, open: !x.open } : x) })}>
+          {it.title || "(untitled)"}<span className="car">{it.open ? "−" : "+"}</span></div>
+        {it.open ? <div className="accBody">{it.body || <i>empty section</i>}</div> : null}
+      </div>))}
+      <button className="miniBtn" onClick={() => d.patch({ items: [...items, { title: "Section " + (items.length + 1), open: false }] })}>+ section</button></div>
+  );
+}
+function SliderBody({ d }) {
+  const c = d.content, v = c.value ?? 50, lo = c.min ?? 0, hi = c.max ?? 100;
+  return (
+    <div>
+      <div className="slVal">{v}</div>
+      <input type="range" min={lo} max={hi} value={v} onChange={e => d.patch({ value: +e.target.value })} />
+      <div className="row" style={{ marginTop: 8 }}><label>min</label><input type="number" value={lo} style={{ width: 56 }} onChange={e => d.patch({ min: +e.target.value })} />
+        <label>max</label><input type="number" value={hi} style={{ width: 56 }} onChange={e => d.patch({ max: +e.target.value })} /></div>
+    </div>
+  );
+}
+
+const TYPES = {
+  note: { label: "Note", Body: NoteBody },
+  markdown: { label: "Markdown", Body: MarkdownBody },
+  code: { label: "Code", Body: CodeBlockBody },
+  sheet: { label: "Sheet", Body: SheetBody },
+  chart: { label: "Chart", Body: ChartBody },
+  calendar: { label: "Calendar", Body: CalendarBody },
+  board: { label: "Board", Body: BoardBody },
+  accordion: { label: "Accordion", Body: AccordionBody },
+  slider: { label: "Slider", Body: SliderBody },
+};
+
+const summarize = (b) => {
+  const c = b.content || {};
+  if (b.type === "sheet") return c.cols ? `${c.rows.length}×${c.cols.length} · ${c.name}` : "empty lens";
+  if (b.type === "chart") return c.tableId ? `${c.ctype || "bar"} · x=${c.xCol || "?"} y=${c.yCol || "?"}` : "awaiting table";
+  if (b.type === "note" || b.type === "code" || b.type === "markdown") { const t = c.text || c.src || ""; return t ? t.slice(0, 26) + (t.length > 26 ? "…" : "") : "empty lens"; }
+  if (b.type === "slider") return "value " + (c.value ?? 50);
+  if (b.type === "board") return Object.values(c.cards || {}).flat().length + " cards";
+  if (b.type === "accordion") return (c.items || []).length + " sections";
+  if (b.type === "calendar") return Object.keys(c.marks || {}).length + " marks";
+  return "—";
+};
+
+/* ── app ── */
+let uid = 0; const nid = () => "b" + (++uid);
+
+function App() {
+  const [blocks, setBlocks] = useState([]);
+  const [focusId, setFocusId] = useState(null);
+  const [sortBy, setSortBy] = useState("arrival");   // "arrival" | "recency"
+  const [rev, setRev] = useState(0);
+  const cardRefs = useRef({});
+  const stripRef = useRef(null);
+  const dragRef = useRef(null);
+
+  const patchBlock = (id, p) => setBlocks(bs => bs.map(b => b.id === id ? { ...b, content: { ...b.content, ...p }, lastTouched: Date.now() } : b));
+  const renameBlock = (id, name) => setBlocks(bs => bs.map(b => b.id === id ? { ...b, name } : b));
+  const removeBlock = (id) => setBlocks(bs => {
+    const i = bs.findIndex(b => b.id === id), next = bs.filter(b => b.id !== id);
+    if (focusId === id && next.length) setFocusId(next[Math.max(0, i - 1)].id);
+    if (!next.length) setFocusId(null);
+    return next;
+  });
+  const addBlock = (type) => {
+    const id = nid(), now = Date.now();
+    setBlocks(bs => [...bs, { id, type, name: TYPES[type].label + " " + (bs.filter(b => b.type === type).length + 1), content: {}, createdAt: now, lastTouched: now }]);
+    setFocusId(id); setRev(r => r + 1);
+  };
+
+  const tables = useMemo(
+    () => blocks.filter(b => b.type === "sheet" && b.content && b.content.cols)
+                .map(b => ({ id: b.id + ":" + b.content.name, name: b.content.name, cols: b.content.cols, rows: b.content.rows })),
+    [blocks]);
+
+  const strip = useMemo(
+    () => [...blocks].sort((a, b) => sortBy === "arrival" ? a.createdAt - b.createdAt : a.lastTouched - b.lastTouched),
+    [blocks, sortBy]);
+
+  const focus = blocks.find(b => b.id === focusId) || null;
+  const focusIdx = focus ? strip.findIndex(b => b.id === focus.id) : -1;
+  const go = (delta) => { if (strip.length) setFocusId(strip[Math.min(strip.length - 1, Math.max(0, focusIdx + delta))].id); };
+
+  /* keyboard scrub */
+  useEffect(() => {
+    const h = (e) => {
+      const tag = (e.target.tagName || "").toLowerCase();
+      if (tag === "input" || tag === "textarea" || tag === "select") return;
+      if (e.key === "ArrowRight") { e.preventDefault(); go(1); }
+      if (e.key === "ArrowLeft")  { e.preventDefault(); go(-1); }
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  });
+
+  /* keep the focused card centered in the strip */
+  useEffect(() => {
+    const el = cardRefs.current[focusId];
+    if (el && stripRef.current) el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [focusId, sortBy, blocks.length]);
+
+  /* wheel → horizontal scrub; mouse drag → pan the strip */
+  const onWheel = (e) => { if (stripRef.current) stripRef.current.scrollLeft += (e.deltaY || e.deltaX); };
+  const onDown = (e) => { dragRef.current = { x: e.clientX, sl: stripRef.current.scrollLeft }; stripRef.current.classList.add("drag"); };
+  const onMove = (e) => { if (dragRef.current) stripRef.current.scrollLeft = dragRef.current.sl - (e.clientX - dragRef.current.x); };
+  const onUp = () => { dragRef.current = null; stripRef.current && stripRef.current.classList.remove("drag"); };
+
+  function seed() {
+    const t = Date.now(), sheetId = nid(), chartId = nid();
+    const parsed = parseCSV("date,asset,pnl\n2026-09-01,BTC,120\n2026-09-02,BTC,-40\n2026-09-03,BTC,88\n2026-09-04,BTC,203\n2026-09-05,BTC,-12");
+    const mk = (type, name, content, mAgo) => ({ id: nid(), type, name, content, createdAt: t - 1000 * 60 * mAgo, lastTouched: t - 1000 * 60 * mAgo });
+    const bs = [
+      mk("note", "Q3 idea", { text: "BTC drawdowns past 20% have marked cycle floors so far. Checking 2021-11 and 2022-06 next." }, 47),
+      mk("markdown", "Method", { src: "# Method\n\n- load daily pnl\n- plot against date\n- watch for **dd ≥ 20%**" }, 41),
+      { id: sheetId, ...mk("sheet", "sample.csv", { name: "sample.csv", cols: parsed.cols, rows: parsed.rows }, 33) },
+      { id: chartId, ...mk("chart", "Equity curve", { tableId: sheetId + ":sample.csv", xCol: "date", yCol: "pnl", ctype: "bar" }, 21) },
+      mk("code", "Rolling dd", { lang: "rust", text: "fn drawdown(p: &[f64]) -> f64 {\n    let peak = p.iter().fold(0.0, f64::max);\n    peak - p[p.len() - 1]\n}" }, 14),
+      mk("board", "Open threads", { cards: { Todo: ["verify 2022-06 dd"], Doing: [], Done: [] } }, 8),
+      mk("slider", "dd threshold", { min: 0, max: 50, value: 20 }, 3),
+    ];
+    setBlocks(bs); setFocusId(bs[3].id); setRev(r => r + 1);   /* land on the chart — it's the dramatic one */
+  }
+
+  const FBody = focus ? TYPES[focus.type].Body : null;
+
+  return (
+    <>
+      <div className="nTop">
+        <span className="nName">BTC Q3 Thesis</span>
+        <span className="viewPill">Timeline</span>
+        <span className="nMeta">{blocks.length} block{blocks.length === 1 ? "" : "s"} · one owns the center</span>
+        {!blocks.length ? <button className="seedBtn" onClick={seed}>load the sample notebook →</button> : null}
+        {blocks.length > 0 ? <span className="nMeta" style={{ opacity: .6 }}>(← → to scrub)</span> : null}
+        <div className="nav">
+          <button title="previous block" onClick={() => go(-1)}>←</button>
+          <span className="pos">{blocks.length ? `${focusIdx + 1} / ${blocks.length}` : "0 / 0"}</span>
+          <button title="next block" onClick={() => go(1)}>→</button>
+        </div>
+      </div>
+
+      <div id="stage">
+        {!focus ? (
+          <div className="zero">
+            <span className="big">the notebook has no blocks yet</span>
+            <span>add one above, or load the sample — then this stage shows one block at a time</span>
+          </div>
+        ) : (
+          <div className="blk">
+            <div className="bHead">
+              <span className="bType">{TYPES[focus.type].label}</span>
+              <input className="bName" value={focus.name} onChange={e => renameBlock(focus.id, e.target.value)} />
+              <span className="bStamp">added {fmtTime(focus.createdAt)} · {timeAgo(focus.createdAt)} · touched {timeAgo(focus.lastTouched)}</span>
+              <span className="bCtl"><button onClick={() => removeBlock(focus.id)} title="remove block">×</button></span>
+            </div>
+            <div className="bBody">
+              <FBody d={{ content: focus.content || {}, patch: (p) => patchBlock(focus.id, p), tables, rev }} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="stripWrap">
+        <div className="stripHead">
+          the strip — same collection, sorted by
+          <div className="sortTog">
+            <button className={sortBy === "arrival" ? "on" : ""} onClick={() => setSortBy("arrival")}>arrival time</button>
+            <button className={sortBy === "recency" ? "on" : ""} onClick={() => setSortBy("recency")}>last touched</button>
+          </div>
+          <span className="stripHint">drag · wheel · click to focus · sort is the view's opinion, not the block's</span>
+        </div>
+        <div id="strip" ref={stripRef} onWheel={onWheel} onMouseDown={onDown} onMouseMove={onMove} onMouseUp={onUp} onMouseLeave={onUp}>
+          {strip.map(b => {
+            const on = focus && b.id === focus.id;
+            return (
+              <div key={b.id} ref={el => cardRefs.current[b.id] = el} className={"scard" + (on ? " on" : "")} onClick={() => setFocusId(b.id)}>
+                <span className="stype">{TYPES[b.type].label}</span>
+                <div className="sname">{b.name}</div>
+                <div className="stime">{sortBy === "arrival" ? fmtTime(b.createdAt) + " · added" : fmtTime(b.lastTouched) + " · touched"}</div>
+                <div className="ssum">{summarize(b)}</div>
+              </div>
+            );
+          })}
+          <button className="sadd" title="add a block (it joins the strip at NOW)"
+            onClick={(e) => {
+              const types = Object.keys(TYPES), base = types.length;
+              /* quick-cycle: each click adds the next type in the registry */
+              addBlock(types[(e.shiftKey ? 0 : (blocks.length % base) + 1) % base]);
+            }}>＋</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

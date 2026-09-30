@@ -1,0 +1,22 @@
+# =====================================================================
+#  UserEditsSentence.ab
+# =====================================================================
+#  sentence   User Edit Sentence
+#  app        src/CellsView.jsx — CellRow textarea, committed onBlur
+#             (line 123).  no Enter key, no cancel: blur IS the
+#             commit, so this sentence has no suspension.
+#  triggers   click into a sentence, change it, click away
+#  status     IMPLEMENTED
+
+program UserEditsSentence
+
+sentence  User Edit Sentence
+enter     sentence.edit.requested
+
+step system edit sentence
+  catch sentence.edit.ok      goto system save workspace
+  catch sentence.edit.invalid goto ReportFailure
+
+step system save workspace
+  catch workspace.save.ok     goto Redraw
+  catch workspace.save.failed goto ReportFailure

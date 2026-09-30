@@ -1,0 +1,59 @@
+# =====================================================================
+#  UserDuplicatesFile.ab
+# =====================================================================
+#  sentence   User Duplicate File
+#  v4         duplicateNode(id)  — IMPLEMENTED, file rows only
+#             leftpanel_v4.html line 603; menu at line 782.
+#  triggers   context menu "Duplicate" (line 782)
+#             the row "more" button -> same menu (line 417-421)
+#
+#  folder duplicate is task 26 in leftpanel_tasks.md and is
+#  UNCHECKED there.  v4 refuses it outright: line 605 returns unless
+#  node.type === 'file'.  so there is no UserDuplicatesFolder.ab —
+#  no capability, no program.  the folder program appears the day
+#  that guard is removed, not before.
+#
+#  the tail of this program is the tail of UserCreatesFile: select,
+#  begin edit, rename, halt.  v4 does exactly that — line 610-612
+#  selects the copy and calls startRename(copy.id).  two sentences,
+#  one shared ending, written once each.
+#
+#  APP GAP: the React app stops after inserting the copy.
+#  duplicateEntry() (App.jsx:127) returns without selecting the
+#  copy and without starting the rename — the chain below is v4's,
+#  not the app's.  PARTIAL, README §2 / §10.
+
+program UserDuplicatesFile
+
+sentence  User Duplicate File
+enter     file.duplicate.requested
+
+# v4 builds the name by splicing " copy" in before the extension
+# (line 607: "notes.md" -> "notes copy.md"), so a collision cannot
+# happen and `exists` is never emitted.  caught anyway: the rule
+# still belongs to the action, and a duplicate that cannot find a
+# free name has failed, not merely been refused.
+step system duplicate file
+  catch file.duplicate.ok      goto system select node
+  catch file.duplicate.exists  goto ReportFailure
+  catch file.duplicate.failed  goto ReportFailure
+
+step system select node
+  catch node.select.ok goto system begin edit
+
+step system begin edit
+  catch edit.begin.ok     goto system rename file
+  catch edit.begin.failed goto Redraw
+
+# suspends until Enter, Esc, or blur (line 400-405).
+# Esc here DISCARDS the copy too — cancelEdit() splices out any node
+# marked isNew (line 553-557), and the copy is isNew.
+step system rename file
+  catch file.rename.ok        goto Redraw
+  catch file.rename.invalid   goto system delete node
+  catch file.rename.cancelled goto system delete node
+  catch file.rename.exists    goto Redraw
+
+step system delete node
+  catch node.delete.ok     goto Redraw
+  catch node.delete.failed goto ReportFailure

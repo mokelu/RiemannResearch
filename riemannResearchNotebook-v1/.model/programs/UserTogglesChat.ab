@@ -1,0 +1,21 @@
+# =====================================================================
+#  UserTogglesChat.ab
+# =====================================================================
+#  sentence   User Toggle Chat
+#  app        src/App.jsx — header "Hide chat"/"Chat" (line 160),
+#             `chatOpen` state
+#  triggers   the chat toggle button
+#  status     IMPLEMENTED
+#
+#  in-memory flag flip — `toggle` declares `ok` only.
+#  KNOWN LIMITATION: the chat renders only while BOTH `docksOpen`
+#  and `chatOpen` are true (line 212), so pressing "Chat" while the
+#  panels are minimized shows nothing.  see UserTogglesPanels.
+
+program UserTogglesChat
+
+sentence  User Toggle Chat
+enter     chat.toggle.requested
+
+step system toggle chat
+  catch chat.toggle.ok goto Redraw

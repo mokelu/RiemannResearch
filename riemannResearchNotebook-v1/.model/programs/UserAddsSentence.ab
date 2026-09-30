@@ -1,0 +1,23 @@
+# =====================================================================
+#  UserAddsSentence.ab
+# =====================================================================
+#  sentence   User Add Sentence
+#  app        src/CellsView.jsx — the add form (id · text · tag).
+#             every intent goes through cellOps -> surface.propose,
+#             which re-validates; a refusal lands in the banner
+#             ("the boundary refused this edit").
+#  triggers   press the add button in the Cells view
+#  status     IMPLEMENTED
+
+program UserAddsSentence
+
+sentence  User Add Sentence
+enter     sentence.add.requested
+
+step system add sentence
+  catch sentence.add.ok      goto system save workspace
+  catch sentence.add.invalid goto ReportFailure
+
+step system save workspace
+  catch workspace.save.ok     goto Redraw
+  catch workspace.save.failed goto ReportFailure

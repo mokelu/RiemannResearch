@@ -18,6 +18,8 @@
  *
  * A patch is one of:
  *   { op: "addNode", id, text, tag, placement: { block, position? } }
+ *       — placement may be omitted only when the document has no blocks at
+ *         all: the first sentence then opens the first paragraph to hold it
  *   { op: "removeNode", id }
  *   { op: "setText", id, text }
  *   { op: "retag", id, tag }
@@ -71,6 +73,23 @@ export function applyPatch(input, patch) {
   switch (patch.op) {
     case "addNode": {
       const placement = patch.placement ?? {};
+
+      // A document with no blocks yet has nothing to name, so the first
+      // sentence also opens the first paragraph to hold it. Once any block
+      // exists, placement is mandatory again — a sentence never appears
+      // without a place the document shows it.
+      if (placement.block === undefined && input.blocks.length === 0) {
+        return {
+          ...input,
+          blocks: [
+            { type: "paragraph", runs: [{ kind: "node", ref: patch.id }] },
+          ],
+          nodes: [
+            { id: patch.id, text: patch.text, tag: patch.tag },
+          ],
+        };
+      }
+
       const index = placement.block;
       const target = input.blocks[index];
       // v1 places into the blocks that are a plain run list. A sentence for a

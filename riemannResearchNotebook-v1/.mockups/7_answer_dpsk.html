@@ -1,0 +1,4257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COMPANY1 — Chiefs @ Bills — Week 8</title>
+<style>
+  :root {
+    --bg: #FAF9F5;
+    --panel: #FFFFFF;
+    --sidebar: #F2F1EC;
+    --surface-2: #F7F6F1;
+    --ink: #14130F;
+    --ink-2: #45443F;
+    --muted: #76756E;
+    --muted-2: #9A9992;
+    --border: #E6E5DF;
+    --border-strong: #D6D5CE;
+    --accent: #1A4D3E;
+    --accent-soft: #EAF1ED;
+    --amber: #B8860B;
+    --amber-soft: #f6ecd9;
+    --blue: #3A6B9C;
+    --blue-soft: #e8edf5;
+    --grid: rgba(20,19,15,0.055);
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+    --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    overflow: hidden;
+  }
+
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+
+  /* ============ APP SHELL ============ */
+  .app {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+  }
+
+  /* ============ SIDEBAR ============ */
+  .sidebar {
+    width: 248px;
+    flex-shrink: 0;
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sidebar-top {
+    padding: 18px 18px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: -0.01em;
+  }
+
+  .mark {
+    width: 20px; height: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--border-strong);
+    border-radius: 5px;
+    background: var(--panel);
+  }
+  .mark span { background: var(--accent); border-radius: 1px; opacity: 0.85; }
+  .mark span:nth-child(2),
+  .mark span:nth-child(3) { opacity: 0.4; }
+
+  .icon-btn {
+    width: 26px; height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    color: var(--muted);
+    transition: all 0.12s;
+  }
+  .icon-btn:hover { background: rgba(20,19,15,0.06); color: var(--ink); }
+
+  .search {
+    margin: 0 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    background: rgba(255,255,255,0.7);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 12.5px;
+    color: var(--muted);
+    transition: all 0.12s;
+  }
+  .search:hover { background: #fff; border-color: var(--border-strong); }
+  .search svg { flex-shrink: 0; opacity: 0.6; }
+  .search .shortcut {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--muted-2);
+    letter-spacing: 0.02em;
+  }
+
+  .sidebar-section {
+    padding: 8px 18px 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted-2);
+  }
+
+  .notebook-list {
+    list-style: none;
+    padding: 0 8px;
+    overflow-y: auto;
+    flex: 1;
+    margin-bottom: 8px;
+  }
+
+  .notebook-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: all 0.1s;
+    margin-bottom: 1px;
+  }
+  .notebook-item:hover { background: rgba(20,19,15,0.045); color: var(--ink); }
+  .notebook-item.active {
+    background: var(--panel);
+    color: var(--ink);
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(20,19,15,0.05);
+  }
+
+  .notebook-item .nb-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border-strong);
+    flex-shrink: 0;
+  }
+  .notebook-item.active .nb-dot { background: var(--accent); }
+
+  .notebook-item .nb-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+
+  .notebook-item .nb-meta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted-2);
+  }
+
+  .sidebar-bottom {
+    padding: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .new-notebook {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border-radius: 7px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 500;
+    transition: all 0.12s;
+  }
+  .new-notebook:hover { background: #163f33; }
+
+  /* Drop overlay */
+  .drop-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+  }
+  .drop-overlay.active { display: flex; }
+
+  .drop-box {
+    padding: 48px 64px;
+    background: var(--panel);
+    border: 2px dashed var(--accent);
+    border-radius: 16px;
+    text-align: center;
+    color: var(--ink);
+    font-size: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  .drop-box svg { color: var(--accent); }
+
+  /* ============ WORKSPACE ============ */
+  .workspace {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: var(--bg);
+  }
+
+  .workspace-main {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+  }
+
+  .workspace-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .topbar {
+    height: 52px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .breadcrumb .sep { color: var(--muted-2); font-size: 11px; }
+  .breadcrumb .current { color: var(--ink); font-weight: 500; }
+
+  .topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tb-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    color: var(--ink-2);
+    border: 1px solid var(--border);
+    background: var(--panel);
+    transition: all 0.12s;
+  }
+  .tb-btn:hover { border-color: var(--border-strong); color: var(--ink); }
+  .tb-btn.primary {
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+  }
+  .tb-btn.primary:hover { background: #2a2925; }
+
+  .avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2A6B57, #1A4D3E);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 4px;
+  }
+
+  /* ============ VIEW TABS ============ */
+  .view-tabs {
+    height: 44px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: stretch;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    gap: 2px;
+  }
+
+  .view-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 14px;
+    font-size: 12.5px;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.12s;
+    position: relative;
+  }
+  .view-tab:hover { color: var(--ink-2); }
+  .view-tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--ink);
+    font-weight: 500;
+  }
+  .view-tab svg { opacity: 0.7; }
+  .view-tab.active svg { opacity: 1; }
+
+  .view-tabs .spacer { flex: 1; }
+
+  .live-status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    align-self: center;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #2A6B57;
+    box-shadow: 0 0 0 3px rgba(42,107,87,0.15);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+  }
+
+  /* ============ BODY ============ */
+  .body {
+    min-height: 0;
+  }
+
+  .canvas-container {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+    background: var(--bg);
+  }
+
+  /* ============ CANVAS ============ */
+  .canvas-wrap {
+    position: relative;
+    width: 860px;
+    height: 670px;
+    margin: 32px auto;
+    background:
+      radial-gradient(circle at 1px 1px, var(--grid) 1px, transparent 0) 0 0 / 22px 22px,
+      var(--bg);
+    border-radius: 12px;
+  }
+
+  .canvas-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .connector {
+    fill: none;
+    stroke: var(--border-strong);
+    stroke-width: 1.4;
+    transition: all 0.3s ease;
+  }
+  .connector.dashed {
+    stroke-dasharray: 5 5;
+    stroke: var(--muted-2);
+    opacity: 0.5;
+  }
+
+  /* ============ CARDS ============ */
+  .card {
+    position: absolute;
+    z-index: 2;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    box-shadow: 0 1px 2px rgba(20,19,15,0.03);
+  }
+
+  .card:hover {
+    border-color: var(--border-strong);
+    box-shadow: 0 4px 14px -6px rgba(20,19,15,0.12);
+    transform: translateY(-1px);
+  }
+
+  .card.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft), 0 4px 14px -6px rgba(20,19,15,0.12);
+  }
+
+  .card.disabled {
+    background: var(--surface-2);
+    border-style: dashed;
+    opacity: 0.62;
+  }
+
+  .card.disabled .card-content {
+    text-decoration: line-through;
+    text-decoration-color: var(--muted-2);
+    text-decoration-thickness: 1px;
+  }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .tag-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .tag-label {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .card-menu {
+    margin-left: auto;
+    color: var(--muted-2);
+    opacity: 0;
+    transition: opacity 0.12s;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 2px;
+  }
+  .card:hover .card-menu { opacity: 1; }
+
+  .card-content {
+    font-size: 12.5px;
+    line-height: 1.42;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--muted-2);
+    letter-spacing: 0.03em;
+    margin-top: auto;
+  }
+  .card-footer .weight {
+    color: var(--muted);
+  }
+  .card-footer .dot-sep {
+    width: 2px; height: 2px;
+    border-radius: 50%;
+    background: var(--muted-2);
+  }
+
+  /* Type colors */
+  .card[data-type="EVIDENCE"] .tag-dot { background: #2A6B57; }
+  .card[data-type="EVIDENCE"] .tag-label { color: #2A6B57; }
+
+  .card[data-type="OBSERVATION"] .tag-dot { background: #3A6B9C; }
+  .card[data-type="OBSERVATION"] .tag-label { color: #3A6B9C; }
+
+  .card[data-type="ASSUMPTION"] .tag-dot { background: #B8860B; }
+  .card[data-type="ASSUMPTION"] .tag-label { color: #B8860B; }
+
+  .card[data-type="MODEL"] .tag-dot { background: #6B4A8C; }
+  .card[data-type="MODEL"] .tag-label { color: #6B4A8C; }
+
+  .card[data-type="CONDITION"] .tag-dot { background: #7A7A7A; }
+  .card[data-type="CONDITION"] .tag-label { color: #7A7A7A; }
+
+  .card[data-type="QUESTION"] .tag-dot { background: var(--ink); }
+  .card[data-type="QUESTION"] .tag-label { color: var(--ink); }
+
+  .card[data-type="ANSWER"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .card[data-type="ANSWER"] .tag-dot { background: #9CC3B4; }
+  .card[data-type="ANSWER"] .tag-label { color: #9CC3B4; }
+  .card[data-type="ANSWER"] .card-content { color: #fff; }
+  .card[data-type="ANSWER"] .card-footer { color: rgba(255,255,255,0.6); }
+  .card[data-type="ANSWER"] .card-footer .weight { color: rgba(255,255,255,0.85); }
+
+  /* Special card: Question */
+  .card[data-type="QUESTION"] {
+    background: var(--panel);
+    border-color: var(--border-strong);
+  }
+  .card[data-type="QUESTION"] .card-content {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+  }
+
+  /* Special card: Answer */
+  .card[data-type="ANSWER"] .card-content {
+    font-family: var(--font-serif);
+    font-size: 30px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+  }
+  .card[data-type="ANSWER"] .answer-sub {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 0.05em;
+  }
+  .card[data-type="ANSWER"] .answer-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .card[data-type="ANSWER"].flash {
+    animation: flash 0.5s ease;
+  }
+  @keyframes flash {
+    0% { box-shadow: 0 0 0 0 rgba(42,107,87,0.4); }
+    100% { box-shadow: 0 0 0 14px rgba(42,107,87,0); }
+  }
+
+  /* ============ RIGHT PANEL (CHAT) ============ */
+  .chat-panel {
+    width: 340px;
+    flex-shrink: 0;
+    background: var(--sidebar);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .chat-head {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .chat-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .chat-thread {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+
+  .chat-msg {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .chat-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .chat-avatar.user {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--ink-2);
+  }
+  .chat-avatar.ai {
+    background: linear-gradient(135deg, #2A6B57, #1A4D3E);
+    color: #fff;
+  }
+
+  .chat-msg-body { flex: 1; min-width: 0; }
+
+  .chat-msg-name {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-2);
+    margin-bottom: 4px;
+  }
+
+  .chat-msg-text {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+  .chat-msg-text p { margin: 0 0 8px; }
+  .chat-msg-text p:last-child { margin-bottom: 0; }
+
+  .chat-msg-time {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--muted-2);
+    margin-top: 4px;
+  }
+
+  /* Proposal card inside chat */
+  .chat-proposal {
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: var(--surface-2);
+    border: 1px dashed var(--border-strong);
+    border-radius: 8px;
+  }
+  .chat-proposal.accepted {
+    border-style: solid;
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .chat-proposal-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .chat-proposal-tag {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    padding: 2px 6px;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    background: var(--accent-soft);
+  }
+  .chat-proposal.accepted .chat-proposal-tag {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .chat-proposal-count {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .chat-proposal-items {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .chat-proposal-item {
+    padding: 8px 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--ink-2);
+    line-height: 1.4;
+  }
+
+  .chat-proposal-item .pip-type {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .chat-proposal-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .chat-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.12s;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--ink-2);
+  }
+  .chat-btn:hover { border-color: var(--border-strong); color: var(--ink); }
+  .chat-btn.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .chat-btn.primary:hover { background: #163f33; }
+  .chat-btn.danger { color: #9A3B3B; border-color: #e0c4c4; }
+  .chat-btn.danger:hover { background: #fdf2f2; }
+
+  /* Chat input */
+  .chat-input-area {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--sidebar);
+  }
+
+  .chat-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  .chat-input {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-family: var(--font-sans);
+    color: var(--ink);
+    background: var(--panel);
+    resize: none;
+    outline: none;
+    min-height: 38px;
+    max-height: 120px;
+    line-height: 1.4;
+    transition: border-color 0.12s;
+  }
+  .chat-input:focus { border-color: var(--accent); }
+  .chat-input::placeholder { color: var(--muted-2); }
+
+  .chat-send {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.12s;
+  }
+  .chat-send:hover { background: #163f33; }
+
+  .chat-input-hint {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--muted-2);
+    margin-top: 6px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ============ TIMELINE VIEW ============ */
+  .timeline-view {
+    padding: 40px 48px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .tl-day {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 24px;
+    position: relative;
+    padding-bottom: 28px;
+  }
+  .tl-day:last-child { padding-bottom: 0; }
+
+  .tl-date {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    padding-top: 6px;
+    text-transform: uppercase;
+  }
+
+  .tl-items {
+    position: relative;
+    padding-left: 20px;
+    border-left: 1px solid var(--border);
+  }
+
+  .tl-items::before {
+    content: "";
+    position: absolute;
+    left: -4px; top: 10px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--border-strong);
+    border: 2px solid var(--bg);
+  }
+
+  .tl-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .tl-item:hover { border-color: var(--border-strong); }
+  .tl-item.selected { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .tl-item:last-child { margin-bottom: 0; }
+
+  .tl-item .ti-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+
+  .tl-item .ti-tag {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .tl-item .ti-text {
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+
+  /* ============ TABLE VIEW ============ */
+  .table-view {
+    padding: 32px 40px;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .data-table th {
+    text-align: left;
+    padding: 12px 16px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+  }
+
+  .data-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink-2);
+    vertical-align: top;
+  }
+
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr { cursor: pointer; transition: background 0.1s; }
+  .data-table tr:hover td { background: var(--surface-2); }
+  .data-table tr.selected td { background: var(--accent-soft); }
+
+  .data-table .tag-cell {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .data-table .num-cell {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--muted);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  /* ============ CODE VIEW ============ */
+  .code-view {
+    padding: 32px 40px;
+  }
+
+  .code-block {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px 24px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--ink-2);
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  .code-block .key { color: #6B4A8C; }
+  .code-block .str { color: #2A6B57; }
+  .code-block .num { color: #B8860B; }
+  .code-block .bool { color: #3A6B9C; }
+  .code-block .punc { color: var(--muted-2); }
+
+  /* ============ SCROLLBARS ============ */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 10px;
+    border: 3px solid var(--bg);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted-2); }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+  }
+
+  /* ============ PAGE VIEW (LINEAR NOTEBOOK FLOW) ============ */
+  .page-view {
+    padding: 26px 20px 80px;
+    overflow-y: auto;
+    height: 100%;
+  }
+
+  .page-flow {
+    max-width: 700px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .page-flow::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 14px;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .page-cell {
+    position: relative;
+    margin-left: 36px;
+    margin-bottom: 18px;
+    scroll-margin-top: 70px;
+    transition: all 0.25s ease;
+  }
+
+  /* Ghost / proposed cell */
+  .page-cell.ghost {
+    opacity: 0.55;
+    transform: scale(0.98);
+  }
+  .page-cell.ghost .cell-card {
+    border-style: dashed;
+    background: var(--surface-2);
+    position: relative;
+  }
+  .page-cell.ghost .cell-card::after {
+    content: 'PROPOSED';
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-family: var(--font-mono);
+    font-size: 8.5px;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    padding: 2px 6px;
+    border: 1px dashed var(--accent);
+    border-radius: 4px;
+    background: var(--accent-soft);
+  }
+  .page-cell.ghost .cell-card .ghost-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+  }
+  .page-cell:not(.ghost) .cell-card .ghost-actions {
+    display: none;
+  }
+  .page-cell.ghost .cell-card .ghost-btn {
+    padding: 5px 12px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--ink-2);
+    transition: all 0.12s;
+  }
+  .page-cell.ghost .cell-card .ghost-btn:hover {
+    border-color: var(--border-strong);
+  }
+  .page-cell.ghost .cell-card .ghost-btn.accept {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .page-cell.ghost .cell-card .ghost-btn.accept:hover {
+    background: #163f33;
+  }
+
+  /* Ghost cell accept animation */
+  .page-cell.ghost.accepting {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .page-cell.ghost.accepting .cell-card {
+    border-style: solid;
+    border-color: var(--accent);
+    background: var(--panel);
+  }
+
+  /* Ghost cell dismiss animation */
+  .page-cell.ghost.dismissing {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+    max-height: 0;
+    margin-bottom: 0;
+    overflow: hidden;
+  }
+
+  .page-cell::before {
+    content: '';
+    position: absolute;
+    left: -33.5px;
+    top: 20px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2.5px solid var(--muted);
+    z-index: 2;
+  }
+
+  .page-cell[data-type="DATA"]::before { border-color: var(--muted); }
+  .page-cell[data-type="QUESTION"]::before { border-color: var(--accent); }
+  .page-cell[data-type="ASSUMPTION"]::before { border-color: var(--amber); }
+  .page-cell[data-type="EVIDENCE"]::before { border-color: var(--blue); }
+  .page-cell[data-type="ANSWER"]::before { border-color: var(--accent); background: var(--accent); }
+  .page-cell[data-type="VIEW"]::before { border-color: var(--muted); }
+  .page-cell[data-type="PREDICTION"]::before { border-color: var(--accent); border-style: dashed; }
+  .page-cell[data-type="NOTE"]::before { border-color: var(--border-strong); }
+
+  .page-cell .cell-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(20,19,15,0.04);
+  }
+
+  .page-cell .cell-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .page-cell .cell-head .ttl {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .page-cell .cell-head .sp {
+    margin-left: auto;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .page-cell .cell-body {
+    padding: 16px 18px;
+  }
+
+  .page-chip {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: #fff;
+    white-space: nowrap;
+  }
+
+  .page-chip.q { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+  .page-chip.a { color: var(--amber); border-color: var(--amber); background: var(--amber-soft); }
+  .page-chip.e { color: var(--blue); border-color: var(--blue); background: var(--blue-soft); }
+  .page-chip.ans { color: #fff; border-color: var(--accent); background: var(--accent); }
+  .page-chip.pred { color: var(--accent); border-color: var(--accent); background: transparent; border-style: dashed; }
+
+  .page-mini {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    padding: 2px 7px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: #fff;
+  }
+
+  /* Page: note cell */
+  .page-cell .note-text {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 15px;
+    color: #3d434c;
+    padding: 14px 18px;
+  }
+
+  .page-cell .note-text .by {
+    font-family: var(--font-mono);
+    font-style: normal;
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* Page: question cell */
+  .page-cell .qtext {
+    font-family: var(--font-serif);
+    font-size: 21px;
+    line-height: 1.35;
+  }
+
+  .page-cell .qmeta {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* Page: assumption levers */
+  .page-cell .lever {
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .page-cell .lever:last-child {
+    border-bottom: none;
+    padding-bottom: 2px;
+  }
+
+  .page-cell .lever .lr {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 7px;
+  }
+
+  .page-cell .lever label {
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+
+  .page-cell .lever .val {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--amber);
+    font-weight: 700;
+  }
+
+  .page-cell .lever .hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .page-cell input[type="range"] {
+    width: 100%;
+    accent-color: var(--amber);
+    height: 22px;
+  }
+
+  .page-cell .seg {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    overflow: hidden;
+    width: fit-content;
+  }
+
+  .page-cell .seg button {
+    padding: 6px 16px;
+    background: #fff;
+    border: none;
+    font-size: 12.5px;
+    color: var(--muted);
+    border-right: 1px solid var(--border);
+  }
+
+  .page-cell .seg button:last-child { border-right: none; }
+  .page-cell .seg button.on { background: var(--amber); color: #fff; font-weight: 600; }
+
+  .page-cell .switch {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    background: var(--border-strong);
+    border-radius: 20px;
+    border: none;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+
+  .page-cell .switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    transition: left 0.15s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+
+  .page-cell .switch.on { background: var(--amber); }
+  .page-cell .switch.on::after { left: 18px; }
+
+  .page-cell .levrow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .page-cell .levrow .lt { font-size: 13.5px; font-weight: 600; }
+  .page-cell .levrow .lh { font-size: 12px; color: var(--muted); }
+
+  /* Page: evidence rows */
+  .page-cell .ev {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 7px;
+    background: #fff;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .page-cell .ev:hover { border-color: var(--muted); }
+
+  .page-cell .ev .tick {
+    width: 16px;
+    height: 16px;
+    border-radius: 5px;
+    border: 1.5px solid var(--blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #fff;
+    flex-shrink: 0;
+    background: var(--blue);
+  }
+
+  .page-cell .ev.off .tick {
+    background: #fff;
+    color: transparent;
+    border-color: var(--border-strong);
+  }
+
+  .page-cell .ev .lbl { font-size: 13px; font-weight: 600; }
+  .page-cell .ev .src { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+  .page-cell .ev .contrib { margin-left: auto; font-family: var(--font-mono); font-size: 12px; color: var(--accent); font-weight: 700; }
+  .page-cell .ev .contrib.neg { color: var(--amber); }
+  .page-cell .ev.off { opacity: 0.45; }
+  .page-cell .ev.off .lbl { text-decoration: line-through; }
+
+  /* Page: answer cell */
+  .page-cell[data-type="ANSWER"] > .cell-card { border: 1.5px solid var(--accent); }
+
+  .page-cell .ansnum {
+    font-family: var(--font-serif);
+    font-size: 46px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+
+  .page-cell .ansnum small {
+    font-size: 19px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .page-cell .anssub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .page-cell .bars { margin-top: 16px; }
+
+  .page-cell .crow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+
+  .page-cell .crow .lbl { width: 158px; color: var(--muted); flex-shrink: 0; }
+
+  .page-cell .crow .bar {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--accent);
+    transition: width 0.3s;
+    min-width: 2px;
+  }
+
+  .page-cell .crow .bar.neg { background: var(--amber); }
+
+  .page-cell .crow .num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    width: 44px;
+    text-align: right;
+  }
+
+  .page-cell .whybtn {
+    margin-top: 14px;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 7px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .page-cell .whybtn:hover { border-color: var(--accent); }
+
+  .page-cell .predtext { font-size: 14.5px; }
+
+  .page-cell .predmeta {
+    margin-top: 9px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  /* Page: tip */
+  .page-tip {
+    max-width: 700px;
+    margin: 0 auto 20px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    background: var(--accent-soft);
+    border: 1px solid #cfe3db;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 13px;
+    color: #204a3f;
+    position: relative;
+  }
+
+  .page-tip button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: #204a3f;
+    font-size: 14px;
+  }
+
+  /* Page: ask bar */
+  .page-askwrap {
+    max-width: 700px;
+    margin: 8px auto 0;
+  }
+
+  .page-ask {
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px -12px rgba(20,19,15,0.15);
+    padding: 10px 12px;
+  }
+
+  .page-askrow {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .page-ask input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14.5px;
+    background: transparent;
+    font-family: inherit;
+  }
+
+  .page-ask .send {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .page-askchips {
+    display: flex;
+    gap: 7px;
+    margin-top: 9px;
+    flex-wrap: wrap;
+  }
+
+  .page-askchip {
+    font-size: 11.5px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 20px;
+    padding: 3px 11px;
+    cursor: pointer;
+  }
+
+  .page-askchip:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ============ DOCUMENT VIEW (PURE PROSE) ============ */
+  .doc-view {
+    height: 100%;
+    overflow-y: auto;
+    background: var(--bg);
+  }
+
+  .doc-body {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 48px 32px 100px;
+  }
+
+  .doc-content {
+    font-family: var(--font-serif);
+    font-size: 17px;
+    line-height: 1.75;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+
+  .doc-content p {
+    margin: 0 0 1.2em;
+  }
+
+  .doc-content p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* ============ CELLS VIEW (STRUCTURED LINEAR FLOW) ============ */
+
+  /* ============ GRAPH VIEW (ENTITY-RELATION TABLE) ============ */
+  .graph-view {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+
+  .graph-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .graph-header h2 {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .graph-section {
+    margin-bottom: 28px;
+  }
+
+  .graph-section-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .graph-table {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .graph-row {
+    display: grid;
+    grid-template-columns: 48px 100px 1fr 60px;
+    gap: 0;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+
+  .graph-row:last-child { border-bottom: none; }
+
+  .graph-row:hover { background: var(--surface-2); }
+
+  .graph-row-header {
+    background: var(--surface-2);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .graph-row-header:hover { background: var(--surface-2); }
+
+  .gr-id {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .gr-type {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+  }
+
+  .gr-stmt {
+    color: var(--ink-2);
+    line-height: 1.4;
+  }
+
+  .gr-weight {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-align: right;
+    font-weight: 600;
+  }
+
+  .graph-rel-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .graph-rel {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr 1fr;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--panel);
+    font-size: 12.5px;
+  }
+
+  .graph-rel:hover { background: var(--surface-2); }
+
+  .gr-from, .gr-to {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink);
+  }
+
+  .gr-arrow {
+    color: var(--muted-2);
+    font-size: 11px;
+  }
+
+  .gr-kind {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: center;
+  }
+
+  .gr-desc {
+    color: var(--muted);
+    font-size: 12px;
+    text-align: right;
+  }
+
+  .graph-chain {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding: 20px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+
+  .chain-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: 100%;
+    max-width: 500px;
+  }
+
+  .chain-step.chain-answer {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .chain-step.chain-answer .chain-id,
+  .chain-step.chain-answer .chain-text {
+    color: #fff;
+  }
+
+  .chain-id {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    min-width: 60px;
+  }
+
+  .chain-text {
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+
+  .chain-connector {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted-2);
+    letter-spacing: 0.06em;
+    padding: 4px 0;
+  }
+
+
+  .cells-view {
+    padding: 32px 40px;
+    overflow-y: auto;
+    height: 100%;
+    max-width: 820px;
+    margin: 0 auto;
+  }
+
+  .cells-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cells-header h2 {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .cells-header .cell-count {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+
+  .cells-add {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px dashed var(--border-strong);
+    background: none;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+
+  .cells-add:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+
+  .cell-block {
+    position: relative;
+    display: flex;
+    gap: 0;
+    margin-bottom: 2px;
+    border-radius: 8px;
+    transition: background 0.1s;
+  }
+
+  .cell-block:hover { background: var(--surface-2); }
+
+  .cell-block.running { background: var(--accent-soft); }
+
+  .cell-gutter {
+    width: 48px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 12px;
+    gap: 4px;
+  }
+
+  .cell-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted-2);
+    letter-spacing: 0.04em;
+    user-select: none;
+  }
+
+  .cell-run {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border-strong);
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.12s;
+    opacity: 0;
+  }
+
+  .cell-block:hover .cell-run { opacity: 1; }
+  .cell-run:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .cell-run svg { width: 10px; height: 10px; color: var(--muted); }
+  .cell-run:hover svg { color: var(--accent); }
+
+  .cell-block.running .cell-run {
+    opacity: 1;
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+  .cell-block.running .cell-run svg { color: #fff; }
+
+  .cell-main {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 14px 10px 0;
+  }
+
+  .cell-type {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted-2);
+    margin-bottom: 4px;
+  }
+
+  .cell-type.type-code { color: #6B4A8C; }
+  .cell-type.type-markdown { color: var(--ink-2); }
+  .cell-type.type-data { color: var(--blue); }
+  .cell-type.type-chart { color: var(--accent); }
+  .cell-type.type-answer { color: var(--accent); }
+
+  .cell-content {
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+
+  .cell-content.code {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.65;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    white-space: pre;
+    overflow-x: auto;
+    color: var(--ink-2);
+  }
+
+  .cell-content.code .kw { color: #6B4A8C; }
+  .cell-content.code .fn { color: #3A6B9C; }
+  .cell-content.code .str { color: #2A6B57; }
+  .cell-content.code .num { color: #B8860B; }
+  .cell-content.code .cmt { color: var(--muted-2); font-style: italic; }
+
+  .cell-content.markdown {
+    font-family: var(--font-serif);
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  .cell-content.chart {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow: hidden;
+  }
+
+  .cell-content.data-table {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .cell-content.data-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+
+  .cell-content.data-table th {
+    text-align: left;
+    padding: 8px 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cell-content.data-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink-2);
+  }
+
+  .cell-content.data-table tr:last-child td { border-bottom: none; }
+
+  .cell-output {
+    margin-top: 8px;
+    padding: 10px 14px;
+    background: var(--surface-2);
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-2);
+    border-left: 3px solid var(--accent);
+  }
+
+  .cell-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 16px 0 16px 48px;
+  }
+
+  /* ============ OBJECTS VIEW ============ */
+  .objects-view {
+    padding: 32px 40px;
+    overflow-y: auto;
+    height: 100%;
+  }
+
+  .objects-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .objects-header h2 {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .objects-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 12.5px;
+    color: var(--muted);
+    width: 240px;
+    transition: all 0.12s;
+  }
+
+  .objects-search:focus-within { border-color: var(--accent); }
+  .objects-search svg { flex-shrink: 0; opacity: 0.5; }
+  .objects-search input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 12.5px;
+    font-family: inherit;
+    color: var(--ink);
+    width: 100%;
+  }
+
+  .objects-filters {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .objects-filter {
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #fff;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.12s;
+    font-family: var(--font-mono);
+    letter-spacing: 0.03em;
+  }
+
+  .objects-filter:hover { border-color: var(--border-strong); color: var(--ink); }
+  .objects-filter.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  .objects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+
+  .obj-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .obj-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: 0 4px 14px -6px rgba(20,19,15,0.1);
+    transform: translateY(-1px);
+  }
+
+  .obj-card.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  .obj-card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .obj-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .obj-card-icon.player { background: var(--accent-soft); color: var(--accent); }
+  .obj-card-icon.team { background: var(--blue-soft); color: var(--blue); }
+  .obj-card-icon.game { background: var(--amber-soft); color: var(--amber); }
+  .obj-card-icon.projection { background: #f0ebf5; color: #6B4A8C; }
+
+  .obj-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+
+  .obj-card-sub {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .obj-card-props {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .obj-prop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    background: var(--panel);
+    font-size: 12px;
+  }
+
+  .obj-prop .k { color: var(--muted); }
+  .obj-prop .v {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .obj-card-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted-2);
+  }
+
+  .obj-tag {
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: #fff;
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .obj-tag.star { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+
+  /* ============ CONVERSATIONS SIDEBAR ============ */
+  .conv-sidebar { width: 260px; }
+  .conv-sidebar .search { margin: 0 12px 8px; }
+
+  .new-chat-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: calc(100% - 24px);
+    margin: 0 12px 12px;
+    padding: 9px 14px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.12s;
+  }
+  .new-chat-btn:hover { background: #163f33; }
+
+  .conv-list {
+    list-style: none;
+    padding: 0 8px;
+    margin-bottom: 16px;
+  }
+
+  .conv-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.1s;
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+  .conv-item:hover { background: var(--surface-2); }
+  .conv-item.active { background: var(--surface-2); color: var(--ink); font-weight: 500; }
+
+  .conv-icon { font-size: 14px; flex-shrink: 0; }
+  .conv-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ============ CENTER CHAT ============ */
+  .chat-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: var(--bg);
+  }
+
+  .model-dropdown {
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-family: var(--font-sans);
+    color: var(--ink);
+    background: var(--panel);
+    cursor: pointer;
+    outline: none;
+  }
+  .model-dropdown:focus { border-color: var(--accent); }
+
+  .notebook-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--ink-2);
+    background: var(--surface-2);
+  }
+  .nb-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .nb-badge-ext {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .chat-center .chat-thread {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    justify-content: flex-end;
+  }
+
+  .center-view {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  .center-view .doc-body {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 24px;
+  }
+
+  .center-view .doc-content p {
+    margin-bottom: 12px;
+    line-height: 1.6;
+  }
+
+  .center-view .page-flow {
+    padding: 20px;
+  }
+
+  .center-view .graph-view {
+    padding: 20px;
+  }
+
+  .center-view .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .center-view .data-table th,
+  .center-view .data-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .center-view .data-table th {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--surface-2);
+  }
+
+  .center-view .code-block {
+    padding: 20px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    color: var(--ink-2);
+  }
+
+  .view-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    flex-shrink: 0;
+  }
+
+  .view-tab {
+    padding: 8px 14px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .view-tab:hover { color: var(--ink-2); }
+  .view-tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--ink);
+    font-weight: 500;
+  }
+
+  .chat-center .chat-input-area {
+    padding: 12px 20px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .chat-input-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .chat-input-box {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--panel);
+    transition: border-color 0.12s;
+  }
+  .chat-input-box:focus-within { border-color: var(--accent); }
+
+  .input-action {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: all 0.12s;
+  }
+  .input-action:hover { background: var(--surface-2); color: var(--ink); }
+
+  .chat-center .chat-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    font-family: var(--font-sans);
+    color: var(--ink);
+    resize: none;
+    min-height: 32px;
+    max-height: 120px;
+    line-height: 1.5;
+    padding: 4px 0;
+  }
+  .chat-center .chat-input::placeholder { color: var(--muted-2); }
+
+  .send-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.12s;
+  }
+  .send-btn:hover { background: #163f33; }
+
+  .chat-center .chat-input-hint {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted-2);
+    margin-top: 8px;
+    text-align: center;
+    letter-spacing: 0.03em;
+  }
+  .hint-sep { margin: 0 6px; }
+
+  /* ============ SETTINGS PANEL ============ */
+  .settings-panel {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--sidebar);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .settings-head {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .settings-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .settings-body { padding: 16px 18px; }
+
+  .settings-section {
+    margin-bottom: 20px;
+  }
+
+  .settings-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .settings-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .settings-meta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+
+  .obj-count-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .obj-count {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  .oc-num {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .oc-type {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .source-list { display: flex; flex-direction: column; gap: 6px; }
+  .source-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .source-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .source-name { flex: 1; color: var(--ink-2); }
+  .source-status { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+
+  .rule-list { display: flex; flex-direction: column; gap: 4px; }
+  .rule-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+  }
+  .rule-name { color: var(--ink-2); }
+  .rule-ver { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+
+  .assumption-list { display: flex; flex-direction: column; gap: 6px; }
+  .assumption-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .assumption-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .assumption-dot.on { background: var(--accent); }
+  .assumption-dot.off { background: var(--muted-2); }
+  .assumption-name { flex: 1; color: var(--ink-2); }
+  .assumption-weight { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
+  .export-btn, .import-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: var(--ink-2);
+    background: var(--panel);
+    cursor: pointer;
+    transition: all 0.12s;
+    margin-bottom: 6px;
+  }
+  .export-btn:hover, .import-btn:hover { border-color: var(--border-strong); color: var(--ink); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ LEFT: CONVERSATIONS ============ -->
+  <aside class="sidebar conv-sidebar">
+    <div class="sidebar-top">
+      <div class="brand">
+        <span class="mark"><span></span><span></span><span></span><span></span></span>
+        COMPANY1
+      </div>
+    </div>
+
+    <button class="new-chat-btn" id="newChatBtn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5v14M5 12h14"></path>
+      </svg>
+      New conversation
+    </button>
+
+    <div class="search">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-4.35-4.35"></path>
+      </svg>
+      <span>Search conversations</span>
+    </div>
+
+    <div class="sidebar-section">Today</div>
+    <ul class="conv-list">
+      <li class="conv-item active">
+        <span class="conv-icon">🏈</span>
+        <span class="conv-name">Chiefs @ Bills — Week 8</span>
+      </li>
+      <li class="conv-item">
+        <span class="conv-icon">🎮</span>
+        <span class="conv-name">GTA VI — mission payout model</span>
+      </li>
+    </ul>
+
+    <div class="sidebar-section">Yesterday</div>
+    <ul class="conv-list">
+      <li class="conv-item">
+        <span class="conv-icon">📈</span>
+        <span class="conv-name">NVDA post-earnings scenario</span>
+      </li>
+      <li class="conv-item">
+        <span class="conv-icon">🏈</span>
+        <span class="conv-name">Fantasy — RB target share</span>
+      </li>
+    </ul>
+
+    <div class="sidebar-section">Previous 7 days</div>
+    <ul class="conv-list">
+      <li class="conv-item">
+        <span class="conv-icon">🏦</span>
+        <span class="conv-name">December rate cut probability</span>
+      </li>
+      <li class="conv-item">
+        <span class="conv-icon">📊</span>
+        <span class="conv-name">CPI surprise analysis</span>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- ============ CENTER: CHAT ============ -->
+  <main class="chat-center">
+
+    <!-- View tabs -->
+    <div class="view-tabs">
+      <button class="view-tab active" data-view="chat">Chat</button>
+      <button class="view-tab" data-view="document">Document</button>
+      <button class="view-tab" data-view="cells">Cells</button>
+      <button class="view-tab" data-view="canvas">Canvas</button>
+      <button class="view-tab" data-view="graph">Graph</button>
+      <button class="view-tab" data-view="timeline">Timeline</button>
+      <button class="view-tab" data-view="table">Table</button>
+      <button class="view-tab" data-view="code">Code</button>
+    </div>
+
+    <!-- Chat view (default) -->
+    <div class="center-view" id="chatView">
+      <div class="chat-thread" id="chatThread"></div>
+    </div>
+
+    <!-- Document view -->
+    <div class="center-view" id="documentView" style="display:none;">
+      <div class="doc-body">
+        <div class="doc-content">
+          <p>Mensah's schedule softens after week 14, but Okafor's role is the real story. I'm keeping the injury adjustment conservative until Friday's reports land.</p>
+          <p>Will D. Okafor outscore S. Mensah in fantasy points over the next four weeks?</p>
+          <p>Okafor's usage has climbed six weeks straight. He took the lead-back role in week 7. The opponent's best pass-rusher is out this Sunday. Two tough matchups in the stretch, but the volume is there.</p>
+          <p>Mensah's per-game average sits at 15.4 points. His schedule opens up after week 14 — two soft zone defenses back to back. But the touch share is only 44%. That's a committee back.</p>
+          <p>The ankle concern is the big unknown. Okafor's role is still the lead back. Two tough matchups in the stretch. If he's healthy, the volume wins. If he's not, Mensah's floor is higher.</p>
+          <p>After running the numbers: Okafor over Mensah, weeks 13 through 16, by 13.1 points. The usage trend and role change outweigh the schedule risk. Conservative on injury until Friday.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cells view -->
+    <div class="center-view" id="cellsView" style="display:none;">
+      <div class="page-flow">
+        <div class="page-tip" id="pageTip">
+          <div>This is a live notebook. <b>Drag the levers</b> in Assumptions, <b>toggle evidence</b>, and watch the answer recompute. Every cell is connected — edit one, and the rest follow.</div>
+          <button onclick="document.getElementById('pageTip').remove()">✕</button>
+        </div>
+        <div class="page-cell" data-type="DATA" id="pd1">
+          <div class="cell-card">
+            <div class="cell-head"><span class="page-chip">Data</span><span class="ttl">League 2027 — connection</span>
+              <span class="sp"><span class="page-mini">synced 2m ago</span></span></div>
+            <div class="cell-body" style="padding-top:8px;padding-bottom:8px">
+              <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px dashed var(--border);font-size:13px">
+                <span style="font-weight:600">League platform</span>
+                <span style="color:var(--muted);font-size:12px">12 teams · 254 players · 17 weeks</span>
+                <span style="margin-left:auto;font-family:var(--font-mono);font-size:10.5px;color:var(--accent)">● synced</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:9px;padding:7px 0;font-size:13px">
+                <span style="font-weight:600">Week 12 in progress</span>
+                <span style="color:var(--muted);font-size:12px">4 games live</span>
+                <span style="margin-left:auto;font-family:var(--font-mono);font-size:10.5px;color:var(--accent)">● live</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="page-cell" data-type="NOTE" id="pn1">
+          <div class="cell-card note-text">Mensah's schedule softens after wk 14, but Okafor's role is the real story. Keeping the injury adjustment conservative until Friday's reports land.
+            <div class="by">DK · Tue 9:12 AM — edited</div>
+          </div>
+        </div>
+        <div class="page-cell" data-type="QUESTION" id="pq1">
+          <div class="cell-card">
+            <div class="cell-head"><span class="page-chip q">Question</span><span class="ttl">Q1</span>
+              <span class="sp"><span class="page-mini">grounded · League 2027</span></span></div>
+            <div class="cell-body">
+              <div class="qtext">Will D. Okafor outscore S. Mensah in fantasy points over the next four weeks?</div>
+              <div class="qmeta"><span class="page-mini">asked Tue</span><span class="page-mini">2 assumptions bound</span><span class="page-mini">5 evidence items</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="page-cell" data-type="ASSUMPTION" id="pa1">
+          <div class="cell-card">
+            <div class="cell-head"><span class="page-chip a">Assumptions</span><span class="ttl">3 — edit, the answer follows</span></div>
+            <div class="cell-body">
+              <div class="lever">
+                <div class="lr"><label>Okafor's usage holds</label><span class="val" id="pgUsageVal">85%</span></div>
+                <input type="range" id="pgUsage" min="40" max="100" value="85">
+                <div class="hint">share of backfield touches, weeks 13–16</div>
+              </div>
+              <div class="lever">
+                <div class="lr"><label>Okafor's opponent defensive strength</label></div>
+                <div class="seg" id="pgDefSeg">
+                  <button data-v="-3.4">Weak</button>
+                  <button data-v="0" class="on">Average</button>
+                  <button data-v="3.4">Strong</button>
+                </div>
+              </div>
+              <div class="lever">
+                <div class="levrow">
+                  <button class="switch" id="pgInjury" role="switch" aria-checked="false"></button>
+                  <div><div class="lt">Conservative injury adjustment</div><div class="lh">discount until Friday's practice reports clear him</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="page-cell" data-type="EVIDENCE" id="pe1">
+          <div class="cell-card">
+            <div class="cell-head"><span class="page-chip e">Evidence</span><span class="ttl">5 pinned · click to include / remove</span></div>
+            <div class="cell-body" id="pgEvList" style="padding-top:12px">
+              <div class="ev" data-ev="trend"><span class="tick">✓</span><span><span class="lbl">Usage trend, last 6 weeks rising</span><br><span class="src">snap data · post-wk11</span></span><span class="contrib">+3.6</span></div>
+              <div class="ev" data-ev="role"><span class="tick">✓</span><span><span class="lbl">Role change after wk 7 — lead back</span><br><span class="src">beat reporters</span></span><span class="contrib">+2.6</span></div>
+              <div class="ev" data-ev="de"><span class="tick">✓</span><span><span class="lbl">Opponent edge rusher ruled out</span><br><span class="src">injury report · Wed</span></span><span class="contrib">+2.0</span></div>
+              <div class="ev" data-ev="sched"><span class="tick">✓</span><span><span class="lbl">Schedule strength, weeks 13–16</span><br><span class="src">2 tough matchups</span></span><span class="contrib neg">−1.6</span></div>
+              <div class="ev" data-ev="wind"><span class="tick">✓</span><span><span class="lbl">One outdoor game, wind risk</span><br><span class="src">weather feed</span></span><span class="contrib neg">−1.2</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="page-cell" data-type="ANSWER" id="pans1">
+          <div class="cell-card">
+            <div class="cell-head"><span class="page-chip ans">Answer</span><span class="ttl">A1 — recomputes live</span></div>
+            <div class="cell-body">
+              <div class="ansnum">+13.1 <small>pts</small></div>
+              <div class="anssub">Okafor projected <b>74.7</b> vs Mensah <b>61.6</b> · weeks 13–16 · <b>18.7</b> vs <b>15.4</b> per game</div>
+              <div class="bars">
+                <div class="crow"><span class="lbl">Talent gap (baseline)</span><div style="flex:1"><div class="bar" style="width:100%"></div></div><span class="num">+3.2</span></div>
+                <div class="crow"><span class="lbl">Assumption — usage</span><div style="flex:1"><div class="bar" style="width:72%"></div></div><span class="num">+4.5</span></div>
+                <div class="crow"><span class="lbl">Condition — opponent DEF</span><div style="flex:1"><div class="bar" style="width:0%"></div></div><span class="num">+0.0</span></div>
+                <div class="crow"><span class="lbl">Adjustment — injury</span><div style="flex:1"><div class="bar" style="width:0%"></div></div><span class="num">+0.0</span></div>
+                <div class="crow"><span class="lbl">Evidence — usage trend</span><div style="flex:1"><div class="bar" style="width:58%"></div></div><span class="num">+3.6</span></div>
+                <div class="crow"><span class="lbl">Evidence — role change</span><div style="flex:1"><div class="bar" style="width:42%"></div></div><span class="num">+2.6</span></div>
+                <div class="crow"><span class="lbl">Evidence — DE ruled out</span><div style="flex:1"><div class="bar" style="width:32%"></div></div><span class="num">+2.0</span></div>
+                <div class="crow"><span class="lbl">Evidence — schedule</span><div style="flex:1"><div class="bar neg" style="width:26%"></div></div><span class="num">−1.6</span></div>
+                <div class="crow"><span class="lbl">Evidence — wind risk</span><div style="flex:1"><div class="bar neg" style="width:19%"></div></div><span class="num">−1.2</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="page-cell" data-type="PREDICTION" id="pp1">
+          <div class="cell-card">
+            <div class="cell-head"><span class="page-chip pred">Prediction</span><span class="ttl">derived from A1</span></div>
+            <div class="cell-body">
+              <div class="predtext">Okafor finishes as a <b>top-24 RB</b> in weeks 13–16 if the assumptions above hold.</div>
+              <div class="predmeta"><span class="page-mini">confidence 62%</span><span class="page-mini">trace: Q1 → A1 → rank proj</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="page-askwrap">
+          <div class="page-ask">
+            <div class="page-askrow">
+              <input placeholder="Ask a follow-up — it becomes cells in this notebook…" autocomplete="off">
+              <button class="send">Ask ▸</button>
+            </div>
+            <div class="page-askchips">
+              <button class="page-askchip">what if the wind game moves indoors?</button>
+              <button class="page-askchip">compare vs the league-average RB2</button>
+              <button class="page-askchip">what changed since week 10?</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Canvas view -->
+    <div class="center-view" id="canvasView" style="display:none;">
+      <div class="canvas-wrap" style="position:relative;width:100%;height:100%;overflow:auto;">
+        <svg class="canvas-svg" viewBox="0 0 860 670" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#D6D5CE"/>
+            </marker>
+            <marker id="arrow-dash" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#9A9992"/>
+            </marker>
+          </defs>
+          <g id="connectors"></g>
+        </svg>
+        <div id="cards" style="position:relative;"></div>
+      </div>
+    </div>
+
+    <!-- Timeline view -->
+    <div class="center-view" id="timelineView" style="display:none;">
+      <div id="timelineContent"></div>
+    </div>
+
+    <!-- Table view -->
+    <div class="center-view" id="tableView" style="display:none;">
+      <table class="data-table" id="dataTable"></table>
+    </div>
+
+    <!-- Code view -->
+    <div class="center-view" id="codeView" style="display:none;">
+      <div class="code-block" id="codeContent"></div>
+    </div>
+
+    <!-- Graph view -->
+    <div class="center-view" id="graphView" style="display:none;">
+      <div class="graph-view">
+        <div class="graph-header">
+          <h2>Entities &amp; Relations</h2>
+          <span class="page-mini">7 entities · 6 relations</span>
+        </div>
+
+        <div class="graph-section">
+          <div class="graph-section-title">Entities</div>
+          <div class="graph-table">
+            <div class="graph-row graph-row-header">
+              <span class="gr-id">ID</span>
+              <span class="gr-type">Type</span>
+              <span class="gr-stmt">Statement</span>
+              <span class="gr-weight">Weight</span>
+            </div>
+            <div class="graph-row">
+              <span class="gr-id">P1</span>
+              <span class="gr-type" style="color:var(--accent)">Question</span>
+              <span class="gr-stmt">Will D. Okafor outscore S. Mensah in fantasy points over the next four weeks?</span>
+              <span class="gr-weight">—</span>
+            </div>
+            <div class="graph-row">
+              <span class="gr-id">P2</span>
+              <span class="gr-type" style="color:#3A6B9C">Evidence</span>
+              <span class="gr-stmt">Usage trend, last 6 weeks rising</span>
+              <span class="gr-weight">+3.6</span>
+            </div>
+            <div class="graph-row">
+              <span class="gr-id">P3</span>
+              <span class="gr-type" style="color:#3A6B9C">Evidence</span>
+              <span class="gr-stmt">Role change after week 7 — lead back</span>
+              <span class="gr-weight">+2.6</span>
+            </div>
+            <div class="graph-row">
+              <span class="gr-id">P4</span>
+              <span class="gr-type" style="color:#3A6B9C">Evidence</span>
+              <span class="gr-stmt">Opponent edge rusher ruled out</span>
+              <span class="gr-weight">+2.0</span>
+            </div>
+            <div class="graph-row">
+              <span class="gr-id">P5</span>
+              <span class="gr-type" style="color:#B8860B">Assumption</span>
+              <span class="gr-stmt">Okafor's usage holds at 85%</span>
+              <span class="gr-weight">+4.5</span>
+            </div>
+            <div class="graph-row">
+              <span class="gr-id">P6</span>
+              <span class="gr-type" style="color:#B8860B">Assumption</span>
+              <span class="gr-stmt">Conservative injury adjustment — discount until Friday</span>
+              <span class="gr-weight">+0.0</span>
+            </div>
+            <div class="graph-row">
+              <span class="gr-id">P7</span>
+              <span class="gr-type" style="color:var(--accent)">Answer</span>
+              <span class="gr-stmt">Okafor over Mensah, +13.1 points, weeks 13–16</span>
+              <span class="gr-weight">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="graph-section">
+          <div class="graph-section-title">Relations</div>
+          <div class="graph-rel-list">
+            <div class="graph-rel">
+              <span class="gr-from">P2 Evidence</span>
+              <span class="gr-arrow">→</span>
+              <span class="gr-kind">supports</span>
+              <span class="gr-arrow">→</span>
+              <span class="gr-to">P1 Question</span>
+              <span class="gr-desc">Usage trend supports the comparison question</span>
+            </div>
+            <div class="graph-rel">
+              <span class="gr-from">P3 Evidence</span>
+              <span class="gr-arrow">→</span>
+              <span class="gr-kind">supports</span>
+              <span class="gr-arrow">→</span>
+              <span class="gr-to">P1 Question</span>
+              <span class="gr-desc">Role change supports the comparison question</span>
+            </div>
+            <div class="graph-rel">
+              <span class="gr-from">P4 Evidence</span>
+              <span class="gr-arrow">→</span>
+              <span class="gr-kind">supports</span>
+              <span class="gr-arrow">→</span>
+              <span class="gr-to">P1 Question</span>
+              <span class="gr-desc">DE ruled out supports the comparison question</span>
+            </div>
+            <div class="graph-rel">
+              <span class="gr-from">P5 Assumption</span>
+              <span class="gr-arrow">→</span>
+              <span class="gr-kind">depends on</span>
+              <span class="gr-arrow">→</span>
+              <span class="gr-to">P1 Question</span>
+              <span class="gr-desc">Usage assumption depends on the question being valid</span>
+            </div>
+            <div class="graph-rel">
+              <span class="gr-from">P6 Assumption</span>
+              <span class="gr-arrow">→</span>
+              <span class="gr-kind">depends on</span>
+              <span class="gr-arrow">→</span>
+              <span class="gr-to">P1 Question</span>
+              <span class="gr-desc">Injury adjustment depends on the question being valid</span>
+            </div>
+            <div class="graph-rel">
+              <span class="gr-from">P7 Answer</span>
+              <span class="gr-arrow">←</span>
+              <span class="gr-kind">follows from</span>
+              <span class="gr-arrow">←</span>
+              <span class="gr-to">P2, P3, P4, P5, P6</span>
+              <span class="gr-desc">Answer follows from all evidence and assumptions</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="graph-section">
+          <div class="graph-section-title">Reasoning chain</div>
+          <div class="graph-chain">
+            <div class="chain-step">
+              <span class="chain-id">P1</span>
+              <span class="chain-text">Question asks who outscores whom</span>
+            </div>
+            <div class="chain-connector">↓ informed by</div>
+            <div class="chain-step">
+              <span class="chain-id">P2, P3, P4</span>
+              <span class="chain-text">Three evidence items provide the factual basis</span>
+            </div>
+            <div class="chain-connector">↓ bounded by</div>
+            <div class="chain-step">
+              <span class="chain-id">P5, P6</span>
+              <span class="chain-text">Two assumptions set the conditions</span>
+            </div>
+            <div class="chain-connector">↓ produces</div>
+            <div class="chain-step chain-answer">
+              <span class="chain-id">P7</span>
+              <span class="chain-text">Answer: +13.1 pts, Okafor over Mensah</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input area (always visible) -->
+    <div class="chat-input-area">
+      <div class="chat-input-toolbar">
+        <select id="modelSelect" class="model-dropdown">
+          <option value="gpt-4o">GPT-4o</option>
+          <option value="claude-4">Claude 4</option>
+          <option value="gemini-2.5">Gemini 2.5</option>
+          <option value="deepseek-r1">DeepSeek R1</option>
+        </select>
+        <select id="engineSelect" class="model-dropdown">
+          <option value="perplexity">Perplexity Pro</option>
+          <option value="tavily">Tavily</option>
+          <option value="exa">Exa</option>
+          <option value="none">None (local only)</option>
+        </select>
+        <span style="flex:1"></span>
+        <div class="notebook-badge" id="notebookBadge">
+          <span class="nb-badge-dot"></span>
+          <span id="notebookBadgeTitle">Chiefs @ Bills — Week 8</span>
+          <span class="nb-badge-ext">.research</span>
+        </div>
+      </div>
+      <div class="chat-input-box">
+        <button class="input-action" id="attachBtn" title="Upload file">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+          </svg>
+        </button>
+        <button class="input-action" id="voiceBtn" title="Voice input">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+        </button>
+        <textarea class="chat-input" id="chatInput" rows="1" placeholder="Ask anything — I'll research it and build notebook cells…"></textarea>
+        <button class="send-btn" id="chatSend" title="Send">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+      <div class="chat-input-hint">
+        <span>⌘⏎ to send</span>
+        <span class="hint-sep">·</span>
+        <span>AI proposes cells into the notebook</span>
+      </div>
+    </div>
+    <input type="file" id="fileInput" accept=".research,.pdf,.csv,.json,.txt" style="display:none" />
+  </main>
+
+  <!-- ============ RIGHT: SETTINGS / OVERVIEW ============ -->
+  <aside class="settings-panel">
+    <div class="settings-head">
+      <span class="settings-title">Overview</span>
+    </div>
+
+    <div class="settings-body">
+      <div class="settings-section">
+        <div class="settings-label">Notebook</div>
+        <div class="settings-value" id="settingsTitle">Chiefs @ Bills — Week 8</div>
+        <div class="settings-meta">Created Nov 17, 2025</div>
+        <div class="settings-meta">v3.2 · Live</div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-label">Objects</div>
+        <div class="obj-count-grid" id="objCountGrid">
+          <div class="obj-count"><span class="oc-num">1</span><span class="oc-type">Question</span></div>
+          <div class="obj-count"><span class="oc-num">3</span><span class="oc-type">Evidence</span></div>
+          <div class="obj-count"><span class="oc-num">2</span><span class="oc-type">Assumptions</span></div>
+          <div class="obj-count"><span class="oc-num">1</span><span class="oc-type">Model</span></div>
+          <div class="obj-count"><span class="oc-num">1</span><span class="oc-type">Answer</span></div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-label">Data Sources</div>
+        <div class="source-list">
+          <div class="source-item">
+            <span class="source-dot" style="background:#38a169"></span>
+            <span class="source-name">League 2027 Platform</span>
+            <span class="source-status">synced</span>
+          </div>
+          <div class="source-item">
+            <span class="source-dot" style="background:#38a169"></span>
+            <span class="source-name">NFL Injury Reports</span>
+            <span class="source-status">live</span>
+          </div>
+          <div class="source-item">
+            <span class="source-dot" style="background:#38a169"></span>
+            <span class="source-name">Weather Feed</span>
+            <span class="source-status">live</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-label">Inference Rules</div>
+        <div class="rule-list">
+          <div class="rule-item">
+            <span class="rule-name">EPA Win Probability</span>
+            <span class="rule-ver">v3.2</span>
+          </div>
+          <div class="rule-item">
+            <span class="rule-name">Assumption Binding</span>
+            <span class="rule-ver">v1.0</span>
+          </div>
+          <div class="rule-item">
+            <span class="rule-name">Evidence Aggregation</span>
+            <span class="rule-ver">v1.0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-label">Active Assumptions</div>
+        <div class="assumption-list">
+          <div class="assumption-item">
+            <span class="assumption-dot on"></span>
+            <span class="assumption-name">Kelce plays full snaps</span>
+            <span class="assumption-weight">0.80</span>
+          </div>
+          <div class="assumption-item">
+            <span class="assumption-dot on"></span>
+            <span class="assumption-name">Wind under 15 mph</span>
+            <span class="assumption-weight">0.70</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <button class="export-btn" id="exportBtn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Export .research file
+        </button>
+        <button class="import-btn" id="importBtn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          Import .research file
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Drag-and-drop overlay -->
+  <div class="drop-overlay" id="dropOverlay">
+    <div class="drop-box">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+        <polyline points="14 2 14 8 20 8"></polyline>
+        <line x1="12" y1="18" x2="12" y2="12"></line>
+        <polyline points="9 15 12 12 15 15"></polyline>
+      </svg>
+      <div>Drop a <b>.research</b> file to open</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// DATA MODEL
+// ============================================================
+
+const objects = [
+  {
+    id: 'q',
+    type: 'QUESTION',
+    x: 210, y: 20, w: 440, h: 90,
+    content: 'What is the probability the Chiefs win on Sunday?',
+    timestamp: 'Nov 17',
+    locked: true
+  },
+  {
+    id: 'ev1',
+    type: 'EVIDENCE',
+    x: 20, y: 140, w: 260, h: 120,
+    content: 'Chiefs are 5–2 in their last 7 road games.',
+    weight: 0.72,
+    timestamp: 'Nov 18',
+    feeds: ['model']
+  },
+  {
+    id: 'obs1',
+    type: 'OBSERVATION',
+    x: 300, y: 140, w: 260, h: 120,
+    content: 'Mahomes practiced fully on Wednesday.',
+    weight: 0.58,
+    timestamp: 'Nov 19',
+    feeds: ['model']
+  },
+  {
+    id: 'ev2',
+    type: 'EVIDENCE',
+    x: 580, y: 140, w: 260, h: 120,
+    content: 'Bills have allowed 24+ points in 4 of their last 5 games.',
+    weight: 0.65,
+    timestamp: 'Nov 18',
+    feeds: ['model']
+  },
+  {
+    id: 'as1',
+    type: 'ASSUMPTION',
+    x: 20, y: 320, w: 260, h: 120,
+    content: 'Kelce plays full snaps.',
+    weight: 0.80,
+    timestamp: 'Nov 17',
+    enabled: true,
+    feeds: ['model']
+  },
+  {
+    id: 'model',
+    type: 'MODEL',
+    x: 300, y: 320, w: 260, h: 120,
+    content: 'EPA-based win probability model v3.2',
+    weight: null,
+    timestamp: 'Nov 18',
+    feeds: ['ans']
+  },
+  {
+    id: 'as2',
+    type: 'ASSUMPTION',
+    x: 580, y: 320, w: 260, h: 120,
+    content: 'Wind under 15 mph at kickoff.',
+    weight: 0.70,
+    timestamp: 'Nov 19',
+    enabled: true,
+    feeds: ['model']
+  },
+  {
+    id: 'ans',
+    type: 'ANSWER',
+    x: 210, y: 500, w: 440, h: 120,
+    content: '73%',
+    subtext: 'confidence 0.82',
+    timestamp: 'computed',
+    locked: true
+  }
+];
+
+const tagColors = {
+  QUESTION: '#14130F',
+  EVIDENCE: '#2A6B57',
+  OBSERVATION: '#3A6B9C',
+  ASSUMPTION: '#B8860B',
+  MODEL: '#6B4A8C',
+  CONDITION: '#7A7A7A',
+  ANSWER: '#1A4D3E'
+};
+
+// ============================================================
+// STATE
+// ============================================================
+
+let selectedId = 'model';
+let currentView = 'document';
+let activeAITab = 'talk';
+let notebookCommitted = true; // start in workspace mode for demo
+let currentNotebookTitle = 'Chiefs @ Bills — Week 8';
+let chatMessages = [];
+let proposals = [];
+let relations = [];
+let historyLog = [];
+let nextGhostId = 1;
+let nextCellId = 100;
+
+// ============================================================
+// RENDER: CARDS (Canvas view)
+// ============================================================
+
+function renderCards() {
+  const container = document.getElementById('cards');
+  if (!container) return;
+  container.innerHTML = '';
+
+  objects.forEach(obj => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.id = obj.id;
+    card.dataset.type = obj.type;
+    card.style.left = obj.x + 'px';
+    card.style.top = obj.y + 'px';
+    card.style.width = obj.w + 'px';
+    card.style.height = obj.h + 'px';
+
+    if (obj.id === selectedId) card.classList.add('selected');
+    if (obj.type === 'ASSUMPTION' && obj.enabled === false) card.classList.add('disabled');
+
+    const head = document.createElement('div');
+    head.className = 'card-head';
+
+    const dot = document.createElement('span');
+    dot.className = 'tag-dot';
+    head.appendChild(dot);
+
+    const label = document.createElement('span');
+    label.className = 'tag-label';
+    label.textContent = obj.type;
+    head.appendChild(label);
+
+    const menu = document.createElement('span');
+    menu.className = 'card-menu';
+    menu.textContent = '⋯';
+    head.appendChild(menu);
+    card.appendChild(head);
+
+    const content = document.createElement('div');
+    content.className = 'card-content';
+    if (obj.type === 'ANSWER') {
+      const row = document.createElement('div');
+      row.className = 'answer-row';
+      const main = document.createElement('span');
+      main.textContent = obj.content;
+      row.appendChild(main);
+      content.appendChild(row);
+      if (obj.subtext) {
+        const sub = document.createElement('div');
+        sub.className = 'answer-sub';
+        sub.textContent = obj.subtext;
+        content.appendChild(sub);
+      }
+    } else {
+      content.textContent = obj.content;
+    }
+    card.appendChild(content);
+
+    if (obj.type !== 'ANSWER' && obj.weight !== null && obj.weight !== undefined) {
+      const footer = document.createElement('div');
+      footer.className = 'card-footer';
+      const w = document.createElement('span');
+      w.className = 'weight';
+      w.textContent = 'w ' + obj.weight.toFixed(2);
+      footer.appendChild(w);
+      const sep = document.createElement('span');
+      sep.className = 'dot-sep';
+      footer.appendChild(sep);
+      const t = document.createElement('span');
+      t.textContent = obj.timestamp;
+      footer.appendChild(t);
+      card.appendChild(footer);
+    } else if (obj.type === 'ANSWER') {
+      const footer = document.createElement('div');
+      footer.className = 'card-footer';
+      const t = document.createElement('span');
+      t.textContent = 'computed · ' + obj.timestamp;
+      footer.appendChild(t);
+      card.appendChild(footer);
+    }
+
+    card.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectObject(obj.id);
+    });
+    container.appendChild(card);
+  });
+}
+
+// ============================================================
+// RENDER: CONNECTORS
+// ============================================================
+
+function renderConnectors() {
+  const g = document.getElementById('connectors');
+  if (!g) return;
+  g.innerHTML = '';
+
+  objects.forEach(obj => {
+    if (!obj.feeds) return;
+    const from = obj;
+    const isDisabled = from.type === 'ASSUMPTION' && from.enabled === false;
+
+    obj.feeds.forEach(targetId => {
+      const target = objects.find(o => o.id === targetId);
+      if (!target) return;
+      const fromCx = from.x + from.w / 2;
+      const fromBottom = from.y + from.h;
+      const toCx = target.x + target.w / 2;
+      const toTop = target.y;
+      let pathD;
+
+      if (from.type === 'ASSUMPTION' && target.type === 'MODEL') {
+        if (from.x < target.x) {
+          const x1 = from.x + from.w;
+          const y1 = from.y + from.h / 2;
+          const x2 = target.x;
+          const y2 = target.y + target.h / 2;
+          pathD = `M ${x1} ${y1} L ${x2} ${y2}`;
+        } else {
+          const x1 = from.x;
+          const y1 = from.y + from.h / 2;
+          const x2 = target.x + target.w;
+          const y2 = target.y + target.h / 2;
+          pathD = `M ${x1} ${y1} L ${x2} ${y2}`;
+        }
+      } else {
+        pathD = `M ${fromCx} ${fromBottom} L ${toCx} ${toTop}`;
+      }
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', pathD);
+      path.setAttribute('class', 'connector' + (isDisabled ? ' dashed' : ''));
+      path.setAttribute('marker-end', isDisabled ? 'url(#arrow-dash)' : 'url(#arrow)');
+      g.appendChild(path);
+    });
+  });
+}
+
+// ============================================================
+// RENDER: DOCUMENT VIEW
+// ============================================================
+
+function renderDocumentView() {
+  const el = document.getElementById('docContent');
+  if (!el) return;
+  const questions = objects.filter(o => o.type === 'QUESTION');
+  const evidence = objects.filter(o => o.type === 'EVIDENCE');
+  const assumptions = objects.filter(o => o.type === 'ASSUMPTION');
+  const answers = objects.filter(o => o.type === 'ANSWER');
+  const models = objects.filter(o => o.type === 'MODEL');
+
+  let html = '';
+  questions.forEach(q => {
+    html += `<p style="font-weight:600;font-size:15px;margin-bottom:12px">${escapeHtml(q.title || q.content)}</p>`;
+  });
+  if (assumptions.length) {
+    html += `<p style="color:var(--muted);font-style:italic;margin-bottom:8px">Assumptions: ${assumptions.map(a => escapeHtml(a.title || a.content)).join('; ')}.</p>`;
+  }
+  evidence.forEach(e => {
+    html += `<p>${escapeHtml(e.title ? e.title + '. ' + e.content : e.content)}</p>`;
+  });
+  models.forEach(m => {
+    html += `<p style="font-family:var(--font-mono);font-size:12px;color:var(--ink-2);border-left:3px solid var(--accent);padding-left:12px;margin:16px 0">${escapeHtml(m.title)}. ${escapeHtml(m.content)}</p>`;
+  });
+  answers.forEach(a => {
+    html += `<p><b>${escapeHtml(a.title || 'Answer')}</b>: ${escapeHtml(a.content)}</p>`;
+  });
+  el.innerHTML = html;
+}
+
+// ============================================================
+// RENDER: CELLS VIEW
+// ============================================================
+
+function renderCellsView() {
+  const el = document.getElementById('cellsContent');
+  if (!el) return;
+  const typeOrder = ['QUESTION', 'EVIDENCE', 'ASSUMPTION', 'MODEL', 'ANSWER', 'PREDICTION', 'NOTE'];
+  const typeLabels = { QUESTION: 'Question', EVIDENCE: 'Evidence', ASSUMPTION: 'Assumptions', MODEL: 'Model', ANSWER: 'Answer', PREDICTION: 'Prediction', NOTE: 'Note' };
+  const typeChipClass = { QUESTION: 'q', EVIDENCE: 'e', ASSUMPTION: 'a', MODEL: 'm', ANSWER: 'ans', PREDICTION: 'pred', NOTE: '' };
+
+  let html = '';
+  typeOrder.forEach(type => {
+    const items = objects.filter(o => o.type === type);
+    if (!items.length) return;
+    items.forEach(obj => {
+      const chip = typeChipClass[type] ? ` <span class="page-chip ${typeChipClass[type]}">${typeLabels[type]}</span>` : ` <span class="page-chip">${typeLabels[type]}</span>`;
+      html += `<div class="page-cell" data-type="${type}"><div class="cell-card"><div class="cell-head">${chip}<span class="ttl">${escapeHtml(obj.title || obj.id)}</span><span class="sp"><span class="page-mini">${obj.timestamp || ''}</span></span></div><div class="cell-body"><div style="font-size:13.5px;line-height:1.5">${escapeHtml(obj.content)}</div>${obj.weight != null ? `<div style="margin-top:6px;font-family:var(--font-mono);font-size:11px;color:var(--muted)">weight: ${obj.weight}</div>` : ''}</div></div></div>`;
+    });
+  });
+  el.innerHTML = html;
+}
+
+// ============================================================
+// RENDER: GRAPH VIEW
+// ============================================================
+
+function renderGraphView() {
+  const el = document.getElementById('graphContent');
+  if (!el) return;
+  const typeColors = { QUESTION: 'var(--accent)', EVIDENCE: '#3A6B9C', ASSUMPTION: '#8B6914', MODEL: '#6B4C8A', ANSWER: '#2A6B57', NOTE: 'var(--muted)' };
+
+  let html = '<div class="graph-header"><h2>Entities & Relations</h2>';
+  html += `<span class="page-mini">${objects.length} entities · ${relations.length} relations</span></div>`;
+
+  html += '<div class="graph-section"><div class="graph-section-title">Entities</div><div class="graph-table">';
+  html += '<div class="graph-row graph-row-header"><span class="gr-id">ID</span><span class="gr-type">Type</span><span class="gr-stmt">Statement</span><span class="gr-weight">Weight</span></div>';
+  objects.forEach(obj => {
+    const color = typeColors[obj.type] || 'var(--muted)';
+    const weight = obj.weight != null ? (obj.weight > 0 ? '+' + obj.weight : obj.weight) : '—';
+    html += `<div class="graph-row"><span class="gr-id">${escapeHtml(obj.id)}</span><span class="gr-type" style="color:${color}">${obj.type}</span><span class="gr-stmt">${escapeHtml(obj.title || obj.content)}</span><span class="gr-weight">${weight}</span></div>`;
+  });
+  html += '</div></div>';
+
+  if (relations.length) {
+    html += '<div class="graph-section"><div class="graph-section-title">Relations</div><div class="graph-rel-list">';
+    relations.forEach(r => {
+      const fromObj = objects.find(o => o.id === r.from);
+      const toObj = objects.find(o => o.id === r.to);
+      const fromLabel = fromObj ? (fromObj.title || fromObj.id) : r.from;
+      const toLabel = toObj ? (toObj.title || toObj.id) : r.to;
+      html += `<div class="graph-rel"><span class="gr-from">${escapeHtml(fromLabel)}</span><span class="gr-arrow">→</span><span class="gr-kind">${r.type}</span><span class="gr-arrow">→</span><span class="gr-to">${escapeHtml(toLabel)}</span></div>`;
+    });
+    html += '</div></div>';
+  }
+
+  el.innerHTML = html;
+}
+
+// ============================================================
+// SWITCH VIEW
+// ============================================================
+
+function switchView(view) {
+  currentView = view;
+  document.querySelectorAll('.view-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.view === view);
+  });
+
+  ['chatView', 'documentView', 'cellsView', 'canvasView', 'graphView', 'timelineView', 'tableView', 'codeView'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  const viewMap = { chat: 'chatView', document: 'documentView', cells: 'cellsView', canvas: 'canvasView', graph: 'graphView', timeline: 'timelineView', table: 'tableView', code: 'codeView' };
+  const target = document.getElementById(viewMap[view]);
+  if (target) target.style.display = '';
+
+  if (view === 'document') renderDocumentView();
+  if (view === 'cells') renderCellsView();
+  if (view === 'canvas') { renderCards(); renderConnectors(); }
+  if (view === 'graph') renderGraphView();
+  if (view === 'timeline') renderTimelineView();
+  if (view === 'table') renderTableView();
+  if (view === 'code') renderCodeView();
+}
+
+document.querySelectorAll('.view-tab').forEach(tab => {
+  tab.addEventListener('click', () => switchView(tab.dataset.view));
+});
+
+// ============================================================
+// CHAT PANEL
+// ============================================================
+
+function renderChat() {
+  const thread = document.getElementById('chatThread');
+  if (!thread) return;
+
+  let html = '';
+  chatMessages.forEach(msg => {
+    const isUser = msg.role === 'user';
+    html += `
+      <div class="chat-msg">
+        <div class="chat-avatar ${isUser ? 'user' : 'ai'}">${isUser ? 'You' : 'AI'}</div>
+        <div class="chat-msg-body">
+          <div class="chat-msg-name">${isUser ? 'You' : 'Research AI'}</div>
+          <div class="chat-msg-text">${msg.html || escapeHtml(msg.text)}</div>
+          ${msg.proposal ? renderProposalHTML(msg.proposal) : ''}
+          <div class="chat-msg-time">${msg.time || 'now'}</div>
+        </div>
+      </div>
+    `;
+  });
+
+  thread.innerHTML = html;
+  thread.scrollTop = thread.scrollHeight;
+
+  thread.querySelectorAll('.chat-btn.accept').forEach(btn => {
+    btn.addEventListener('click', () => acceptProposal(btn.dataset.pid));
+  });
+  thread.querySelectorAll('.chat-btn.reject').forEach(btn => {
+    btn.addEventListener('click', () => rejectProposal(btn.dataset.pid));
+  });
+}
+
+function renderProposalHTML(prop) {
+  const statusClass = prop.status === 'accepted' ? ' accepted' : '';
+  let itemsHTML = '';
+  prop.items.forEach(item => {
+    itemsHTML += `
+      <div class="chat-proposal-item">
+        <span class="pip-type">${item.type}</span>
+        ${escapeHtml(item.content)}
+      </div>
+    `;
+  });
+
+  let actionsHTML = '';
+  if (prop.status === 'pending') {
+    actionsHTML = `
+      <div class="chat-proposal-actions">
+        <button class="chat-btn primary accept" data-pid="${prop.id}">Accept all</button>
+        <button class="chat-btn danger reject" data-pid="${prop.id}">Reject</button>
+      </div>
+    `;
+  } else if (prop.status === 'accepted') {
+    actionsHTML = `
+      <div class="chat-proposal-actions">
+        <button class="chat-btn" disabled style="opacity:0.5">Accepted</button>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="chat-proposal${statusClass}" id="proposal-${prop.id}">
+      <div class="chat-proposal-head">
+        <span class="chat-proposal-tag">${prop.status === 'accepted' ? 'Added' : 'Proposed'}</span>
+        <span class="chat-proposal-count">${prop.items.length} cell${prop.items.length > 1 ? 's' : ''}</span>
+      </div>
+      <div class="chat-proposal-items">${itemsHTML}</div>
+      ${actionsHTML}
+    </div>
+  `;
+}
+
+// ============================================================
+// CHAT: Send message & get response
+// ============================================================
+
+function sendAIMessage(text) {
+  if (!text.trim()) return;
+
+  const userMsg = { role: 'user', text: text.trim(), time: formatTime() };
+  chatMessages.push(userMsg);
+  historyLog.push({ action: 'User message', detail: text.trim(), who: 'You', time: formatTime() });
+
+  const chatInput = document.getElementById('chatInput');
+  if (chatInput) chatInput.value = '';
+
+  renderChat();
+
+  setTimeout(() => {
+    const response = generateAIResponse(text.trim());
+    chatMessages.push(response.msg);
+    historyLog.push({ action: 'AI response', detail: response.msg.text.substring(0, 80) + '…', who: 'AI', time: formatTime() });
+
+    if (response.proposal) {
+      proposals.push(response.proposal);
+      historyLog.push({ action: 'Cells proposed', detail: `${response.proposal.items.length} cell(s) added to notebook`, who: 'AI', time: formatTime() });
+    }
+
+    renderChat();
+  }, 600 + Math.random() * 800);
+}
+
+function generateAIResponse(text) {
+  const lower = text.toLowerCase();
+  let msg = {};
+  let proposal = null;
+
+  if (lower.includes('evidence') || lower.includes('source') || lower.includes('find')) {
+    proposal = {
+      id: 'p' + nextGhostId++,
+      status: 'pending',
+      items: [
+        { type: 'Evidence', content: 'Chiefs defense ranks 4th in EPA/play over the last 4 weeks.' },
+        { type: 'Evidence', content: 'Bills turnover rate increases 18% in primetime games this season.' }
+      ]
+    };
+    msg = {
+      role: 'ai',
+      text: 'Found two relevant data points. I\'ve proposed them as new evidence cells in the notebook — review and accept to include them in the analysis.',
+      proposal: proposal,
+      time: formatTime()
+    };
+  } else if (lower.includes('assumption') || lower.includes('what if') || lower.includes('assume')) {
+    proposal = {
+      id: 'p' + nextGhostId++,
+      status: 'pending',
+      items: [
+        { type: 'Assumption', content: 'Wind stays below 10 mph at Arrowhead (lowered from 15).' }
+      ]
+    };
+    msg = {
+      role: 'ai',
+      text: 'New assumption proposed. This tightens the weather constraint — the answer will recompute if you accept it.',
+      proposal: proposal,
+      time: formatTime()
+    };
+  } else if (lower.includes('answer') || lower.includes('probability') || lower.includes('win')) {
+    proposal = {
+      id: 'p' + nextGhostId++,
+      status: 'pending',
+      items: [
+        { type: 'Answer', content: 'Adjusted win probability: 68% (down from 73% due to tightened weather assumption).' }
+      ]
+    };
+    msg = {
+      role: 'ai',
+      text: 'Recomputed the answer with the updated constraints. The probability drops slightly — proposed as a new answer cell.',
+      proposal: proposal,
+      time: formatTime()
+    };
+  } else if (lower.includes('explain') || lower.includes('why') || lower.includes('reason')) {
+    msg = {
+      role: 'ai',
+      text: 'The current answer (73%) is driven primarily by the Chiefs\' road record (+0.72 weight) and the Bills\' defensive struggles (+0.65 weight). The two assumptions — Kelce playing full snaps and wind under 15 mph — contribute +0.80 and +0.70 respectively. Disabling either drops the probability significantly.',
+      time: formatTime()
+    };
+  } else {
+    proposal = {
+      id: 'p' + nextGhostId++,
+      status: 'pending',
+      items: [
+        { type: 'Note', content: 'User asked: "' + text + '" — flagged for follow-up.' }
+      ]
+    };
+    msg = {
+      role: 'ai',
+      text: 'Noted. I\'ve proposed a note cell to track this question. You can accept it to keep it in the notebook, or ask me to dig deeper.',
+      proposal: proposal,
+      time: formatTime()
+    };
+  }
+
+  return { msg, proposal };
+}
+
+function acceptProposal(pid) {
+  const prop = proposals.find(p => p.id === pid);
+  if (!prop || prop.status !== 'pending') return;
+  prop.status = 'accepted';
+
+  prop.items.forEach(item => {
+    const newCell = {
+      id: item.id || ('cell_' + nextCellId++),
+      type: item.type,
+      x: 20 + Math.random() * 400,
+      y: 20 + Math.random() * 300,
+      w: 260,
+      h: 120,
+      content: item.title ? item.title + ': ' + item.content : item.content,
+      weight: null,
+      timestamp: formatTime(),
+      locked: false,
+      feeds: []
+    };
+    objects.push(newCell);
+  });
+
+  renderChat();
+  renderCards();
+  renderConnectors();
+}
+
+function rejectProposal(pid) {
+  const prop = proposals.find(p => p.id === pid);
+  if (!prop || prop.status !== 'pending') return;
+  prop.status = 'rejected';
+  renderChat();
+}
+
+function solidifyCell(btn) {
+  const cell = btn.closest('.page-cell');
+  if (!cell) return;
+  cell.classList.remove('ghost');
+  cell.classList.add('accepting');
+  setTimeout(() => cell.classList.remove('accepting'), 400);
+}
+
+function dismissCell(btn) {
+  const cell = btn.closest('.page-cell');
+  if (!cell) return;
+  cell.classList.add('dismissing');
+  setTimeout(() => cell.remove(), 300);
+}
+
+// ============================================================
+// FILE LOADING (.research)
+// ============================================================
+
+function loadResearchFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.meta && data.objects) {
+        loadNotebookData(data);
+      } else {
+        alert('Invalid .research file: missing meta or objects.');
+      }
+    } catch (err) {
+      alert('Could not parse file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function loadNotebookData(data) {
+  // Update meta
+  currentNotebookTitle = data.meta.title || 'Untitled';
+  document.querySelector('.topbar .current').textContent = currentNotebookTitle;
+  document.title = currentNotebookTitle + ' — Research Notebook';
+
+  // Convert .research objects to app objects
+  objects.length = 0;
+  let x = 20, y = 20;
+  data.objects.forEach((obj, i) => {
+    const typeMap = {
+      'QUESTION': 'QUESTION',
+      'EVIDENCE': 'EVIDENCE',
+      'OBSERVATION': 'OBSERVATION',
+      'ASSUMPTION': 'ASSUMPTION',
+      'MODEL': 'MODEL',
+      'ANSWER': 'ANSWER',
+      'PREDICTION': 'PREDICTION',
+      'NOTE': 'NOTE'
+    };
+
+    const appObj = {
+      id: obj.id,
+      type: typeMap[obj.type] || 'NOTE',
+      x: x,
+      y: y,
+      w: 260,
+      h: 120,
+      content: obj.title ? obj.title + ': ' + obj.content : obj.content,
+      weight: obj.weight || null,
+      timestamp: obj.timestamp || '',
+      locked: obj.locked || false,
+      feeds: [],
+      enabled: obj.active !== undefined ? obj.active : true
+    };
+
+    // Position in a grid
+    if (i % 3 === 0 && i > 0) { x = 20; y += 160; }
+    else { x += 280; }
+
+    objects.push(appObj);
+  });
+
+  // Build relations
+  relations.length = 0;
+  if (data.relations) {
+    data.relations.forEach(r => {
+      relations.push({ from: r.from, to: r.to, type: r.type });
+    });
+  }
+
+  // Build chat
+  chatMessages.length = 0;
+  if (data.chat && data.chat.length) {
+    data.chat.forEach(m => chatMessages.push(m));
+  } else {
+    chatMessages.push({
+      role: 'ai',
+      text: `Notebook open: <b>${escapeHtml(currentNotebookTitle)}</b>. I have ${data.objects.length} objects loaded. Ask me anything, or propose changes.`,
+      time: 'now'
+    });
+  }
+
+  // Count types
+  const counts = {};
+  data.objects.forEach(o => { counts[o.type] = (counts[o.type] || 0) + 1; });
+  const summary = Object.entries(counts).map(([t, c]) => `${c} ${t.toLowerCase()}`).join(', ');
+
+  // Update sidebar
+  updateSettingsPanel();
+
+  // Render
+  notebookCommitted = true;
+  renderChat();
+  renderCards();
+  renderConnectors();
+  updateSettingsPanel();
+}
+
+// Hidden file input
+document.getElementById('fileInput').addEventListener('change', (e) => {
+  if (e.target.files.length) loadResearchFile(e.target.files[0]);
+});
+
+// Sidebar items switch notebooks
+const builtinNotebooks = {
+  'GTA VI — mission payout model': {
+    meta: {
+      title: 'GTA VI — Mission Payout Model',
+      description: 'Modeling expected mission payouts across GTA VI\'s Leonida map.',
+      version: 'v0.4.1',
+      status: 'live'
+    },
+    objects: [
+      { id: 'q1', type: 'QUESTION', title: 'What is the average base payout for Story missions in Act 2?', content: 'Act 2 spans missions 12–28. Need to determine if the difficulty spike correlates with a proportional payout increase, or if Rockstar uses a flat tier system.', weight: 1.0, timestamp: 'Sep 10', locked: true },
+      { id: 'e1', type: 'EVIDENCE', title: 'Act 1 mission payouts (leaked)', content: 'Missions 1–11: $2,500–$8,000 base. Average: $4,850. Heist setup missions pay $3,200 flat. Street races pay $1,200–$2,000 depending on placement.', weight: 0.85, timestamp: 'Sep 10' },
+      { id: 'e2', type: 'EVIDENCE', title: 'Act 2 mission payouts (estimated)', content: 'Missions 12–28: $6,000–$18,000 base. Average: $10,200. Infiltration missions pay $14,500+. Vehicle chase missions pay $8,500 flat. Boss fight at mission 28 pays $22,000.', weight: 0.72, timestamp: 'Sep 11' },
+      { id: 'e3', type: 'EVIDENCE', title: 'Optional objective bonus structure', content: 'Each mission has 1–3 optional objectives. Bonus per objective: +15% base payout. Completing all grants a "Perfect Run" bonus: +$5,000 flat.', weight: 0.90, timestamp: 'Sep 11' },
+      { id: 'e4', type: 'EVIDENCE', title: 'Heist missions have a separate payout formula', content: 'Heist finales use a split payout: 60% base to protagonist, 40% split among crew. Crew cut varies: cheap crew (15%) vs expensive crew (35%). Net take: $45K–$180K.', weight: 0.68, timestamp: 'Sep 12' },
+      { id: 'a1', type: 'ASSUMPTION', title: 'Difficulty scales linearly with payout', content: 'Each difficulty tier (Easy/Normal/Hard) multiplies the base payout by 0.85x/1.0x/1.25x respectively. Consistent with GTA V.', weight: 0.80, timestamp: 'Sep 10' },
+      { id: 'a2', type: 'ASSUMPTION', title: 'No mid-Act difficulty resets', content: 'Difficulty increases monotonically through each Act. If Rockstar resets between Acts, the model needs adjustment.', weight: 0.65, timestamp: 'Sep 10' },
+      { id: 'm1', type: 'MODEL', title: 'Payout Model v0.4', content: 'Expected Payout = Base × Difficulty × (1 + 0.15 × OptionalObjectives) + PerfectRunBonus. Heists: (Base × CrewEfficiency) × Difficulty × SplitRatio.', timestamp: 'Sep 12' },
+      { id: 'a1_ans', type: 'ANSWER', title: 'Act 2 average base payout: ~$10,200', content: 'Based on 17 missions in Act 2, average base payout is ~$10,200. 110% increase over Act 1\'s $4,850. Infiltration missions are outliers at $14,500+. Median is ~$8,500.', confidence: 0.65, timestamp: 'Sep 13' }
+    ],
+    relations: [
+      { from: 'e1', to: 'q1', type: 'supports' },
+      { from: 'e2', to: 'q1', type: 'supports' },
+      { from: 'e3', to: 'q1', type: 'supports' },
+      { from: 'e4', to: 'q1', type: 'supports' },
+      { from: 'a1', to: 'm1', type: 'depends on' },
+      { from: 'a2', to: 'm1', type: 'depends on' },
+      { from: 'm1', to: 'a1_ans', type: 'produces' },
+      { from: 'a1_ans', to: 'q1', type: 'answers' }
+    ],
+    chat: [
+      { role: 'ai', text: 'Notebook open: <b>GTA VI — Mission Payout Model</b>. 9 objects — 4 evidence, 2 assumptions, 1 model, 1 question, 1 answer. Ask me anything.', time: '1d ago' }
+    ]
+  }
+};
+
+// Drag and drop .research files anywhere
+const dropOverlay = document.getElementById('dropOverlay');
+let dragCounter = 0;
+
+document.addEventListener('dragenter', (e) => {
+  e.preventDefault();
+  dragCounter++;
+  dropOverlay.classList.add('active');
+});
+
+document.addEventListener('dragleave', (e) => {
+  e.preventDefault();
+  dragCounter--;
+  if (dragCounter <= 0) {
+    dragCounter = 0;
+    dropOverlay.classList.remove('active');
+  }
+});
+
+document.addEventListener('dragover', (e) => {
+  e.preventDefault();
+});
+
+document.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dragCounter = 0;
+  dropOverlay.classList.remove('active');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.research')) {
+    loadResearchFile(file);
+  } else if (file) {
+    alert('Please drop a .research file.');
+  }
+});
+
+// ============================================================
+// ENTRY MODE
+// ============================================================
+
+function enterNotebook() {
+  notebookCommitted = true;
+  document.querySelector('.app').classList.remove('entry-mode');
+
+  chatMessages = [
+    { role: 'ai', text: 'Notebook open: <b>Chiefs @ Bills — Week 8</b>. I have 8 objects loaded — 3 evidence, 2 assumptions, 1 model, 1 question, and the computed answer. Ask me anything, or propose changes.', time: '2m ago' }
+  ];
+  historyLog = [
+    { action: 'Notebook opened', detail: 'Chiefs @ Bills — Week 8', who: 'System', time: '2m ago' }
+  ];
+
+  renderChat();
+  updateSettingsPanel();
+}
+
+// ============================================================
+// SELECT
+// ============================================================
+
+function selectObject(id) {
+  selectedId = id;
+  renderCards();
+  renderConnectors();
+  renderTableView();
+  renderTimelineView();
+}
+
+// ============================================================
+// VIEW: TIMELINE
+// ============================================================
+
+function renderTimelineView() {
+  const container = document.getElementById('timelineContent');
+  if (!container) return;
+
+  const groups = {};
+  objects.forEach(o => {
+    const t = o.timestamp || 'unknown';
+    if (!groups[t]) groups[t] = [];
+    groups[t].push(o);
+  });
+
+  const orderedKeys = ['Nov 17', 'Nov 18', 'Nov 19', 'computed'];
+  let html = '';
+  orderedKeys.forEach(key => {
+    if (!groups[key]) return;
+    html += `<div class="tl-day"><div class="tl-date">${key}</div><div class="tl-items">`;
+    groups[key].forEach(o => {
+      const color = tagColors[o.type] || '#76756E';
+      const sel = o.id === selectedId ? ' selected' : '';
+      html += `
+        <div class="tl-item${sel}" data-id="${o.id}">
+          <span class="ti-dot" style="background:${color}"></span>
+          <div>
+            <div class="ti-tag" style="color:${color}">${o.type}</div>
+            <div class="ti-text">${escapeHtml(o.content)}</div>
+          </div>
+        </div>
+      `;
+    });
+    html += `</div></div>`;
+  });
+
+  container.innerHTML = html;
+  container.querySelectorAll('.tl-item').forEach(el => {
+    el.addEventListener('click', () => selectObject(el.dataset.id));
+  });
+}
+
+// ============================================================
+// VIEW: TABLE
+// ============================================================
+
+function renderTableView() {
+  const table = document.getElementById('dataTable');
+  if (!table) return;
+
+  let html = `
+    <thead><tr>
+      <th style="width:130px">Tag</th><th>Content</th>
+      <th style="width:80px;text-align:right">Weight</th>
+      <th style="width:100px">Time</th>
+      <th style="width:90px">Status</th>
+    </tr></thead><tbody>
+  `;
+
+  objects.forEach(o => {
+    const color = tagColors[o.type] || '#76756E';
+    const sel = o.id === selectedId ? ' class="selected"' : '';
+    const weight = (o.weight !== null && o.weight !== undefined) ? o.weight.toFixed(2) : '—';
+    let status = 'active';
+    if (o.type === 'ASSUMPTION' && o.enabled === false) status = 'disabled';
+    if (o.type === 'QUESTION' || o.type === 'ANSWER') status = 'locked';
+
+    html += `
+      <tr${sel} data-id="${o.id}">
+        <td class="tag-cell" style="color:${color}">
+          <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${color};margin-right:7px;vertical-align:middle;"></span>
+          ${o.type}
+        </td>
+        <td>${escapeHtml(o.content)}</td>
+        <td class="num-cell">${weight}</td>
+        <td class="num-cell" style="text-align:left;color:var(--muted);">${o.timestamp || '—'}</td>
+        <td class="num-cell" style="text-align:left;color:${status === 'disabled' ? 'var(--muted-2)' : 'var(--ink-2)'};">${status}</td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody>';
+  table.innerHTML = html;
+  table.querySelectorAll('tr[data-id]').forEach(el => {
+    el.addEventListener('click', () => selectObject(el.dataset.id));
+  });
+}
+
+// ============================================================
+// VIEW: CODE
+// ============================================================
+
+function renderCodeView() {
+  const container = document.getElementById('codeContent');
+  if (!container) return;
+
+  const clean = objects.map(o => {
+    const copy = {};
+    copy.id = o.id;
+    copy.tag = o.type;
+    copy.content = o.content;
+    if (o.weight !== null && o.weight !== undefined) copy.weight = o.weight;
+    if (o.timestamp) copy.timestamp = o.timestamp;
+    if (o.type === 'ASSUMPTION') copy.enabled = o.enabled;
+    if (o.feeds) copy.feeds = o.feeds;
+    return copy;
+  });
+
+  const json = JSON.stringify({ notebook: 'chiefs-bills-week-8', objects: clean }, null, 2);
+  const highlighted = json
+    .replace(/"([^"]+)":/g, '<span class="key">"$1"</span>:')
+    .replace(/: "([^"]*)"/g, ': <span class="str">"$1"</span>')
+    .replace(/: (true|false)/g, ': <span class="bool">$1</span>')
+    .replace(/: (-?\d+\.?\d*)/g, ': <span class="num">$1</span>');
+
+  container.innerHTML = highlighted;
+}
+
+// ============================================================
+// VIEW SWITCHING
+// ============================================================
+
+// ============================================================
+// CHAT INPUT
+// ============================================================
+
+document.getElementById('chatSend').addEventListener('click', () => {
+  sendAIMessage(document.getElementById('chatInput').value);
+});
+
+document.getElementById('chatInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+    e.preventDefault();
+    sendAIMessage(document.getElementById('chatInput').value);
+  }
+});
+
+// ============================================================
+// UTILITIES
+// ============================================================
+
+function escapeHtml(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+function formatTime() {
+  const now = new Date();
+  return now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+}
+
+// ============================================================
+// RECOMPUTE
+// ============================================================
+
+function recomputeAnswer() {
+  const as1 = objects.find(o => o.id === 'as1');
+  const as2 = objects.find(o => o.id === 'as2');
+  const ans = objects.find(o => o.id === 'ans');
+  let value = 73;
+  if (as1 && !as1.enabled) value -= 12;
+  if (as2 && !as2.enabled) value -= 15;
+  if (value < 30) value = 30;
+  if (value > 90) value = 90;
+  const oldValue = ans.content;
+  ans.content = value + '%';
+  const conf = 0.82 - (as1.enabled ? 0 : 0.04) - (as2.enabled ? 0 : 0.06);
+  ans.subtext = 'confidence ' + Math.max(0.55, conf).toFixed(2);
+  if (oldValue !== ans.content) {
+    const card = document.querySelector('.card[data-id="ans"]');
+    if (card) {
+      card.classList.add('flash');
+      setTimeout(() => card.classList.remove('flash'), 500);
+    }
+  }
+}
+
+// ============================================================
+// CONVERSATIONS SIDEBAR
+// ============================================================
+
+const conversations = [
+  { name: 'Chiefs @ Bills — Week 8', icon: '🏈', data: null }, // uses default objects
+  { name: 'GTA VI — mission payout model', icon: '🎮', data: builtinNotebooks['GTA VI — mission payout model'] }
+];
+
+document.querySelectorAll('.conv-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.conv-item').forEach(i => i.classList.remove('active'));
+    item.classList.add('active');
+
+    const name = item.querySelector('.conv-name').textContent;
+    const conv = conversations.find(c => c.name === name);
+
+    if (conv && conv.data) {
+      loadNotebookData(conv.data);
+    } else if (conv) {
+      // Default Chiefs notebook — reload original data
+      location.reload();
+    }
+  });
+});
+
+// ============================================================
+// FILE INPUT WIRED TO IMPORT BUTTON
+// ============================================================
+
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('fileInput').click();
+});
+
+document.getElementById('newChatBtn').addEventListener('click', () => {
+  document.getElementById('fileInput').click();
+});
+
+// ============================================================
+// EXPORT .research FILE
+// ============================================================
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const data = {
+    meta: {
+      title: currentNotebookTitle,
+      version: 'v1.0',
+      created: new Date().toISOString().split('T')[0],
+      status: 'live'
+    },
+    objects: objects.map(o => ({
+      id: o.id,
+      type: o.type,
+      title: o.content.split(':')[0] || o.id,
+      content: o.content.includes(':') ? o.content.split(':').slice(1).join(':').trim() : o.content,
+      weight: o.weight,
+      timestamp: o.timestamp
+    })),
+    relations: relations,
+    chat: chatMessages
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (currentNotebookTitle || 'notebook').replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.research';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ============================================================
+// SETTINGS PANEL — update on load
+// ============================================================
+
+function updateSettingsPanel() {
+  const titleEl = document.getElementById('settingsTitle');
+  if (titleEl) titleEl.textContent = currentNotebookTitle;
+
+  const badgeTitle = document.getElementById('notebookBadgeTitle');
+  if (badgeTitle) badgeTitle.textContent = currentNotebookTitle;
+
+  const grid = document.getElementById('objCountGrid');
+  if (grid) {
+    const counts = {};
+    objects.forEach(o => { counts[o.type] = (counts[o.type] || 0) + 1; });
+    const typeLabels = { QUESTION: 'Question', EVIDENCE: 'Evidence', ASSUMPTION: 'Assumptions', MODEL: 'Model', ANSWER: 'Answer', NOTE: 'Note' };
+    let html = '';
+    for (const [type, count] of Object.entries(counts)) {
+      html += `<div class="obj-count"><span class="oc-num">${count}</span><span class="oc-type">${typeLabels[type] || type}</span></div>`;
+    }
+    grid.innerHTML = html;
+  }
+}
+
+// ============================================================
+// CELLS VIEW INTERACTIVITY
+// ============================================================
+
+// Usage lever
+const pgUsage = document.getElementById('pgUsage');
+const pgUsageVal = document.getElementById('pgUsageVal');
+if (pgUsage && pgUsageVal) {
+  pgUsage.addEventListener('input', () => {
+    pgUsageVal.textContent = pgUsage.value + '%';
+  });
+}
+
+// Injury toggle
+const pgInjury = document.getElementById('pgInjury');
+if (pgInjury) {
+  pgInjury.addEventListener('click', () => {
+    pgInjury.classList.toggle('on');
+    pgInjury.setAttribute('aria-checked', pgInjury.classList.contains('on'));
+  });
+}
+
+// Defense segment
+const pgDefSeg = document.getElementById('pgDefSeg');
+if (pgDefSeg) {
+  pgDefSeg.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      pgDefSeg.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+    });
+  });
+}
+
+// Evidence toggles
+const pgEvList = document.getElementById('pgEvList');
+if (pgEvList) {
+  pgEvList.querySelectorAll('.ev').forEach(ev => {
+    ev.addEventListener('click', () => {
+      ev.classList.toggle('off');
+    });
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+function init() {
+  renderChat();
+  renderCards();
+  renderConnectors();
+  updateSettingsPanel();
+}
+
+init();
+</script>
+
+</body>
+</html>
